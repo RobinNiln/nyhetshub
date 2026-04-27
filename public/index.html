@@ -3,51 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NyhetsHub – Sveriges nyheter samlat på ett ställe</title>
-  <meta name="description" content="Snabb överblick över det senaste från svenska medier. Nyheter, sport, näringsliv och kultur – aggregerat i realtid.">
-  <meta property="og:title" content="NyhetsHub – Sveriges nyheter">
+  <title>NyhetsHub – Svenska nyheter samlat</title>
+  <meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och fler – nationellt och regionalt.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://nyhetshub.se/">
+  <meta property="og:title" content="NyhetsHub – Svenska nyheter">
+  <meta property="og:description" content="Nyheter från alla stora svenska medier, samlat och rankat.">
   <meta property="og:type" content="website">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"NewsMediaOrganization","name":"NyhetsHub","url":"https://nyhetshub.se"}
+  {"@context":"https://schema.org","@type":"WebSite","name":"NyhetsHub","url":"https://nyhetshub.se","description":"Aggregerad svensk nyhetstjänst","potentialAction":{"@type":"SearchAction","target":"https://nyhetshub.se/?q={search_term_string}","query-input":"required name=search_term_string"}}
   </script>
+  <!-- Google AdSense – ersätt ca-pub-XXXX med ditt eget ID när du fått det -->
+  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXX" crossorigin="anonymous"></script> -->
   <style>
+    :root {
+      --red: #e63946;
+      --dark: #0d1117;
+      --dark2: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --bg: #0d1117;
+      --card: #161b22;
+    }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:#f4f4f4; color:#1a1a1a; }
-    header { background:#1a1a2e; color:white; padding:0 20px; position:sticky; top:0; z-index:100; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
-    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; height:60px; }
-    .logo { font-size:1.4rem; font-weight:800; }
-    .logo span { color:#e94560; }
-    .lang-toggle { background:#e94560; border:none; color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:0.85rem; font-weight:600; }
-    .ad-leaderboard { background:#fff; text-align:center; padding:10px; border-bottom:1px solid #e0e0e0; }
-    .ad-placeholder { background:#f0f0f0; border:1px dashed #ccc; color:#999; font-size:0.75rem; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; }
-    nav { background:white; border-bottom:2px solid #e94560; overflow-x:auto; white-space:nowrap; }
-    .nav-inner { max-width:1200px; margin:0 auto; padding:0 20px; display:flex; gap:4px; }
-    .cat-btn { background:none; border:none; padding:14px 16px; cursor:pointer; font-size:0.9rem; font-weight:500; color:#555; border-bottom:3px solid transparent; transition:all 0.2s; }
-    .cat-btn:hover { color:#e94560; }
-    .cat-btn.active { color:#e94560; border-bottom-color:#e94560; font-weight:700; }
-    .main-layout { max-width:1200px; margin:24px auto; padding:0 20px; display:grid; grid-template-columns:1fr 300px; gap:24px; }
-    @media(max-width:768px){ .main-layout{grid-template-columns:1fr} .sidebar{display:none} }
-    #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
-    .news-card { background:white; border-radius:8px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); transition:transform 0.15s,box-shadow 0.15s; display:flex; flex-direction:column; gap:10px; }
-    .news-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.12); }
-    .card-source { display:flex; align-items:center; gap:8px; }
-    .source-dot { width:8px; height:8px; border-radius:50%; background:#e94560; flex-shrink:0; }
-    .source-name { font-size:0.75rem; font-weight:600; color:#e94560; text-transform:uppercase; letter-spacing:0.5px; }
-    .cat-badge { margin-left:auto; font-size:0.7rem; background:#f0f0f0; color:#666; padding:2px 8px; border-radius:10px; }
-    .news-card a { text-decoration:none; color:#1a1a1a; font-size:0.95rem; font-weight:600; line-height:1.4; }
-    .news-card a:hover { color:#e94560; }
-    .card-time { font-size:0.75rem; color:#999; margin-top:auto; }
-    .sidebar { display:flex; flex-direction:column; gap:20px; }
-    .sidebar-widget { background:white; border-radius:8px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
-    .widget-title { font-size:0.8rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:#999; margin-bottom:12px; }
-    .trending-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid #f0f0f0; }
-    .trending-num { font-size:1.2rem; font-weight:800; color:#e0e0e0; min-width:24px; }
-    .trending-item a { font-size:0.85rem; color:#1a1a1a; text-decoration:none; line-height:1.3; }
-    .trending-item a:hover { color:#e94560; }
-    .loading { grid-column:1/-1; text-align:center; padding:60px; color:#999; }
-    .spinner { width:32px; height:32px; border:3px solid #f0f0f0; border-top-color:#e94560; border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 12px; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    /* Header */
+    header { background:var(--dark2); border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; }
+    .header-inner { max-width:1280px; margin:0 auto; display:flex; align-items:center; gap:16px; height:56px; }
+    .logo { font-size:1.3rem; font-weight:800; letter-spacing:-0.5px; white-space:nowrap; }
+    .logo span { color:var(--red); }
+    .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
+    .lang-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; transition:all 0.15s; }
+    .lang-btn:hover { border-color:var(--red); color:var(--text); }
+
+    /* AdSense leaderboard */
+    .ad-top { background:var(--dark2); border-bottom:1px solid var(--border); padding:8px; text-align:center; min-height:60px; display:flex; align-items:center; justify-content:center; }
+    .ad-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border:1px dashed var(--border); padding:16px 40px; border-radius:4px; }
+
+    /* Mode toggle (Nationellt / Regionalt) */
+    .mode-bar { background:var(--dark2); border-bottom:1px solid var(--border); padding:0 24px; }
+    .mode-inner { max-width:1280px; margin:0 auto; display:flex; gap:0; }
+    .mode-btn { background:none; border:none; color:var(--muted); padding:14px 20px; cursor:pointer; font-size:0.9rem; font-weight:600; border-bottom:3px solid transparent; transition:all 0.15s; }
+    .mode-btn.active { color:var(--red); border-bottom-color:var(--red); }
+
+    /* Kategori / region-nav */
+    nav { background:var(--dark2); border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; }
+    nav::-webkit-scrollbar { display:none; }
+    .nav-inner { max-width:1280px; margin:0 auto; padding:0 24px; display:flex; gap:2px; }
+    .cat-btn { background:none; border:none; color:var(--muted); padding:10px 14px; cursor:pointer; font-size:0.82rem; border-radius:6px; transition:all 0.15s; white-space:nowrap; margin:4px 0; }
+    .cat-btn:hover { color:var(--text); background:rgba(255,255,255,0.05); }
+    .cat-btn.active { color:var(--red); background:rgba(230,57,70,0.1); font-weight:600; }
+
+    /* Layout */
+    .layout { max-width:1280px; margin:24px auto; padding:0 24px; display:grid; grid-template-columns:1fr 300px; gap:24px; }
+    @media(max-width:900px){ .layout{grid-template-columns:1fr; padding:0 16px;} .sidebar{display:none;} }
+
+    /* Grid */
+    #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; align-content:start; }
+
+    /* Kort */
+    .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:8px; transition:border-color 0.15s; }
+    .card:hover { border-color:#555; }
+    .card-meta { display:flex; align-items:center; gap:6px; }
+    .source { font-size:0.7rem; font-weight:700; color:var(--red); text-transform:uppercase; letter-spacing:0.5px; }
+    .badge { margin-left:auto; font-size:0.65rem; background:rgba(255,255,255,0.06); color:var(--muted); padding:2px 7px; border-radius:10px; }
+    .card a { color:var(--text); text-decoration:none; font-size:0.9rem; font-weight:500; line-height:1.45; }
+    .card a:hover { color:#fff; }
+    .card-time { font-size:0.72rem; color:var(--muted); }
+
+    /* Ad in-feed */
+    .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:8px; min-height:100px; display:flex; align-items:center; justify-content:center; }
+
+    /* Sidebar */
+    .sidebar { display:flex; flex-direction:column; gap:16px; }
+    .widget { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; }
+    .widget-title { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:12px; }
+    .trend-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+    .trend-item:last-child { border:none; }
+    .trend-num { font-size:1rem; font-weight:800; color:var(--border); min-width:20px; }
+    .trend-item a { font-size:0.82rem; color:var(--text); text-decoration:none; line-height:1.3; }
+    .trend-item a:hover { color:var(--red); }
+
+    /* States */
+    .state { grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--muted); }
+    .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 12px; }
     @keyframes spin { to{transform:rotate(360deg)} }
-    footer { background:#1a1a2e; color:#aaa; text-align:center; padding:24px; margin-top:40px; font-size:0.85rem; }
+
+    /* Status-bar */
+    .status { font-size:0.72rem; color:var(--muted); margin-bottom:12px; }
+    .dot-live { display:inline-block; width:6px; height:6px; background:#3fb950; border-radius:50%; margin-right:4px; }
+
+    footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.78rem; color:var(--muted); margin-top:20px; }
   </style>
 </head>
 <body>
@@ -55,94 +103,133 @@
 <header>
   <div class="header-inner">
     <div class="logo">Nyhets<span>Hub</span></div>
-    <button class="lang-toggle" onclick="toggleLang()">🌐 EN</button>
+    <div class="header-right">
+      <button class="lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+    </div>
   </div>
 </header>
 
-<div class="ad-leaderboard">
-  <div class="ad-placeholder" style="width:728px;height:90px">Annons 728x90 – Ersätt med AdSense-kod</div>
+<!-- AdSense: Leaderboard 728x90 -->
+<div class="ad-top">
+  <!-- <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX"></ins> -->
+  <div class="ad-label">Annons</div>
 </div>
 
-<nav>
-  <div class="nav-inner" id="cat-nav">
-    <button class="cat-btn active" onclick="loadNews('alla')" data-sv="🏠 Alla" data-en="🏠 All">🏠 Alla</button>
-    <button class="cat-btn" onclick="loadNews('nyheter')" data-sv="📰 Nyheter" data-en="📰 News">📰 Nyheter</button>
-    <button class="cat-btn" onclick="loadNews('politik')" data-sv="🏛️ Politik" data-en="🏛️ Politics">🏛️ Politik</button>
-    <button class="cat-btn" onclick="loadNews('naringsliv')" data-sv="📈 Näringsliv" data-en="📈 Business">📈 Näringsliv</button>
-    <button class="cat-btn" onclick="loadNews('sport')" data-sv="⚽ Sport" data-en="⚽ Sports">⚽ Sport</button>
-    <button class="cat-btn" onclick="loadNews('tech')" data-sv="💻 Tech" data-en="💻 Tech">💻 Tech</button>
-    <button class="cat-btn" onclick="loadNews('kultur')" data-sv="🎭 Kultur" data-en="🎭 Culture">🎭 Kultur</button>
-    <button class="cat-btn" onclick="loadNews('utrikes')" data-sv="🌍 Utrikes" data-en="🌍 World">🌍 Utrikes</button>
+<!-- Nationellt / Regionalt -->
+<div class="mode-bar">
+  <div class="mode-inner">
+    <button class="mode-btn active" onclick="setMode('national', this)" id="t-national">🇸🇪 Nationellt</button>
+    <button class="mode-btn" onclick="setMode('regional', this)" id="t-regional">📍 Regionalt</button>
   </div>
-</nav>
+</div>
 
-<div class="main-layout">
+<!-- Kategori- eller regionflikar -->
+<nav><div class="nav-inner" id="tab-nav"></div></nav>
+
+<div class="layout">
   <main>
-    <div id="news-grid">
-      <div class="loading"><div class="spinner"></div><div>Hämtar nyheter...</div></div>
-    </div>
+    <div class="status" id="status"></div>
+    <div id="news-grid"><div class="state"><div class="spinner"></div><div>Hämtar nyheter...</div></div></div>
   </main>
   <aside class="sidebar">
-    <div class="sidebar-widget">
-      <div class="ad-placeholder" style="width:268px;height:250px">Annons 300x250 – AdSense</div>
+    <!-- AdSense: Rectangle 300x250 -->
+    <div class="widget" style="min-height:250px;display:flex;align-items:center;justify-content:center;">
+      <!-- <ins class="adsbygoogle" style="display:block;width:300px;height:250px" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX"></ins> -->
+      <div class="ad-label">Annons 300×250</div>
     </div>
-    <div class="sidebar-widget">
-      <div class="widget-title" id="trending-title">🔥 Trending nu</div>
-      <div id="trending-list"></div>
-    </div>
-    <div class="sidebar-widget">
-      <div class="widget-title">Om NyhetsHub</div>
-      <p style="font-size:0.82rem;color:#666;line-height:1.5">Vi aggregerar nyheter från Sveriges ledande medier. Klicka på en rubrik för att läsa hos källan.</p>
+    <div class="widget">
+      <div class="widget-title" id="t-trending">🔥 Trending</div>
+      <div id="trending"></div>
     </div>
   </aside>
 </div>
 
 <footer>
-  <p>© 2025 NyhetsHub – Nyheter aggregerade från svenska medier</p>
+  <span id="t-footer">© 2025 NyhetsHub – nyheter aggregerade från svenska medier</span>
 </footer>
 
 <script>
-  let currentLang = 'sv';
-  let currentCat = 'alla';
+const CATS = [
+  { id:'alla',       sv:'🏠 Alla',        en:'🏠 All'       },
+  { id:'nyheter',    sv:'📰 Nyheter',     en:'📰 News'      },
+  { id:'politik',    sv:'🏛 Politik',     en:'🏛 Politics'  },
+  { id:'naringsliv', sv:'📈 Näringsliv',  en:'📈 Business'  },
+  { id:'sport',      sv:'⚽ Sport',       en:'⚽ Sports'     },
+  { id:'tech',       sv:'💻 Tech',        en:'💻 Tech'      },
+  { id:'kultur',     sv:'🎭 Kultur',      en:'🎭 Culture'   },
+  { id:'utrikes',    sv:'🌍 Utrikes',     en:'🌍 World'     },
+];
 
-  async function loadNews(category) {
-    currentCat = category;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    event.target.classList.add('active');
-    const grid = document.getElementById('news-grid');
-    grid.innerHTML = '<div class="loading"><div class="spinner"></div><div>Hämtar...</div></div>';
-    try {
-      const res = await fetch('/api/news?category=' + category);
-      const articles = await res.json();
-      renderNews(articles);
-      renderTrending(articles.slice(0, 7));
-    } catch(e) {
-      grid.innerHTML = '<div class="loading">Kunde inte hämta nyheter. Försök igen.</div>';
-    }
+const LABELS = { nyheter:'Nyheter', sport:'Sport', naringsliv:'Näringsliv', kultur:'Kultur', tech:'Tech', politik:'Politik', utrikes:'Utrikes' };
+
+let mode = 'national';
+let lang = 'sv';
+let current = 'alla';
+let regions = [];
+
+async function init() {
+  const res = await fetch('/api/regions');
+  regions = await res.json();
+  renderTabs();
+  load();
+}
+
+function setMode(m, el) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  current = m === 'national' ? 'alla' : regions[0];
+  renderTabs();
+  load();
+}
+
+function renderTabs() {
+  const nav = document.getElementById('tab-nav');
+  if (mode === 'national') {
+    nav.innerHTML = CATS.map(c =>
+      `<button class="cat-btn${c.id===current?' active':''}" onclick="select('${c.id}',this)">${lang==='sv'?c.sv:c.en}</button>`
+    ).join('');
+  } else {
+    nav.innerHTML = regions.map(r =>
+      `<button class="cat-btn${r===current?' active':''}" onclick="select('${r}',this)">${r}</button>`
+    ).join('');
   }
+}
 
-  function renderNews(articles) {
-    const grid = document.getElementById('news-grid');
-    if (!articles.length) {
-      grid.innerHTML = '<div class="loading">Inga nyheter hittades.</div>';
-      return;
-    }
-    const labels = {
-      nyheter:'Nyheter', sport:'Sport', naringsliv:'Näringsliv',
-      kultur:'Kultur', tech:'Tech', politik:'Politik', utrikes:'Utrikes'
-    };
-    grid.innerHTML = articles.map((a, i) => {
-      const adAfter = (i > 0 && i % 8 === 0)
-        ? '<div class="news-card" style="border:1px dashed #ddd;align-items:center;justify-content:center;color:#ccc;font-size:0.75rem">Annons</div>'
-        : '';
-      const time = a.published_at ? new Date(a.published_at).toLocaleString('sv-SE', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-      return adAfter + '<div class="news-card">'
-        + '<div class="card-source"><div class="source-dot"></div><span class="source-name">' + a.source + '</span>'
-        + '<span class="cat-badge">' + (labels[a.category] || a.category) + '</span></div>'
-        + '<a href="' + a.url + '" target="_blank" rel="noopener noreferrer">' + a.title + '</a>'
-        + '<div class="card-time">' + time + '</div></div>';
-    }).join('');
+function select(val, el) {
+  current = val;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  load();
+}
+
+async function load() {
+  document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
+  try {
+    const q = mode === 'national'
+      ? `/api/news?category=${current}`
+      : `/api/news?region=${encodeURIComponent(current)}`;
+    const res = await fetch(q);
+    const articles = await res.json();
+    render(articles);
+    renderTrending(articles.slice(0,7));
+    document.getElementById('status').innerHTML =
+      `<span class="dot-live"></span>${articles.length} nyheter – uppdateras automatiskt var 30:e minut`;
+  } catch(e) {
+    document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
   }
+}
 
-  function renderTrending(articles) {
-    document.getElemen
+function render(articles) {
+  if (!articles.length) {
+    document.getElementById('news-grid').innerHTML = '<div class="state">Inga nyheter hittades.</div>';
+    return;
+  }
+  document.getElementById('news-grid').innerHTML = articles.map((a,i) => {
+    const time = a.published_at
+      ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+      : '';
+    const ad = (i > 0 && i % 9 === 0)
+      ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>`
+      : '';
+    return ad + `<article cl
