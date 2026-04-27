@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.static('public'));
 
-const SITE_URL = process.env.SITE_URL || 'https://nyhetshub.se';
+const SITE_URL = process.env.SITE_URL || 'https://skime.se';
 
 const ALL_REGIONS = [
   'Blekinge','Dalarna','Gotland','Gävleborg','Halland',
@@ -56,12 +56,12 @@ Sitemap: ${SITE_URL}/sitemap.xml`);
 // ── llms.txt (AI-sökmotorer) ──────────────────────────────────
 app.get('/llms.txt', (req, res) => {
   res.type('text/plain');
-  res.send(`# NyhetsHub
+  res.send(`# Skime
 
-> NyhetsHub aggregerar och rankar nyheter från Sveriges ledande medier i realtid.
+> Skime aggregerar och rankar nyheter från Sveriges ledande medier i realtid.
 
-## Vad är NyhetsHub?
-NyhetsHub är en svensk nyhetstjänst som samlar nyheter från SVT, SR, DN, SvD, Aftonbladet, Expressen, DI och ett 40-tal regionala tidningar. Nyheter rankas efter hur många källor som rapporterar samma händelse.
+## Vad är Skime?
+Skime är en svensk nyhetstjänst som samlar nyheter från SVT, SR, DN, SvD, Aftonbladet, Expressen, DI och ett 40-tal regionala tidningar. Nyheter rankas efter hur många källor som rapporterar samma händelse.
 
 ## Kategorier
 - Nationella nyheter: inrikes, utrikes, politik, näringsliv, sport, tech, kultur
@@ -148,8 +148,8 @@ app.get('/', async (req, res) => {
     ).join('\n');
 
     const title = region
-      ? `${region} nyheter – NyhetsHub`
-      : `NyhetsHub – Svenska nyheter samlat`;
+      ? `${region} nyheter – Skime`
+      : `Skime – Svenska nyheter samlat`;
 
     const description = region
       ? `Senaste nyheterna från ${region}. Aggregerat från lokala medier i realtid.`
@@ -161,7 +161,7 @@ app.get('/', async (req, res) => {
 
     // Injicera dynamisk meta + schema + SSR-innehåll
     const enriched = html
-      .replace('<title>NyhetsHub – Svenska nyheter samlat</title>',
+      .replace('<title>Skime – Svenska nyheter samlat</title>',
         `<title>${title}</title>`)
       .replace('<meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och fler – nationellt och regionalt.">',
         `<meta name="description" content="${description}">`)
@@ -180,5 +180,5 @@ app.get('/', async (req, res) => {
 // ── Start ─────────────────────────────────────────────────────
 init().then(async () => {
   await fetchAll();
-  app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('NyhetsHub live'));
+  app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'));
 }).catch(console.error);
