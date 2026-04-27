@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -13,22 +14,25 @@ async function init() {
       source TEXT NOT NULL,
       category TEXT DEFAULT 'nyheter',
       region TEXT,
+      ingress TEXT,
       published_at TIMESTAMPTZ,
       score INTEGER DEFAULT 1,
       fetched_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
   await pool.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT`);
+  await pool.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS ingress TEXT`);
   const { rows } = await pool.query(`SELECT COUNT(*) FROM articles`);
   console.log(`DB: ${rows[0].count} artiklar i databasen`);
 }
 
 async function save(article) {
   await pool.query(
-    `INSERT INTO articles (title, url, source, category, region, published_at)
-     VALUES ($1,$2,$3,$4,$5,$6)
+    `INSERT INTO articles (title, url, source, category, region, ingress, published_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
      ON CONFLICT (url) DO NOTHING`,
-    [article.title, article.url, article.source, article.category, article.region || null, article.published_at]
+    [article.title, article.url, article.source, article.category,
+     article.region || null, article.ingress || null, article.published_at]
   );
 }
 
@@ -51,7 +55,7 @@ async function get({ category, region } = {}) {
     conditions.push(`category = $${params.length}`);
   }
   const { rows } = await pool.query(`
-    SELECT title, url, source, category, region, published_at, score
+    SELECT title, url, source, category, region, ingress, published_at, score
     FROM articles
     WHERE ${conditions.join(' AND ')}
     ORDER BY score DESC, published_at DESC
