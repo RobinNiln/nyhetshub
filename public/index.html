@@ -4,17 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NyhetsHub – Svenska nyheter samlat</title>
-  <meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och fler – nationellt och regionalt.">
-  <meta name="robots" content="index, follow">
+  <meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och 40+ medier – nationellt och regionalt.">
+  <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://nyhetshub.se/">
-  <meta property="og:title" content="NyhetsHub – Svenska nyheter">
-  <meta property="og:description" content="Nyheter från alla stora svenska medier, samlat och rankat.">
+  <link rel="alternate" hreflang="sv" href="https://nyhetshub.se/">
+  <link rel="alternate" hreflang="en" href="https://nyhetshub.se/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://nyhetshub.se/">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="NyhetsHub – Svenska nyheter samlat">
+  <meta property="og:description" content="Nyheter från alla stora svenska medier, samlat och rankat i realtid.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nyhetshub.se/">
+  <meta property="og:locale" content="sv_SE">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="NyhetsHub – Svenska nyheter">
+  <meta name="twitter:description" content="Nyheter från alla stora svenska medier, samlat och rankat i realtid.">
+
+  <!-- Schema.org WebSite (ersätts dynamiskt av server vid behov) -->
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebSite","name":"NyhetsHub","url":"https://nyhetshub.se","description":"Aggregerad svensk nyhetstjänst"}
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "NyhetsHub",
+    "url": "https://nyhetshub.se",
+    "description": "Aggregerad svensk nyhetstjänst – nyheter från SVT, DN, Aftonbladet och 40+ medier",
+    "inLanguage": ["sv", "en"],
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://nyhetshub.se/?category={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
   </script>
+
+  <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --red: #e8001c;
@@ -66,23 +96,18 @@
     .live-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:pulse 2s infinite; flex-shrink:0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; align-content:start; }
-
-    /* Kort */
     .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:9px; transition:background 0.15s,border-color 0.15s; }
     .card:hover { background:var(--hover); border-color:#ccc; }
-    .card-top { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .card-top { display:flex; align-items:center; gap:6px; }
     .badge { margin-left:auto; font-size:0.63rem; color:var(--muted); background:rgba(0,0,0,0.04); padding:2px 7px; border-radius:10px; border:1px solid var(--border); white-space:nowrap; }
     .card-title { color:var(--text); text-decoration:none; font-size:0.88rem; font-weight:600; line-height:1.5; display:block; }
     .card-title:hover { color:var(--red); }
     .card-ingress { font-size:0.8rem; color:var(--ingress); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .card-time { font-size:0.68rem; color:var(--muted); }
-
-    /* Källor-rad */
     .sources-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
     .source-link { font-size:0.68rem; font-weight:600; color:var(--red); text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border:1px solid rgba(232,0,28,0.2); border-radius:10px; transition:all 0.15s; }
     .source-link:hover { background:rgba(232,0,28,0.08); border-color:var(--red); }
     .source-count { font-size:0.68rem; color:var(--muted); padding:2px 7px; border:1px solid var(--border); border-radius:10px; }
-
     .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:6px; min-height:90px; display:flex; align-items:center; justify-content:center; }
     .sidebar { display:flex; flex-direction:column; gap:14px; }
     .widget { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
@@ -96,49 +121,62 @@
     .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 10px; }
     @keyframes spin { to{transform:rotate(360deg)} }
     footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
+    footer a { color:var(--muted); text-decoration:none; }
+    footer a:hover { color:var(--red); }
   </style>
 </head>
 <body>
 <header>
   <div class="header-inner">
-    <div class="logo">Nyhets<em>Hub</em></div>
+    <div class="logo"><a href="/" style="text-decoration:none;color:inherit">Nyhets<em>Hub</em></a></div>
     <div class="header-right">
-      <button class="pill-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
-      <button class="pill-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+      <button class="pill-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Växla mörkt läge">🌙</button>
+      <button class="pill-btn" onclick="toggleLang()" id="lang-btn" aria-label="Byt språk">EN</button>
     </div>
   </div>
 </header>
 
-<div class="ad-top">
+<div class="ad-top" aria-label="Annons">
   <div class="ad-label">Annons 728×90</div>
 </div>
 
-<div class="mode-bar">
+<div class="mode-bar" role="navigation" aria-label="Nyhetsnivå">
   <div class="mode-inner">
     <button class="mode-btn active" id="btn-national" onclick="setMode('national',this)">🇸🇪 Nationellt</button>
     <button class="mode-btn" id="btn-regional" onclick="setMode('regional',this)">📍 Regionalt</button>
   </div>
 </div>
 
-<nav><div class="nav-inner" id="tab-nav"></div></nav>
+<nav aria-label="Kategorier"><div class="nav-inner" id="tab-nav"></div></nav>
 
 <div class="layout">
-  <main>
-    <div class="status-bar" id="status-bar"></div>
-    <div id="news-grid"><div class="state"><div class="spinner"></div></div></div>
+  <main id="main-content">
+    <div class="status-bar" id="status-bar" aria-live="polite"></div>
+    <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
   </main>
-  <aside class="sidebar">
-    <div class="widget" style="min-height:260px;display:flex;align-items:center;justify-content:center;">
+  <aside class="sidebar" aria-label="Sidebar">
+    <div class="widget" style="min-height:260px;display:flex;align-items:center;justify-content:center;" aria-label="Annons">
       <div class="ad-label">Annons 300×250</div>
     </div>
     <div class="widget">
       <div class="widget-title" id="t-trending">🔥 Trending</div>
-      <div id="trending"></div>
+      <div id="trending" role="list"></div>
     </div>
   </aside>
 </div>
 
-<footer>© 2025 NyhetsHub – nyheter aggregerade från svenska medier</footer>
+<footer>
+  <p>© 2025 NyhetsHub – nyheter aggregerade från svenska medier</p>
+  <p style="margin-top:6px">
+    <a href="/?category=nyheter">Nyheter</a> ·
+    <a href="/?category=sport">Sport</a> ·
+    <a href="/?category=naringsliv">Näringsliv</a> ·
+    <a href="/?category=politik">Politik</a> ·
+    <a href="/?category=tech">Tech</a> ·
+    <a href="/?category=kultur">Kultur</a> ·
+    <a href="/?category=utrikes">Utrikes</a>
+  </p>
+</footer>
 
 <script>
 const CATS = [
@@ -162,6 +200,11 @@ const ALL_REGIONS = [
 
 let mode = 'national', lang = 'sv', current = 'alla';
 
+// Läs URL-parametrar vid start
+const params = new URLSearchParams(window.location.search);
+if (params.get('category')) current = params.get('category');
+if (params.get('region')) { mode = 'regional'; current = params.get('region'); }
+
 function setMode(m, el) {
   mode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -178,6 +221,8 @@ function renderTabs() {
       `<button class="cat-btn${c.id===current?' active':''}" onclick="selectTab('${c.id}',this)">${lang==='sv'?c.sv:c.en}</button>`
     ).join('');
   } else {
+    document.getElementById('btn-regional').classList.add('active');
+    document.getElementById('btn-national').classList.remove('active');
     nav.innerHTML = ALL_REGIONS.map(r =>
       `<button class="cat-btn${r===current?' active':''}" onclick="selectTab('${encodeURIComponent(r)}',this)">${r}</button>`
     ).join('');
@@ -188,6 +233,11 @@ function selectTab(val, el) {
   current = decodeURIComponent(val);
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
+  // Uppdatera URL utan reload
+  const newUrl = mode === 'national'
+    ? (current === 'alla' ? '/' : `/?category=${current}`)
+    : `/?region=${encodeURIComponent(current)}`;
+  history.pushState({}, '', newUrl);
   load();
 }
 
@@ -203,6 +253,9 @@ async function load() {
     renderTrending(articles.slice(0, 7));
     document.getElementById('status-bar').innerHTML =
       `<span class="live-dot"></span>${articles.length} nyheter`;
+    // Uppdatera page title dynamiskt
+    const label = mode === 'regional' ? current : (CAT_LABELS[current] || 'Alla');
+    document.title = `${label} – NyhetsHub`;
   } catch(e) {
     document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
   }
@@ -219,33 +272,33 @@ function renderGrid(articles) {
       : '';
     const label = a.region || CAT_LABELS[a.category] || a.category;
     const ad = (i > 0 && i % 9 === 0) ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
-
-    // Källor-rad: visa upp till 4 klickbara källknappar
     const sources = a.sources || [{ name: a.source, url: a.url }];
     const visibleSources = sources.slice(0, 4);
     const extraCount = sources.length - visibleSources.length;
     const sourcesHtml = `<div class="sources-row">
       ${visibleSources.map(s =>
-        `<a class="source-link" href="${s.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${s.name}</a>`
+        `<a class="source-link" href="${s.url}" target="_blank" rel="noopener noreferrer">${s.name}</a>`
       ).join('')}
       ${extraCount > 0 ? `<span class="source-count">+${extraCount} till</span>` : ''}
     </div>`;
-
-    return ad + `<article class="card">
+    return ad + `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
       <div class="card-top">
         <span class="badge">${label}</span>
       </div>
-      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
-      ${a.ingress ? `<div class="card-ingress">${a.ingress}</div>` : ''}
+      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer"
+         itemprop="headline url">${a.title}</a>
+      ${a.ingress ? `<div class="card-ingress" itemprop="description">${a.ingress}</div>` : ''}
       ${sourcesHtml}
-      <div class="card-time">${time}</div>
+      <div class="card-time">
+        <time itemprop="datePublished" datetime="${a.published_at}">${time}</time>
+      </div>
     </article>`;
   }).join('');
 }
 
 function renderTrending(articles) {
   document.getElementById('trending').innerHTML = articles.map((a, i) =>
-    `<div class="trend-item">
+    `<div class="trend-item" role="listitem">
       <span class="trend-num">${i+1}</span>
       <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
     </div>`
@@ -256,6 +309,7 @@ function toggleTheme() {
   const dark = document.documentElement.getAttribute('data-theme') === 'dark';
   document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
   document.getElementById('theme-btn').textContent = dark ? '🌙' : '☀️';
+  localStorage.setItem('theme', dark ? 'light' : 'dark');
 }
 
 function toggleLang() {
@@ -265,6 +319,13 @@ function toggleLang() {
   document.getElementById('btn-national').textContent = lang === 'sv' ? '🇸🇪 Nationellt' : '🇸🇪 National';
   document.getElementById('btn-regional').textContent = lang === 'sv' ? '📍 Regionalt' : '📍 Regional';
   renderTabs();
+}
+
+// Återställ tema från localStorage
+const savedTheme = localStorage.getItem('theme');
+if (savedTheme === 'dark') {
+  document.documentElement.setAttribute('data-theme', 'dark');
+  document.getElementById('theme-btn').textContent = '☀️';
 }
 
 renderTabs();
