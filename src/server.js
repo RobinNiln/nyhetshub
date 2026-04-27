@@ -2,11 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { init, get, lastFetched } = require('./db');
-const { fetchAll, SOURCES } = require('./fetcher');
+const { fetchAll } = require('./fetcher');
 
 const app = express();
 app.use(cors());
 app.use(express.static('public'));
+
+const ALL_REGIONS = [
+  'Blekinge','Dalarna','Gotland','Gävleborg','Halland',
+  'Jämtland','Jönköping','Kalmar','Kronoberg','Norrbotten',
+  'Skåne','Stockholm','Södermanland','Uppsala','Värmland',
+  'Västerbotten','Västernorrland','Västmanland','Västra Götaland',
+  'Örebro','Östergötland'
+];
 
 let fetching = false;
 
@@ -30,8 +38,7 @@ app.get('/api/news', async (req, res) => {
 });
 
 app.get('/api/regions', (req, res) => {
-  const regions = [...new Set(SOURCES.regional.map(s => s.region))].sort();
-  res.json(regions);
+  res.json(ALL_REGIONS);
 });
 
 app.get('/', (req, res) => {
@@ -40,5 +47,5 @@ app.get('/', (req, res) => {
 
 init().then(async () => {
   await fetchAll();
-app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('NyhetsHub live'));
+  app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('NyhetsHub live'));
 }).catch(console.error);
