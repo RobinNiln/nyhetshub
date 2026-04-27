@@ -13,19 +13,24 @@ async function init() {
       url TEXT UNIQUE NOT NULL,
       source TEXT NOT NULL,
       category TEXT DEFAULT 'nyheter',
+      region TEXT,
       published_at TIMESTAMPTZ,
       score INTEGER DEFAULT 1,
       fetched_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  // Lägg till region-kolumn om den saknas (för befintliga databaser)
+  await pool.query(`
+    ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT
+  `);
 }
 
 async function save(article) {
   await pool.query(
-    `INSERT INTO articles (title, url, source, category, published_at)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO articles (title, url, source, category, region, published_at)
+     VALUES ($1,$2,$3,$4,$5,$6)
      ON CONFLICT (url) DO NOTHING`,
-    [article.title, article.url, article.source, article.category, article.published_at]
+    [article.title, article.url, article.source, article.category, article.region || null, article.published_at]
   );
 }
 
@@ -37,18 +42,33 @@ async function boost(keyword) {
   );
 }
 
-async function get(category) {
-  const where = category && category !== 'alla'
-    ? `AND category = '${category}'` : '';
+async function get({ category, region } = {}) {
+  const conditions = [`fetched_at > NOW() - INTERVAL '6 hours'`];
+  const params = [];
+
+  if (region) {
+    params.push(region);
+    conditions.push(`region = $${params.length}`);
+  } else if (category && category !== 'alla') {
+    params.push(category);
+    conditions.push(`category = $${params.length}`);
+  }
+
   const { rows } = await pool.query(`
-    SELECT title, url, source, category, published_at, score
+    SELECT title, url, source, category, region, published_at, score
     FROM articles
-    WHERE fetched_at > NOW() - INTERVAL '6 hours'
-    ${where}
+    WHERE ${conditions.join(' AND ')}
     ORDER BY score DESC, published_at DESC
     LIMIT 60
-  `);
+  `, params);
   return rows;
 }
 
-module.exports = { init, save, boost, get };
+async function lastFetched() {
+  const { rows } = await pool.query(
+    `SELECT fetched_at FROM articles ORDER BY fetched_at DESC LIMIT 1`
+  );
+  return rows[0]?.fetched_at || null;
+}
+
+module.exports = { init, save, boost, get, lastFetched };
