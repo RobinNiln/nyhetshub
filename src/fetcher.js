@@ -1,7 +1,12 @@
 const Parser = require('rss-parser');
 const { save, boost } = require('./db');
 
-const parser = new Parser({ timeout: 8000 });
+const parser = new Parser({
+  timeout: 8000,
+  headers: {
+    'User-Agent': 'Mozilla/5.0 (compatible; NyhetsHub/1.0; +https://nyhetshub.se)'
+  }
+});
 
 const SKIP_PATTERNS = [
   /nyheter från dagen/i,
@@ -38,7 +43,7 @@ const SOURCES = {
     { name: 'HD',                   url: 'https://www.hd.se/rss.xml',                                  region: 'Skåne' },
     { name: 'Kristianstadsbladet',  url: 'https://www.kristianstadsbladet.se/rss.xml',                 region: 'Skåne' },
     { name: 'Borås Tidning',        url: 'https://www.bt.se/rss.xml',                                  region: 'Västra Götaland' },
-    // ── NTM (alla använder /rss/nyheter) ─────────────────────────
+    // ── NTM ──────────────────────────────────────────────────────
     { name: 'NT',                   url: 'https://www.nt.se/rss/nyheter',                              region: 'Östergötland' },
     { name: 'Corren',               url: 'https://www.corren.se/rss/nyheter',                          region: 'Östergötland' },
     { name: 'MVT',                  url: 'https://www.mvt.se/rss/nyheter',                             region: 'Östergötland' },
@@ -61,17 +66,17 @@ const SOURCES = {
     { name: 'SVT Skåne',            url: 'https://www.svt.se/nyheter/lokalt/skane/rss.xml',           region: 'Skåne' },
     { name: 'SVT Göteborg',         url: 'https://www.svt.se/nyheter/lokalt/vast/rss.xml',            region: 'Västra Götaland' },
     { name: 'SVT Östergötland',     url: 'https://www.svt.se/nyheter/lokalt/ost/rss.xml',             region: 'Östergötland' },
+    { name: 'SVT Gotland',          url: 'https://www.svt.se/nyheter/lokalt/ost/rss.xml',             region: 'Gotland' },
     { name: 'SVT Dalarna',          url: 'https://www.svt.se/nyheter/lokalt/dalarna/rss.xml',         region: 'Dalarna' },
     { name: 'SVT Norrbotten',       url: 'https://www.svt.se/nyheter/lokalt/norrbotten/rss.xml',      region: 'Norrbotten' },
     { name: 'SVT Västernorrland',   url: 'https://www.svt.se/nyheter/lokalt/vasternorrland/rss.xml',  region: 'Västernorrland' },
     { name: 'SVT Värmland',         url: 'https://www.svt.se/nyheter/lokalt/varmland/rss.xml',        region: 'Värmland' },
     { name: 'SVT Örebro',           url: 'https://www.svt.se/nyheter/lokalt/orebro/rss.xml',          region: 'Örebro' },
-    { name: 'SVT Uppsala',          url: 'https://www.svt.se/nyheter/lokalt/uppland/rss.xml',         region: 'Uppsala' },
+    { name: 'SVT Uppsala',          url: 'https://www.svt.se/nyheter/lokalt/uppsala/rss.xml',         region: 'Uppsala' },
     { name: 'SVT Sörmland',         url: 'https://www.svt.se/nyheter/lokalt/sormland/rss.xml',        region: 'Södermanland' },
     { name: 'SVT Halland',          url: 'https://www.svt.se/nyheter/lokalt/halland/rss.xml',         region: 'Halland' },
     { name: 'SVT Blekinge',         url: 'https://www.svt.se/nyheter/lokalt/blekinge/rss.xml',        region: 'Blekinge' },
     { name: 'SVT Småland',          url: 'https://www.svt.se/nyheter/lokalt/smaland/rss.xml',         region: 'Kronoberg' },
-    { name: 'SVT Gotland',          url: 'https://www.svt.se/nyheter/lokalt/gotland/rss.xml',         region: 'Gotland' },
     { name: 'SVT Gävleborg',        url: 'https://www.svt.se/nyheter/lokalt/gavleborg/rss.xml',       region: 'Gävleborg' },
     { name: 'SVT Jämtland',         url: 'https://www.svt.se/nyheter/lokalt/jamtland/rss.xml',        region: 'Jämtland' },
     { name: 'SVT Jönköping',        url: 'https://www.svt.se/nyheter/lokalt/jonkoping/rss.xml',       region: 'Jönköping' },
