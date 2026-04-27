@@ -44,9 +44,12 @@ async function boost(keyword) {
   );
 }
 
+// Extraherar de första 4 orden ur en titel som grupperingsnyckel
+// Exempel: "Misstänkte galaskytten åtalas för mordförsök" -> "misstänkte galaskytten åtalas för"
 async function get({ category, region } = {}) {
   const conditions = [`fetched_at > NOW() - INTERVAL '24 hours'`];
   const params = [];
+
   if (region) {
     params.push(region);
     conditions.push(`region = $${params.length}`);
@@ -54,15 +57,57 @@ async function get({ category, region } = {}) {
     params.push(category);
     conditions.push(`category = $${params.length}`);
   }
+
+  // Hämta alla artiklar inom filtret
   const { rows } = await pool.query(`
     SELECT title, url, source, category, region, ingress, published_at, score
     FROM articles
     WHERE ${conditions.join(' AND ')}
     ORDER BY score DESC, published_at DESC
-    LIMIT 60
+    LIMIT 300
   `, params);
-  console.log(`get() returnerade ${rows.length} artiklar`);
-  return rows;
+
+  // Gruppera liknande rubriker baserat på de första 5 orden
+  const groups = [];
+  const seen = new Map();
+
+  for (const row of rows) {
+    const key = row.title
+      .toLowerCase()
+      .replace(/[^a-zåäö\s]/g, '')
+      .split(/\s+/)
+      .slice(0, 5)
+      .join(' ');
+
+    if (seen.has(key)) {
+      // Lägg till källa i befintlig grupp
+      const group = seen.get(key);
+      if (group.sources.length < 6) {
+        group.sources.push({ name: row.source, url: row.url });
+      }
+      group.score += row.score;
+    } else {
+      // Ny grupp
+      const group = {
+        title: row.title,
+        url: row.url,
+        source: row.source,
+        sources: [{ name: row.source, url: row.url }],
+        category: row.category,
+        region: row.region,
+        ingress: row.ingress,
+        published_at: row.published_at,
+        score: row.score
+      };
+      seen.set(key, group);
+      groups.push(group);
+    }
+  }
+
+  // Sortera efter score och returnera top 60
+  return groups
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 60);
 }
 
 async function lastFetched() {
