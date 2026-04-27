@@ -13,128 +13,121 @@
   <script type="application/ld+json">
   {"@context":"https://schema.org","@type":"WebSite","name":"NyhetsHub","url":"https://nyhetshub.se","description":"Aggregerad svensk nyhetstjänst","potentialAction":{"@type":"SearchAction","target":"https://nyhetshub.se/?q={search_term_string}","query-input":"required name=search_term_string"}}
   </script>
-  <!-- Google AdSense – ersätt ca-pub-XXXX med ditt eget ID när du fått det -->
-  <!-- <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXX" crossorigin="anonymous"></script> -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --red: #e63946;
-      --dark: #0d1117;
-      --dark2: #161b22;
-      --border: #30363d;
-      --text: #e6edf3;
-      --muted: #8b949e;
-      --bg: #0d1117;
-      --card: #161b22;
+      --red: #ff2d4a;
+      --dark: #0a0a0a;
+      --card: #111111;
+      --border: #222;
+      --text: #f0f0f0;
+      --muted: #666;
+      --hover: #1a1a1a;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    body { font-family:'Inter',sans-serif; background:var(--dark); color:var(--text); min-height:100vh; }
 
     /* Header */
-    header { background:var(--dark2); border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; }
-    .header-inner { max-width:1280px; margin:0 auto; display:flex; align-items:center; gap:16px; height:56px; }
-    .logo { font-size:1.3rem; font-weight:800; letter-spacing:-0.5px; white-space:nowrap; }
-    .logo span { color:var(--red); }
-    .header-right { margin-left:auto; display:flex; align-items:center; gap:10px; }
-    .lang-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:0.8rem; transition:all 0.15s; }
-    .lang-btn:hover { border-color:var(--red); color:var(--text); }
+    header { border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; background:rgba(10,10,10,0.95); backdrop-filter:blur(12px); }
+    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:54px; gap:16px; }
+    .logo { font-family:'Syne',sans-serif; font-size:1.35rem; font-weight:800; letter-spacing:-1px; }
+    .logo em { color:var(--red); font-style:normal; }
+    .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
+    .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
+    .pill-btn:hover, .pill-btn.active { border-color:var(--red); color:var(--text); }
 
-    /* AdSense leaderboard */
-    .ad-top { background:var(--dark2); border-bottom:1px solid var(--border); padding:8px; text-align:center; min-height:60px; display:flex; align-items:center; justify-content:center; }
-    .ad-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; border:1px dashed var(--border); padding:16px 40px; border-radius:4px; }
+    /* Ad top */
+    .ad-top { border-bottom:1px solid var(--border); padding:8px; text-align:center; min-height:58px; display:flex; align-items:center; justify-content:center; }
+    .ad-label { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; border:1px dashed var(--border); padding:14px 40px; border-radius:4px; }
 
-    /* Mode toggle (Nationellt / Regionalt) */
-    .mode-bar { background:var(--dark2); border-bottom:1px solid var(--border); padding:0 24px; }
-    .mode-inner { max-width:1280px; margin:0 auto; display:flex; gap:0; }
-    .mode-btn { background:none; border:none; color:var(--muted); padding:14px 20px; cursor:pointer; font-size:0.9rem; font-weight:600; border-bottom:3px solid transparent; transition:all 0.15s; }
+    /* Mode tabs */
+    .mode-bar { border-bottom:1px solid var(--border); padding:0 24px; background:var(--dark); }
+    .mode-inner { max-width:1200px; margin:0 auto; display:flex; }
+    .mode-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:13px 18px; cursor:pointer; font-size:0.88rem; font-weight:600; font-family:'Syne',sans-serif; transition:all 0.15s; }
     .mode-btn.active { color:var(--red); border-bottom-color:var(--red); }
 
-    /* Kategori / region-nav */
-    nav { background:var(--dark2); border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; }
+    /* Category nav */
+    nav { border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; background:var(--dark); }
     nav::-webkit-scrollbar { display:none; }
-    .nav-inner { max-width:1280px; margin:0 auto; padding:0 24px; display:flex; gap:2px; }
-    .cat-btn { background:none; border:none; color:var(--muted); padding:10px 14px; cursor:pointer; font-size:0.82rem; border-radius:6px; transition:all 0.15s; white-space:nowrap; margin:4px 0; }
-    .cat-btn:hover { color:var(--text); background:rgba(255,255,255,0.05); }
-    .cat-btn.active { color:var(--red); background:rgba(230,57,70,0.1); font-weight:600; }
+    .nav-inner { max-width:1200px; margin:0 auto; padding:6px 24px; display:flex; gap:4px; }
+    .cat-btn { background:none; border:1px solid transparent; color:var(--muted); padding:6px 14px; cursor:pointer; font-size:0.8rem; border-radius:20px; transition:all 0.15s; font-family:'Inter',sans-serif; white-space:nowrap; }
+    .cat-btn:hover { color:var(--text); border-color:var(--border); }
+    .cat-btn.active { color:var(--red); border-color:var(--red); background:rgba(255,45,74,0.08); }
 
     /* Layout */
-    .layout { max-width:1280px; margin:24px auto; padding:0 24px; display:grid; grid-template-columns:1fr 300px; gap:24px; }
-    @media(max-width:900px){ .layout{grid-template-columns:1fr; padding:0 16px;} .sidebar{display:none;} }
+    .layout { max-width:1200px; margin:20px auto; padding:0 24px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
+    @media(max-width:860px){ .layout{grid-template-columns:1fr;padding:0 16px;} .sidebar{display:none;} }
+
+    /* Status */
+    .status-bar { font-size:0.72rem; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
+    .live-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
     /* Grid */
-    #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; align-content:start; }
+    #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; align-content:start; }
 
-    /* Kort */
-    .card { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px; display:flex; flex-direction:column; gap:8px; transition:border-color 0.15s; }
-    .card:hover { border-color:#555; }
-    .card-meta { display:flex; align-items:center; gap:6px; }
-    .source { font-size:0.7rem; font-weight:700; color:var(--red); text-transform:uppercase; letter-spacing:0.5px; }
-    .badge { margin-left:auto; font-size:0.65rem; background:rgba(255,255,255,0.06); color:var(--muted); padding:2px 7px; border-radius:10px; }
-    .card a { color:var(--text); text-decoration:none; font-size:0.9rem; font-weight:500; line-height:1.45; }
+    /* Card */
+    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:9px; transition:background 0.15s,border-color 0.15s; }
+    .card:hover { background:var(--hover); border-color:#333; }
+    .card-top { display:flex; align-items:center; gap:6px; }
+    .source { font-size:0.68rem; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.8px; }
+    .badge { margin-left:auto; font-size:0.63rem; color:var(--muted); background:rgba(255,255,255,0.04); padding:2px 7px; border-radius:10px; border:1px solid var(--border); }
+    .card a { color:var(--text); text-decoration:none; font-size:0.88rem; font-weight:500; line-height:1.5; display:block; }
     .card a:hover { color:#fff; }
-    .card-time { font-size:0.72rem; color:var(--muted); }
-
-    /* Ad in-feed */
-    .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:8px; min-height:100px; display:flex; align-items:center; justify-content:center; }
+    .card-time { font-size:0.68rem; color:var(--muted); }
+    .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:6px; min-height:90px; display:flex; align-items:center; justify-content:center; }
 
     /* Sidebar */
-    .sidebar { display:flex; flex-direction:column; gap:16px; }
-    .widget { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; }
-    .widget-title { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin-bottom:12px; }
-    .trend-item { display:flex; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
-    .trend-item:last-child { border:none; }
-    .trend-num { font-size:1rem; font-weight:800; color:var(--border); min-width:20px; }
-    .trend-item a { font-size:0.82rem; color:var(--text); text-decoration:none; line-height:1.3; }
+    .sidebar { display:flex; flex-direction:column; gap:14px; }
+    .widget { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
+    .widget-title { font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:12px; }
+    .trend-item { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
+    .trend-item:last-child { border:none; padding-bottom:0; }
+    .trend-num { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:800; color:var(--border); min-width:18px; line-height:1.5; }
+    .trend-item a { font-size:0.8rem; color:var(--text); text-decoration:none; line-height:1.4; }
     .trend-item a:hover { color:var(--red); }
 
     /* States */
-    .state { grid-column:1/-1; text-align:center; padding:60px 20px; color:var(--muted); }
-    .spinner { width:28px; height:28px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 12px; }
+    .state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--muted); }
+    .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 10px; }
     @keyframes spin { to{transform:rotate(360deg)} }
 
-    /* Status-bar */
-    .status { font-size:0.72rem; color:var(--muted); margin-bottom:12px; }
-    .dot-live { display:inline-block; width:6px; height:6px; background:#3fb950; border-radius:50%; margin-right:4px; }
-
-    footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.78rem; color:var(--muted); margin-top:20px; }
+    footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
   </style>
 </head>
 <body>
 
 <header>
   <div class="header-inner">
-    <div class="logo">Nyhets<span>Hub</span></div>
+    <div class="logo">Nyhets<em>Hub</em></div>
     <div class="header-right">
-      <button class="lang-btn" onclick="toggleLang()" id="lang-btn">EN</button>
+      <button class="pill-btn" onclick="toggleLang()" id="lang-btn">EN</button>
     </div>
   </div>
 </header>
 
-<!-- AdSense: Leaderboard 728x90 -->
 <div class="ad-top">
-  <!-- <ins class="adsbygoogle" style="display:inline-block;width:728px;height:90px" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX"></ins> -->
+  <!-- AdSense 728x90: ersätt när du har ca-pub-ID -->
   <div class="ad-label">Annons</div>
 </div>
 
-<!-- Nationellt / Regionalt -->
 <div class="mode-bar">
   <div class="mode-inner">
-    <button class="mode-btn active" onclick="setMode('national', this)" id="t-national">🇸🇪 Nationellt</button>
-    <button class="mode-btn" onclick="setMode('regional', this)" id="t-regional">📍 Regionalt</button>
+    <button class="mode-btn active" id="btn-national" onclick="setMode('national',this)">🇸🇪 Nationellt</button>
+    <button class="mode-btn" id="btn-regional" onclick="setMode('regional',this)">📍 Regionalt</button>
   </div>
 </div>
 
-<!-- Kategori- eller regionflikar -->
 <nav><div class="nav-inner" id="tab-nav"></div></nav>
 
 <div class="layout">
   <main>
-    <div class="status" id="status"></div>
-    <div id="news-grid"><div class="state"><div class="spinner"></div><div>Hämtar nyheter...</div></div></div>
+    <div class="status-bar" id="status-bar"></div>
+    <div id="news-grid"><div class="state"><div class="spinner"></div></div></div>
   </main>
   <aside class="sidebar">
-    <!-- AdSense: Rectangle 300x250 -->
-    <div class="widget" style="min-height:250px;display:flex;align-items:center;justify-content:center;">
-      <!-- <ins class="adsbygoogle" style="display:block;width:300px;height:250px" data-ad-client="ca-pub-XXXX" data-ad-slot="XXXX"></ins> -->
+    <div class="widget" style="min-height:260px;display:flex;align-items:center;justify-content:center;">
       <div class="ad-label">Annons 300×250</div>
     </div>
     <div class="widget">
@@ -144,23 +137,20 @@
   </aside>
 </div>
 
-<footer>
-  <span id="t-footer">© 2025 NyhetsHub – nyheter aggregerade från svenska medier</span>
-</footer>
+<footer>© 2025 NyhetsHub – nyheter aggregerade från svenska medier</footer>
 
 <script>
 const CATS = [
-  { id:'alla',       sv:'🏠 Alla',        en:'🏠 All'       },
-  { id:'nyheter',    sv:'📰 Nyheter',     en:'📰 News'      },
-  { id:'politik',    sv:'🏛 Politik',     en:'🏛 Politics'  },
-  { id:'naringsliv', sv:'📈 Näringsliv',  en:'📈 Business'  },
-  { id:'sport',      sv:'⚽ Sport',       en:'⚽ Sports'     },
-  { id:'tech',       sv:'💻 Tech',        en:'💻 Tech'      },
-  { id:'kultur',     sv:'🎭 Kultur',      en:'🎭 Culture'   },
-  { id:'utrikes',    sv:'🌍 Utrikes',     en:'🌍 World'     },
+  {id:'alla',sv:'Alla',en:'All'},
+  {id:'nyheter',sv:'Nyheter',en:'News'},
+  {id:'politik',sv:'Politik',en:'Politics'},
+  {id:'naringsliv',sv:'Näringsliv',en:'Business'},
+  {id:'sport',sv:'Sport',en:'Sports'},
+  {id:'tech',sv:'Tech',en:'Tech'},
+  {id:'kultur',sv:'Kultur',en:'Culture'},
+  {id:'utrikes',sv:'Utrikes',en:'World'},
 ];
-
-const LABELS = { nyheter:'Nyheter', sport:'Sport', naringsliv:'Näringsliv', kultur:'Kultur', tech:'Tech', politik:'Politik', utrikes:'Utrikes' };
+const CAT_LABELS = {nyheter:'Nyheter',sport:'Sport',naringsliv:'Näringsliv',kultur:'Kultur',tech:'Tech',politik:'Politik',utrikes:'Utrikes'};
 
 let mode = 'national';
 let lang = 'sv';
@@ -168,8 +158,10 @@ let current = 'alla';
 let regions = [];
 
 async function init() {
-  const res = await fetch('/api/regions');
-  regions = await res.json();
+  try {
+    const res = await fetch('/api/regions');
+    regions = await res.json();
+  } catch(e) { regions = []; }
   renderTabs();
   load();
 }
@@ -178,7 +170,7 @@ function setMode(m, el) {
   mode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  current = m === 'national' ? 'alla' : regions[0];
+  current = m === 'national' ? 'alla' : (regions[0] || '');
   renderTabs();
   load();
 }
@@ -187,17 +179,17 @@ function renderTabs() {
   const nav = document.getElementById('tab-nav');
   if (mode === 'national') {
     nav.innerHTML = CATS.map(c =>
-      `<button class="cat-btn${c.id===current?' active':''}" onclick="select('${c.id}',this)">${lang==='sv'?c.sv:c.en}</button>`
+      `<button class="cat-btn${c.id===current?' active':''}" onclick="selectTab('${c.id}',this)">${lang==='sv'?c.sv:c.en}</button>`
     ).join('');
   } else {
     nav.innerHTML = regions.map(r =>
-      `<button class="cat-btn${r===current?' active':''}" onclick="select('${r}',this)">${r}</button>`
+      `<button class="cat-btn${r===current?' active':''}" onclick="selectTab('${encodeURIComponent(r)}',this)">${r}</button>`
     ).join('');
   }
 }
 
-function select(val, el) {
-  current = val;
+function selectTab(val, el) {
+  current = decodeURIComponent(val);
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   load();
@@ -206,30 +198,64 @@ function select(val, el) {
 async function load() {
   document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
   try {
-    const q = mode === 'national'
+    const url = mode === 'national'
       ? `/api/news?category=${current}`
       : `/api/news?region=${encodeURIComponent(current)}`;
-    const res = await fetch(q);
+    const res = await fetch(url);
     const articles = await res.json();
-    render(articles);
+    renderGrid(articles);
     renderTrending(articles.slice(0,7));
-    document.getElementById('status').innerHTML =
-      `<span class="dot-live"></span>${articles.length} nyheter – uppdateras automatiskt var 30:e minut`;
+    document.getElementById('status-bar').innerHTML =
+      `<span class="live-dot"></span>${articles.length} nyheter`;
   } catch(e) {
     document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
   }
 }
 
-function render(articles) {
+function renderGrid(articles) {
   if (!articles.length) {
     document.getElementById('news-grid').innerHTML = '<div class="state">Inga nyheter hittades.</div>';
     return;
   }
-  document.getElementById('news-grid').innerHTML = articles.map((a,i) => {
+  document.getElementById('news-grid').innerHTML = articles.map((a, i) => {
     const time = a.published_at
       ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : '';
+    const label = a.region || CAT_LABELS[a.category] || a.category;
     const ad = (i > 0 && i % 9 === 0)
-      ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>`
-      : '';
-    return ad + `<article cl
+      ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
+    return ad + `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
+      <div class="card-top">
+        <span class="source" itemprop="publisher">${a.source}</span>
+        <span class="badge">${label}</span>
+      </div>
+      <a href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url">${a.title}</a>
+      <div class="card-time">${time}</div>
+    </article>`;
+  }).join('');
+}
+
+function renderTrending(articles) {
+  document.getElementById('trending').innerHTML = articles.map((a,i) =>
+    `<div class="trend-item">
+      <span class="trend-num">${i+1}</span>
+      <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
+    </div>`
+  ).join('');
+}
+
+function toggleLang() {
+  lang = lang === 'sv' ? 'en' : 'sv';
+  document.getElementById('lang-btn').textContent = lang === 'sv' ? 'EN' : 'SV';
+  document.querySelector('html').lang = lang;
+  document.getElementById('btn-national').textContent = lang === 'sv' ? '🇸🇪 Nationellt' : '🇸🇪 National';
+  document.getElementById('btn-regional').textContent = lang === 'sv' ? '📍 Regionalt' : '📍 Regional';
+  document.getElementById('t-trending').textContent = lang === 'sv' ? '🔥 Trending' : '🔥 Trending';
+  renderTabs();
+}
+
+init();
+setInterval(load, 30 * 60 * 1000);
+</script>
+</body>
+</html>
