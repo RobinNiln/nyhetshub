@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NyhetsHub – Svenska nyheter samlat</title>
+  <title>Skime – Vi sweper nyhetsinternet åt dig</title>
   <meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och 40+ medier – nationellt och regionalt.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
   <link rel="canonical" href="https://nyhetshub.se/">
@@ -12,7 +12,7 @@
   <link rel="alternate" hreflang="x-default" href="https://nyhetshub.se/">
 
   <!-- Open Graph -->
-  <meta property="og:title" content="NyhetsHub – Svenska nyheter samlat">
+  <meta property="og:title" content="Skime – Vi sweper nyhetsinternet åt dig">
   <meta property="og:description" content="Nyheter från alla stora svenska medier, samlat och rankat i realtid.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://nyhetshub.se/">
@@ -20,7 +20,7 @@
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="NyhetsHub – Svenska nyheter">
+  <meta name="twitter:title" content="Skime – Svenska nyheter">
   <meta name="twitter:description" content="Nyheter från alla stora svenska medier, samlat och rankat i realtid.">
 
   <!-- Schema.org WebSite (ersätts dynamiskt av server vid behov) -->
@@ -28,8 +28,8 @@
   {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "NyhetsHub",
-    "url": "https://nyhetshub.se",
+    "name": "Skime",
+    "url": "https://skime.se",
     "description": "Aggregerad svensk nyhetstjänst – nyheter från SVT, DN, Aftonbladet och 40+ medier",
     "inLanguage": ["sv", "en"],
     "potentialAction": {
@@ -47,7 +47,7 @@
 
   <style>
     :root {
-      --red: #e8001c;
+      --red: #2563eb;
       --card: #ffffff;
       --border: #e5e5e5;
       --text: #111111;
@@ -73,7 +73,7 @@
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.2s,color 0.2s; }
     header { border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; background:var(--header-bg); backdrop-filter:blur(12px); }
     .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:54px; gap:16px; }
-    .logo { font-family:'Syne',sans-serif; font-size:1.35rem; font-weight:800; letter-spacing:-1px; }
+    .logo img { filter: none; } [data-theme="dark"] .logo img { filter: invert(1); } .logo { font-family:'Syne',sans-serif; font-size:1.35rem; font-weight:800; letter-spacing:-1px; }
     .logo em { color:var(--red); font-style:normal; }
     .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
     .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
@@ -89,7 +89,7 @@
     .nav-inner { max-width:1200px; margin:0 auto; padding:6px 24px; display:flex; gap:4px; }
     .cat-btn { background:none; border:1px solid transparent; color:var(--muted); padding:6px 14px; cursor:pointer; font-size:0.8rem; border-radius:20px; transition:all 0.15s; font-family:'Inter',sans-serif; white-space:nowrap; }
     .cat-btn:hover { color:var(--text); border-color:var(--border); }
-    .cat-btn.active { color:var(--red); border-color:var(--red); background:rgba(232,0,28,0.06); }
+    .cat-btn.active { color:var(--red); border-color:var(--red); background:rgba(37,99,235,0.06); }
     .layout { max-width:1200px; margin:20px auto; padding:0 24px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
     @media(max-width:860px){ .layout{grid-template-columns:1fr;padding:0 16px;} .sidebar{display:none;} }
     .status-bar { font-size:0.72rem; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
@@ -105,8 +105,8 @@
     .card-ingress { font-size:0.8rem; color:var(--ingress); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .card-time { font-size:0.68rem; color:var(--muted); }
     .sources-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
-    .source-link { font-size:0.68rem; font-weight:600; color:var(--red); text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border:1px solid rgba(232,0,28,0.2); border-radius:10px; transition:all 0.15s; }
-    .source-link:hover { background:rgba(232,0,28,0.08); border-color:var(--red); }
+    .source-link { font-size:0.68rem; font-weight:600; color:var(--red); text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border:1px solid rgba(37,99,235,0.2); border-radius:10px; transition:all 0.15s; }
+    .source-link:hover { background:rgba(37,99,235,0.08); border-color:var(--red); }
     .source-count { font-size:0.68rem; color:var(--muted); padding:2px 7px; border:1px solid var(--border); border-radius:10px; }
     .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:6px; min-height:90px; display:flex; align-items:center; justify-content:center; }
     .sidebar { display:flex; flex-direction:column; gap:14px; }
@@ -128,7 +128,7 @@
 <body>
 <header>
   <div class="header-inner">
-    <div class="logo"><a href="/" style="text-decoration:none;color:inherit">Nyhets<em>Hub</em></a></div>
+    <div class="logo"><a href="/"><img src="/logo1.png" alt="Skime" style="height:36px;width:auto;display:block"></a></div>
     <div class="header-right">
       <button class="pill-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Växla mörkt läge">🌙</button>
       <button class="pill-btn" onclick="toggleLang()" id="lang-btn" aria-label="Byt språk">EN</button>
@@ -166,7 +166,7 @@
 </div>
 
 <footer>
-  <p>© 2025 NyhetsHub – nyheter aggregerade från svenska medier</p>
+  <p>© 2025 Skime – nyheter aggregerade från svenska medier</p>
   <p style="margin-top:6px">
     <a href="/?category=nyheter">Nyheter</a> ·
     <a href="/?category=sport">Sport</a> ·
@@ -255,7 +255,7 @@ async function load() {
       `<span class="live-dot"></span>${articles.length} nyheter`;
     // Uppdatera page title dynamiskt
     const label = mode === 'regional' ? current : (CAT_LABELS[current] || 'Alla');
-    document.title = `${label} – NyhetsHub`;
+    document.title = `${label} – Skime`;
   } catch(e) {
     document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
   }
