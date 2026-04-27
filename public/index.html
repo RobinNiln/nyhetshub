@@ -66,15 +66,23 @@
     .live-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:pulse 2s infinite; flex-shrink:0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; align-content:start; }
-    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:9px; transition:background 0.15s,border-color 0.15s; cursor:pointer; }
+
+    /* Kort */
+    .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:9px; transition:background 0.15s,border-color 0.15s; }
     .card:hover { background:var(--hover); border-color:#ccc; }
-    .card-top { display:flex; align-items:center; gap:6px; }
-    .source { font-size:0.68rem; font-weight:600; color:var(--red); text-transform:uppercase; letter-spacing:0.8px; }
-    .badge { margin-left:auto; font-size:0.63rem; color:var(--muted); background:rgba(0,0,0,0.04); padding:2px 7px; border-radius:10px; border:1px solid var(--border); }
-    .card a { color:var(--text); text-decoration:none; font-size:0.88rem; font-weight:500; line-height:1.5; display:block; }
-    .card a:hover { color:var(--red); }
+    .card-top { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+    .badge { margin-left:auto; font-size:0.63rem; color:var(--muted); background:rgba(0,0,0,0.04); padding:2px 7px; border-radius:10px; border:1px solid var(--border); white-space:nowrap; }
+    .card-title { color:var(--text); text-decoration:none; font-size:0.88rem; font-weight:600; line-height:1.5; display:block; }
+    .card-title:hover { color:var(--red); }
     .card-ingress { font-size:0.8rem; color:var(--ingress); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .card-time { font-size:0.68rem; color:var(--muted); }
+
+    /* Källor-rad */
+    .sources-row { display:flex; flex-wrap:wrap; gap:5px; margin-top:2px; }
+    .source-link { font-size:0.68rem; font-weight:600; color:var(--red); text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border:1px solid rgba(232,0,28,0.2); border-radius:10px; transition:all 0.15s; }
+    .source-link:hover { background:rgba(232,0,28,0.08); border-color:var(--red); }
+    .source-count { font-size:0.68rem; color:var(--muted); padding:2px 7px; border:1px solid var(--border); border-radius:10px; }
+
     .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:6px; min-height:90px; display:flex; align-items:center; justify-content:center; }
     .sidebar { display:flex; flex-direction:column; gap:14px; }
     .widget { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
@@ -192,7 +200,7 @@ async function load() {
     const res = await fetch(url);
     const articles = await res.json();
     renderGrid(articles);
-    renderTrending(articles.slice(0,7));
+    renderTrending(articles.slice(0, 7));
     document.getElementById('status-bar').innerHTML =
       `<span class="live-dot"></span>${articles.length} nyheter`;
   } catch(e) {
@@ -211,21 +219,32 @@ function renderGrid(articles) {
       : '';
     const label = a.region || CAT_LABELS[a.category] || a.category;
     const ad = (i > 0 && i % 9 === 0) ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
-    const url = a.url;
-    return ad + `<article class="card" onclick="window.open('${url}','_blank','noopener,noreferrer')">
+
+    // Källor-rad: visa upp till 4 klickbara källknappar
+    const sources = a.sources || [{ name: a.source, url: a.url }];
+    const visibleSources = sources.slice(0, 4);
+    const extraCount = sources.length - visibleSources.length;
+    const sourcesHtml = `<div class="sources-row">
+      ${visibleSources.map(s =>
+        `<a class="source-link" href="${s.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${s.name}</a>`
+      ).join('')}
+      ${extraCount > 0 ? `<span class="source-count">+${extraCount} till</span>` : ''}
+    </div>`;
+
+    return ad + `<article class="card">
       <div class="card-top">
-        <span class="source">${a.source}</span>
         <span class="badge">${label}</span>
       </div>
-      <a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${a.title}</a>
+      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
       ${a.ingress ? `<div class="card-ingress">${a.ingress}</div>` : ''}
+      ${sourcesHtml}
       <div class="card-time">${time}</div>
     </article>`;
   }).join('');
 }
 
 function renderTrending(articles) {
-  document.getElementById('trending').innerHTML = articles.map((a,i) =>
+  document.getElementById('trending').innerHTML = articles.map((a, i) =>
     `<div class="trend-item">
       <span class="trend-num">${i+1}</span>
       <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
