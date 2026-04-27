@@ -3,7 +3,7 @@ const { save, boost } = require('./db');
 
 const parser = new Parser({ timeout: 8000 });
 
-export const SOURCES = {
+const SOURCES = {
   national: [
     { name: 'SVT',         url: 'https://www.svt.se/nyheter/rss.xml' },
     { name: 'SR',          url: 'https://api.sr.se/api/rss/program/83?format=1' },
