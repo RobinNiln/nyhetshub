@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { init, get, lastFetched } = require('./db');
-const { fetchAll } = require('./fetcher');
+const { fetchAll, SOURCES } = require('./fetcher');
 
 const app = express();
 app.use(cors());
@@ -13,8 +13,7 @@ let fetching = false;
 async function refreshIfStale() {
   if (fetching) return;
   const last = await lastFetched();
-  const staleMinutes = 30;
-  if (!last || (Date.now() - new Date(last)) > staleMinutes * 60 * 1000) {
+  if (!last || (Date.now() - new Date(last)) > 30 * 60 * 1000) {
     fetching = true;
     fetchAll().finally(() => { fetching = false; });
   }
@@ -31,7 +30,6 @@ app.get('/api/news', async (req, res) => {
 });
 
 app.get('/api/regions', (req, res) => {
-  const { SOURCES } = require('./fetcher');
   const regions = [...new Set(SOURCES.regional.map(s => s.region))].sort();
   res.json(regions);
 });
@@ -40,6 +38,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-init().then(() => {
+init().then(async () => {
+  await fetchAll();
   app.listen(process.env.PORT || 3000, () => console.log('NyhetsHub live'));
 }).catch(console.error);
