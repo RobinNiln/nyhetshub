@@ -1,5 +1,4 @@
 const { Pool } = require('pg');
-
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
@@ -19,10 +18,9 @@ async function init() {
       fetched_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  // Lägg till region-kolumn om den saknas (för befintliga databaser)
-  await pool.query(`
-    ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT
-  `);
+  await pool.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT`);
+  const { rows } = await pool.query(`SELECT COUNT(*) FROM articles`);
+  console.log(`DB: ${rows[0].count} artiklar i databasen`);
 }
 
 async function save(article) {
@@ -43,9 +41,8 @@ async function boost(keyword) {
 }
 
 async function get({ category, region } = {}) {
-  const conditions = [`fetched_at > NOW() - INTERVAL '6 hours'`];
+  const conditions = [`fetched_at > NOW() - INTERVAL '24 hours'`];
   const params = [];
-
   if (region) {
     params.push(region);
     conditions.push(`region = $${params.length}`);
@@ -53,7 +50,6 @@ async function get({ category, region } = {}) {
     params.push(category);
     conditions.push(`category = $${params.length}`);
   }
-
   const { rows } = await pool.query(`
     SELECT title, url, source, category, region, published_at, score
     FROM articles
@@ -61,6 +57,7 @@ async function get({ category, region } = {}) {
     ORDER BY score DESC, published_at DESC
     LIMIT 60
   `, params);
+  console.log(`get() returnerade ${rows.length} artiklar`);
   return rows;
 }
 
