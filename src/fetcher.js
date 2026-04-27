@@ -60,6 +60,7 @@ const SOURCES = {
     { name: 'Piteå-Tidningen',      url: 'https://www.pt.se/feed/',                                   region: 'Norrbotten' },
     { name: 'Gotlands Allehanda',   url: 'https://www.helagotland.se/feed/',                          region: 'Gotland' },
     // SVT lokalt
+    { name: 'SVT Jönköping',        url: 'https://www.svt.se/nyheter/lokalt/jonkoping/rss.xml',       region: 'Jönköping' },
     { name: 'SVT Stockholm',        url: 'https://www.svt.se/nyheter/lokalt/stockholm/rss.xml',       region: 'Stockholm' },
     { name: 'SVT Skåne',            url: 'https://www.svt.se/nyheter/lokalt/skane/rss.xml',           region: 'Skåne' },
     { name: 'SVT Göteborg',         url: 'https://www.svt.se/nyheter/lokalt/vast/rss.xml',            region: 'Västra Götaland' },
