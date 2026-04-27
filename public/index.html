@@ -159,11 +159,14 @@ const MOCK = [
   {title:"Grönt ljus för nya spår mellan Lund och Hässleholm",url:"#",source:"SVT Skåne",category:"nyheter",region:"Skåne",published_at:"2026-04-26T12:07:00Z",score:15,ingress:"Regeringen ger klartecken för dubbelspår på den hårt belastade sträckan i södra Sverige."},
 ];
 
-const MOCK_REGIONS = {
-  'Stockholm': [{title:"Nyheter från dagen 26 april",url:"#",source:"SVT Stockholm",category:"nyheter",region:"Stockholm",published_at:"2026-04-26T18:10:00Z",score:10}],
-  'Skåne': [{title:"Grönt ljus för nya spår mellan Lund och Hässleholm",url:"#",source:"SVT Skåne",category:"nyheter",region:"Skåne",published_at:"2026-04-26T12:07:00Z",score:9}],
-  'Västra Götaland': [{title:"Nyheter från dagen: 26 april",url:"#",source:"SVT Göteborg",category:"nyheter",region:"Västra Götaland",published_at:"2026-04-26T18:03:00Z",score:8}],
-};
+// Alla 21 svenska län
+const ALL_REGIONS = [
+  'Blekinge','Dalarna','Gotland','Gävleborg','Halland',
+  'Jämtland','Jönköping','Kalmar','Kronoberg','Norrbotten',
+  'Skåne','Stockholm','Södermanland','Uppsala','Värmland',
+  'Västerbotten','Västernorrland','Västmanland','Västra Götaland',
+  'Örebro','Östergötland'
+];
 
 const CATS = [
   {id:'alla',sv:'Alla',en:'All'},
@@ -178,7 +181,7 @@ const CATS = [
 const CAT_LABELS = {nyheter:'Nyheter',sport:'Sport',naringsliv:'Näringsliv',kultur:'Kultur',tech:'Tech',politik:'Politik',utrikes:'Utrikes'};
 
 let mode = 'national', lang = 'sv', current = 'alla';
-const regions = Object.keys(MOCK_REGIONS);
+const regions = ALL_REGIONS;
 
 function setMode(m, el) {
   mode = m;
@@ -213,7 +216,9 @@ function load() {
   if (mode === 'national') {
     articles = current === 'alla' ? MOCK : MOCK.filter(a => a.category === current);
   } else {
-    articles = MOCK_REGIONS[current] || [];
+    // I förhandsgranskning: visa mock-artiklar filtrerade på region om de finns
+    articles = MOCK.filter(a => a.region === current);
+    if (!articles.length) articles = MOCK.slice(0, 3).map(a => ({...a, region: current}));
   }
   renderGrid(articles);
   renderTrending(articles.slice(0,7));
