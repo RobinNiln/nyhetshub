@@ -11,63 +11,69 @@
   <meta property="og:description" content="Nyheter från alla stora svenska medier, samlat och rankat.">
   <meta property="og:type" content="website">
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"WebSite","name":"NyhetsHub","url":"https://nyhetshub.se","description":"Aggregerad svensk nyhetstjänst","potentialAction":{"@type":"SearchAction","target":"https://nyhetshub.se/?q={search_term_string}","query-input":"required name=search_term_string"}}
+  {"@context":"https://schema.org","@type":"WebSite","name":"NyhetsHub","url":"https://nyhetshub.se","description":"Aggregerad svensk nyhetstjänst"}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --red: #ff2d4a;
-      --dark: #0a0a0a;
+      --red: #e8001c;
+      --card: #ffffff;
+      --border: #e5e5e5;
+      --text: #111111;
+      --muted: #888;
+      --hover: #fafafa;
+      --bg: #f4f4f4;
+      --header-bg: rgba(255,255,255,0.97);
+      --nav-bg: #fff;
+      --ingress: #555;
+    }
+    [data-theme="dark"] {
       --card: #111111;
       --border: #222;
       --text: #f0f0f0;
       --muted: #666;
       --hover: #1a1a1a;
+      --bg: #0a0a0a;
+      --header-bg: rgba(10,10,10,0.95);
+      --nav-bg: #0a0a0a;
+      --ingress: #999;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:'Inter',sans-serif; background:var(--dark); color:var(--text); min-height:100vh; }
+    body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.2s,color 0.2s; }
 
-    /* Header */
-    header { border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; background:rgba(10,10,10,0.95); backdrop-filter:blur(12px); }
+    header { border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; background:var(--header-bg); backdrop-filter:blur(12px); }
     .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:54px; gap:16px; }
     .logo { font-family:'Syne',sans-serif; font-size:1.35rem; font-weight:800; letter-spacing:-1px; }
     .logo em { color:var(--red); font-style:normal; }
     .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
     .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
-    .pill-btn:hover, .pill-btn.active { border-color:var(--red); color:var(--text); }
+    .pill-btn:hover { border-color:var(--red); color:var(--text); }
 
-    /* Ad top */
-    .ad-top { border-bottom:1px solid var(--border); padding:8px; text-align:center; min-height:58px; display:flex; align-items:center; justify-content:center; }
+    .ad-top { border-bottom:1px solid var(--border); padding:8px; text-align:center; min-height:58px; display:flex; align-items:center; justify-content:center; background:var(--nav-bg); }
     .ad-label { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; border:1px dashed var(--border); padding:14px 40px; border-radius:4px; }
 
-    /* Mode tabs */
-    .mode-bar { border-bottom:1px solid var(--border); padding:0 24px; background:var(--dark); }
+    .mode-bar { border-bottom:1px solid var(--border); padding:0 24px; background:var(--nav-bg); }
     .mode-inner { max-width:1200px; margin:0 auto; display:flex; }
     .mode-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:13px 18px; cursor:pointer; font-size:0.88rem; font-weight:600; font-family:'Syne',sans-serif; transition:all 0.15s; }
     .mode-btn.active { color:var(--red); border-bottom-color:var(--red); }
 
-    /* Category nav */
-    nav { border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; background:var(--dark); }
+    nav { border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; background:var(--nav-bg); }
     nav::-webkit-scrollbar { display:none; }
     .nav-inner { max-width:1200px; margin:0 auto; padding:6px 24px; display:flex; gap:4px; }
     .cat-btn { background:none; border:1px solid transparent; color:var(--muted); padding:6px 14px; cursor:pointer; font-size:0.8rem; border-radius:20px; transition:all 0.15s; font-family:'Inter',sans-serif; white-space:nowrap; }
     .cat-btn:hover { color:var(--text); border-color:var(--border); }
     .cat-btn.active { color:var(--red); border-color:var(--red); background:rgba(255,45,74,0.08); }
 
-    /* Layout */
     .layout { max-width:1200px; margin:20px auto; padding:0 24px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
     @media(max-width:860px){ .layout{grid-template-columns:1fr;padding:0 16px;} .sidebar{display:none;} }
 
-    /* Status */
     .status-bar { font-size:0.72rem; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
     .live-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:pulse 2s infinite; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-    /* Grid */
     #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; align-content:start; }
 
-    /* Card */
     .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:9px; transition:background 0.15s,border-color 0.15s; }
     .card:hover { background:var(--hover); border-color:#333; }
     .card-top { display:flex; align-items:center; gap:6px; }
@@ -76,9 +82,9 @@
     .card a { color:var(--text); text-decoration:none; font-size:0.88rem; font-weight:500; line-height:1.5; display:block; }
     .card a:hover { color:#fff; }
     .card-time { font-size:0.68rem; color:var(--muted); }
+    .card-ingress { font-size:0.8rem; color:var(--ingress); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:6px; min-height:90px; display:flex; align-items:center; justify-content:center; }
 
-    /* Sidebar */
     .sidebar { display:flex; flex-direction:column; gap:14px; }
     .widget { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
     .widget-title { font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:12px; }
@@ -88,7 +94,6 @@
     .trend-item a { font-size:0.8rem; color:var(--text); text-decoration:none; line-height:1.4; }
     .trend-item a:hover { color:var(--red); }
 
-    /* States */
     .state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--muted); }
     .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 10px; }
     @keyframes spin { to{transform:rotate(360deg)} }
@@ -102,14 +107,14 @@
   <div class="header-inner">
     <div class="logo">Nyhets<em>Hub</em></div>
     <div class="header-right">
+      <button class="pill-btn" onclick="toggleTheme()" id="theme-btn">🌙</button>
       <button class="pill-btn" onclick="toggleLang()" id="lang-btn">EN</button>
     </div>
   </div>
 </header>
 
 <div class="ad-top">
-  <!-- AdSense 728x90: ersätt när du har ca-pub-ID -->
-  <div class="ad-label">Annons</div>
+  <div class="ad-label">Annons 728×90</div>
 </div>
 
 <div class="mode-bar">
@@ -140,6 +145,26 @@
 <footer>© 2025 NyhetsHub – nyheter aggregerade från svenska medier</footer>
 
 <script>
+// Mock-data för förhandsgranskning
+const MOCK = [
+  {title:"Regeringen satsar en miljard på Östlig förbindelse",url:"#",source:"DN",category:"politik",region:null,published_at:"2026-04-27T11:44:00Z",score:45,ingress:"Infrastruktursatsningen ska förbättra trafiken i Stockholmsregionen och beräknas stå klar 2035."},
+  {title:"Svagt upp på börsen – Telia tappar medan Saab stiger",url:"#",source:"DI",category:"naringsliv",region:null,published_at:"2026-04-27T12:15:00Z",score:40,ingress:"Stockholmsbörsen öppnade försiktigt positivt men handeln präglas av osäkerhet kring globala tullar."},
+  {title:"Polisen kraftsamlar inför valborgskaos",url:"#",source:"DN",category:"nyheter",region:null,published_at:"2026-04-27T09:47:00Z",score:38,ingress:"Fler poliser än normalt sätts in i landets större städer under valborgshelgen."},
+  {title:"SM-guld till Luleå Basket – tionde guldet på damsidan",url:"#",source:"SVT Sport",category:"sport",region:null,published_at:"2026-04-26T17:47:00Z",score:35,ingress:"Luleå vann finalen mot Södertälje med 87–74 och säkrade sitt tionde SM-guld på damsidan."},
+  {title:"Källor: Iran har gett USA nytt förslag",url:"#",source:"DN",category:"utrikes",region:null,published_at:"2026-04-27T08:49:00Z",score:30,ingress:"Förslaget rör Irans kärnteknikprogram och kan bana väg för nya förhandlingar."},
+  {title:"S lägger 400 miljoner på elektrifiering",url:"#",source:"Aftonbladet",category:"politik",region:null,published_at:"2026-04-27T10:36:00Z",score:25,ingress:"Socialdemokraterna vill satsa på laddinfrastruktur och förnybar energi i sin budgetmotion."},
+  {title:"Experten: Räkna med ransonering – bilister tar första smällen",url:"#",source:"DI",category:"naringsliv",region:null,published_at:"2026-04-27T12:41:00Z",score:22,ingress:"Energiexperten varnar för att elbristen kan leda till ransonering redan nästa vinter."},
+  {title:"Johaug vann löpartävling tre månader efter förlossningen",url:"#",source:"SVT",category:"sport",region:null,published_at:"2026-04-27T10:44:00Z",score:20,ingress:"Therese Johaug imponerade stort när hon vann en norsk löpartävling kort efter barnafödandet."},
+  {title:"SVT-dokumentär om Joakim Lundell frias av Granskningsnämnden",url:"#",source:"SR",category:"nyheter",region:null,published_at:"2026-04-27T10:26:00Z",score:18,ingress:"Nämnden bedömde att dokumentären uppfyllde kraven på opartiskhet och saklighet."},
+  {title:"Grönt ljus för nya spår mellan Lund och Hässleholm",url:"#",source:"SVT Skåne",category:"nyheter",region:"Skåne",published_at:"2026-04-26T12:07:00Z",score:15,ingress:"Regeringen ger klartecken för dubbelspår på den hårt belastade sträckan i södra Sverige."},
+];
+
+const MOCK_REGIONS = {
+  'Stockholm': [{title:"Nyheter från dagen 26 april",url:"#",source:"SVT Stockholm",category:"nyheter",region:"Stockholm",published_at:"2026-04-26T18:10:00Z",score:10}],
+  'Skåne': [{title:"Grönt ljus för nya spår mellan Lund och Hässleholm",url:"#",source:"SVT Skåne",category:"nyheter",region:"Skåne",published_at:"2026-04-26T12:07:00Z",score:9}],
+  'Västra Götaland': [{title:"Nyheter från dagen: 26 april",url:"#",source:"SVT Göteborg",category:"nyheter",region:"Västra Götaland",published_at:"2026-04-26T18:03:00Z",score:8}],
+};
+
 const CATS = [
   {id:'alla',sv:'Alla',en:'All'},
   {id:'nyheter',sv:'Nyheter',en:'News'},
@@ -152,27 +177,15 @@ const CATS = [
 ];
 const CAT_LABELS = {nyheter:'Nyheter',sport:'Sport',naringsliv:'Näringsliv',kultur:'Kultur',tech:'Tech',politik:'Politik',utrikes:'Utrikes'};
 
-let mode = 'national';
-let lang = 'sv';
-let current = 'alla';
-let regions = [];
-
-async function init() {
-  try {
-    const res = await fetch('/api/regions');
-    regions = await res.json();
-  } catch(e) { regions = []; }
-  renderTabs();
-  load();
-}
+let mode = 'national', lang = 'sv', current = 'alla';
+const regions = Object.keys(MOCK_REGIONS);
 
 function setMode(m, el) {
   mode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  current = m === 'national' ? 'alla' : (regions[0] || '');
-  renderTabs();
-  load();
+  current = m === 'national' ? 'alla' : regions[0];
+  renderTabs(); load();
 }
 
 function renderTabs() {
@@ -183,33 +196,29 @@ function renderTabs() {
     ).join('');
   } else {
     nav.innerHTML = regions.map(r =>
-      `<button class="cat-btn${r===current?' active':''}" onclick="selectTab('${encodeURIComponent(r)}',this)">${r}</button>`
+      `<button class="cat-btn${r===current?' active':''}" onclick="selectTab('${r}',this)">${r}</button>`
     ).join('');
   }
 }
 
 function selectTab(val, el) {
-  current = decodeURIComponent(val);
+  current = val;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   load();
 }
 
-async function load() {
-  document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
-  try {
-    const url = mode === 'national'
-      ? `/api/news?category=${current}`
-      : `/api/news?region=${encodeURIComponent(current)}`;
-    const res = await fetch(url);
-    const articles = await res.json();
-    renderGrid(articles);
-    renderTrending(articles.slice(0,7));
-    document.getElementById('status-bar').innerHTML =
-      `<span class="live-dot"></span>${articles.length} nyheter`;
-  } catch(e) {
-    document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
+function load() {
+  let articles;
+  if (mode === 'national') {
+    articles = current === 'alla' ? MOCK : MOCK.filter(a => a.category === current);
+  } else {
+    articles = MOCK_REGIONS[current] || [];
   }
+  renderGrid(articles);
+  renderTrending(articles.slice(0,7));
+  document.getElementById('status-bar').innerHTML =
+    `<span class="live-dot"></span>${articles.length} nyheter (förhandsgranskning)`;
 }
 
 function renderGrid(articles) {
@@ -217,19 +226,17 @@ function renderGrid(articles) {
     document.getElementById('news-grid').innerHTML = '<div class="state">Inga nyheter hittades.</div>';
     return;
   }
-  document.getElementById('news-grid').innerHTML = articles.map((a, i) => {
-    const time = a.published_at
-      ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
-      : '';
+  document.getElementById('news-grid').innerHTML = articles.map((a,i) => {
+    const time = new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     const label = a.region || CAT_LABELS[a.category] || a.category;
-    const ad = (i > 0 && i % 9 === 0)
-      ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
-    return ad + `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
+    const ad = (i > 0 && i % 9 === 0) ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
+    return ad + `<article class="card">
       <div class="card-top">
-        <span class="source" itemprop="publisher">${a.source}</span>
+        <span class="source">${a.source}</span>
         <span class="badge">${label}</span>
       </div>
-      <a href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url">${a.title}</a>
+      <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
+      ${a.ingress ? `<div class="card-ingress">${a.ingress}</div>` : ''}
       <div class="card-time">${time}</div>
     </article>`;
   }).join('');
@@ -237,11 +244,15 @@ function renderGrid(articles) {
 
 function renderTrending(articles) {
   document.getElementById('trending').innerHTML = articles.map((a,i) =>
-    `<div class="trend-item">
-      <span class="trend-num">${i+1}</span>
-      <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
-    </div>`
+    `<div class="trend-item"><span class="trend-num">${i+1}</span>
+    <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a></div>`
   ).join('');
+}
+
+function toggleTheme() {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
+  document.getElementById('theme-btn').textContent = dark ? '🌙' : '☀️';
 }
 
 function toggleLang() {
@@ -250,12 +261,10 @@ function toggleLang() {
   document.querySelector('html').lang = lang;
   document.getElementById('btn-national').textContent = lang === 'sv' ? '🇸🇪 Nationellt' : '🇸🇪 National';
   document.getElementById('btn-regional').textContent = lang === 'sv' ? '📍 Regionalt' : '📍 Regional';
-  document.getElementById('t-trending').textContent = lang === 'sv' ? '🔥 Trending' : '🔥 Trending';
   renderTabs();
 }
 
-init();
-setInterval(load, 30 * 60 * 1000);
+renderTabs(); load();
 </script>
 </body>
 </html>
