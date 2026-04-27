@@ -40,5 +40,5 @@ app.get('/', (req, res) => {
 
 init().then(async () => {
   await fetchAll();
-app.listen(process.env.PORT || 3000, '0.0.0.0', () => console.log('NyhetsHub live'));
+app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('NyhetsHub live'));
 }).catch(console.error);
