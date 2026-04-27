@@ -4,7 +4,7 @@ const { save, boost } = require('./db');
 const parser = new Parser({
   timeout: 8000,
   headers: {
-    'User-Agent': 'Mozilla/5.0 (compatible; NyhetsHub/1.0; +https://nyhetshub.se)'
+    'User-Agent': 'Mozilla/5.0 (compatible; Skime/1.0; +https://skime.se)'
   }
 });
 
@@ -34,16 +34,16 @@ const SOURCES = {
     { name: 'DI',          url: 'https://www.di.se/rss' },
   ],
   regional: [
-    // ── Stampen ───────────────────────────────────────────────────
+    // Stampen
     { name: 'GP',                   url: 'https://www.gp.se/rss/nyheter',                              region: 'Västra Götaland' },
     { name: 'Bohuslänningen',       url: 'https://www.bohuslaningen.se/rss/nyheter',                   region: 'Västra Götaland' },
     { name: 'TTELA',                url: 'https://www.ttela.se/rss/nyheter',                           region: 'Västra Götaland' },
-    // ── Bonnier News Local ────────────────────────────────────────
+    // Bonnier News Local
     { name: 'Sydsvenskan',          url: 'https://www.sydsvenskan.se/rss.xml',                         region: 'Skåne' },
     { name: 'HD',                   url: 'https://www.hd.se/rss.xml',                                  region: 'Skåne' },
     { name: 'Kristianstadsbladet',  url: 'https://www.kristianstadsbladet.se/rss.xml',                 region: 'Skåne' },
     { name: 'Borås Tidning',        url: 'https://www.bt.se/rss.xml',                                  region: 'Västra Götaland' },
-    // ── NTM ──────────────────────────────────────────────────────
+    // NTM
     { name: 'NT',                   url: 'https://www.nt.se/rss/nyheter',                              region: 'Östergötland' },
     { name: 'Corren',               url: 'https://www.corren.se/rss/nyheter',                          region: 'Östergötland' },
     { name: 'MVT',                  url: 'https://www.mvt.se/rss/nyheter',                             region: 'Östergötland' },
@@ -61,7 +61,7 @@ const SOURCES = {
     { name: 'NSD',                  url: 'https://www.nsd.se/rss/nyheter',                             region: 'Norrbotten' },
     { name: 'Piteå-Tidningen',      url: 'https://www.pt.se/rss/nyheter',                             region: 'Norrbotten' },
     { name: 'Gotlands Allehanda',   url: 'https://www.helagotland.se/rss/nyheter',                    region: 'Gotland' },
-    // ── SVT lokalt ───────────────────────────────────────────────
+    // SVT lokalt
     { name: 'SVT Stockholm',        url: 'https://www.svt.se/nyheter/lokalt/stockholm/rss.xml',       region: 'Stockholm' },
     { name: 'SVT Skåne',            url: 'https://www.svt.se/nyheter/lokalt/skane/rss.xml',           region: 'Skåne' },
     { name: 'SVT Göteborg',         url: 'https://www.svt.se/nyheter/lokalt/vast/rss.xml',            region: 'Västra Götaland' },
@@ -85,20 +85,119 @@ const SOURCES = {
   ]
 };
 
-const KEYWORDS = {
-  sport:      ['fotboll','hockey','tennis','golf','allsvenskan','nhl','nba','vm','em','match','spelare'],
-  naringsliv: ['börsen','aktier','ekonomi','inflation','ränta','riksbank','företag','förvärv','vinst'],
-  kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen'],
-  tech:       ['ai','tech','app','startup','microsoft','google','apple','cybersäkerhet','hack'],
-  politik:    ['riksdag','regering','minister','statsminister','parti','val','riksdagen','eu','nato'],
-  utrikes:    ['usa','ryssland','kina','ukraina','mellanöstern','fn','internationell','konflikt'],
-};
-
-function categorize(title) {
-  const t = title.toLowerCase();
-  for (const [cat, words] of Object.entries(KEYWORDS)) {
-    if (words.some(w => t.includes(w))) return cat;
+// Kategorier i prioritetsordning – mer specifika nyckelord först
+// Varje kategori har REQUIRED-ord som MÅSTE finnas för att matcha
+const CATEGORIES = [
+  {
+    id: 'sport',
+    required: [
+      'allsvenskan','superettan','premier league','serie a','la liga','bundesliga',
+      'champions league','europa league','nhl','nba','nfl','vm-kval','em-kval',
+      'fotbollsmatch','hockeymatch','tennismatch','golfmatch','basketmatch',
+      'sm-guld','sm-final','sm-semifinal','allsvensk','djurgården','malmö ff',
+      'ifk göteborg','hammarby','aik ','brommapojkarna','häcken','sirius',
+      'elfsborg','kalmar ff','värnamo','mjällby','degerfors','hif','öis',
+      'tre kronor','luleå hockey','frölunda','modo hockey','brynäs','rögle',
+      'skellefteå aik','övergång till','transfer','landslagstruppen',
+      'mål av','assist av','poäng av','rödkort','gult kort','offside',
+      'halvtid','slutresultat','matcher denna','spelade i','vann mot',
+      'johaug','ibrahimovic','eriksson','backstrom','hedman','lundqvist',
+      'korda','mcilroy','scheffler','djokovic','nadal','federer',
+      'marathon','triathlon','simning','friidrott','skidskytte','längdskidor',
+      'skidåkning','backhoppning','konståkning','handboll','innebandy',
+      'volleyboll','bordtennis','badminton','cykling','rodd','kanotsport'
+    ]
+  },
+  {
+    id: 'naringsliv',
+    required: [
+      'börsen','aktiekurs','aktier stiger','aktier faller','stockholmsbörsen',
+      'nasdaq','dow jones','vinstrapport','kvartalsrapport','årsredovisning',
+      'förvärvar','uppköp av','fusion med','börsnotering','ipo ',
+      'inflation','räntebesked','riksbanken höjer','riksbanken sänker',
+      'styrräntan','kpi ','bpi ','bnp-tillväxt','handelsbalans',
+      'vd för','ny vd','avgår som vd','tillträder som vd',
+      'volvo ','ericsson ','h&m ','ikea ','spotify ','klarna ',
+      'saab ','atlas copco','hexagon ','telia ','swedbank ','seb ',
+      'handelsbanken','nordea ','astrazeneca','investor ab',
+      'vinst på','omsättning på','rörelseresultat','ebitda',
+      'varslar','varsel om','permitterar','lönsamhet',
+      'exporterar','importerar','handelskrig','tull på'
+    ]
+  },
+  {
+    id: 'kultur',
+    required: [
+      'nobelpriset','nobelprize','grammisgalan','grammis ','melodifestivalen',
+      'eurovision','kulturpriset','bokmässan','litteraturpriset',
+      'filmfestival','filmpremiär','ny film','ny serie','ny säsong',
+      'netflix-serien','hbo-serien','svt-serien','ny bok av','debuterar med',
+      'konsertturné','spelning i','album ute','singel ute','musikvideo',
+      'musikalartist','ny skiva','ny låt','artist ','sångare ','regissör ',
+      'skådespelare ','premiär på','teaterpremiär','dansföreställning',
+      'utställning på','museum ','konstgalleri','konstpriser',
+      'kulturminister','kulturnämnden','kulturanslag'
+    ]
+  },
+  {
+    id: 'tech',
+    required: [
+      'artificiell intelligens','ai-modell','ai-verktyg','chatgpt','openai',
+      'anthropic','google gemini','microsoft copilot','meta ai',
+      'startup lanserar','techbolag','techföretag','app lanseras','ny app',
+      'mobiltelefon','iphone ','android ','samsung galaxy',
+      'cybersäkerhet','dataintrång','hackers','ransomware','dataskydd',
+      'gdpr-böter','dataskyddsbrott','it-säkerhet','nätattack',
+      'kryptovaluta','bitcoin ','ethereum ','blockchain',
+      'elbilar','tesla ','laddinfrastruktur','självkörande',
+      'rymdfärd','spacex','nasa ','satelliter','rymdteleskop'
+    ]
+  },
+  {
+    id: 'utrikes',
+    required: [
+      'usa ','trump ','biden ','washington dc','vita huset','kongressen',
+      'ryssland ','putin ','kreml ','ukraina ','zelenskyj',
+      'kina ','xi jinping','peking ','taiwan ',
+      'nato ','eu-toppmötet','eu-kommissionen','europaparlamentet',
+      'fn-rådet','fn-mötet','säkerhetsrådet',
+      'mellanöstern','gaza ','israel ','iran ','irak ','syrien ',
+      'nordkorea ','kim jong','seoul ','tokyo ','beijing ',
+      'paris ','berlin ','london ','rom ','madrid ',
+      'statsbesök','utrikesminister','utrikespolitik','diplomatisk',
+      'sanktioner mot','vapenvila','fredsförhandling','kriget i',
+      'konflikt i','attack mot','bombning av','invasion av'
+    ]
+  },
+  {
+    id: 'politik',
+    required: [
+      'riksdagen','riksdagsval','riksdagsledamot','talmannen',
+      'statsminister','statsråd','minister ','departement',
+      'moderaterna','socialdemokraterna','sverigedemokraterna',
+      'centerpartiet','vänsterpartiet','kristdemokraterna',
+      'liberalerna','miljöpartiet','sd ','m ','s ','kd ','c ',
+      'regeringens budget','budgetpropositionen','skattepolitik',
+      'migrationspolitik','kriminalpolitik','skolpolitik',
+      'sjukvårdspolitik','bostadspolitik','klimatpolitik',
+      'kommunval','regionval','kommunfullmäktige','regionstyrelsen',
+      'remissvar','lagstiftning','proposition om','motion om',
+      'omröstning i','votering om','beslut i riksdagen'
+    ]
   }
+];
+
+function categorize(title, sourceName) {
+  const t = title.toLowerCase();
+
+  // Om källan är SVT Sport → alltid sport
+  if (sourceName === 'SVT Sport') return 'sport';
+
+  // Kolla varje kategori i prioritetsordning
+  for (const cat of CATEGORIES) {
+    if (cat.required.some(w => t.includes(w))) return cat.id;
+  }
+
   return 'nyheter';
 }
 
@@ -121,7 +220,7 @@ async function fetchSources(sources) {
           title: item.title.trim(),
           url: item.link,
           source: source.name,
-          category: categorize(item.title),
+          category: categorize(item.title, source.name),
           region: source.region || null,
           ingress: snippet(item),
           published_at: item.pubDate || new Date()
