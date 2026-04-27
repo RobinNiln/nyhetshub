@@ -235,12 +235,13 @@ function renderGrid(articles) {
     const time = new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     const label = a.region || CAT_LABELS[a.category] || a.category;
     const ad = (i > 0 && i % 9 === 0) ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
-    return ad + `<article class="card">
+    const url = a.url && a.url.startsWith('http') ? a.url : '#';
+    return ad + `<article class="card" onclick="if('${url}'!=='#')window.open('${url}','_blank','noopener,noreferrer')" style="cursor:pointer">
       <div class="card-top">
         <span class="source">${a.source}</span>
         <span class="badge">${label}</span>
       </div>
-      <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
+      <a href="${url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${a.title}</a>
       ${a.ingress ? `<div class="card-ingress">${a.ingress}</div>` : ''}
       <div class="card-time">${time}</div>
     </article>`;
