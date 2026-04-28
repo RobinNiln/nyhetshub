@@ -27,7 +27,11 @@ cron.schedule('*/15 * * * *', fetchAll);
 // ── API ───────────────────────────────────────────────────────
 app.get('/api/news', async (req, res) => {
   try {
-    const articles = await get({ category: req.query.category, region: req.query.region });
+    const articles = await get({
+      category: req.query.category,
+      region: req.query.region,
+      sport: req.query.sport
+    });
     res.json(articles);
   } catch (e) {
     res.status(500).json({ error: e.message });
