@@ -20,8 +20,15 @@ async function init() {
       fetched_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  await pool.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT`);
-  await pool.query(`ALTER TABLE articles ADD COLUMN IF NOT EXISTS ingress TEXT`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS article_clicks (
+      id SERIAL PRIMARY KEY,
+      url TEXT NOT NULL,
+      clicked_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_clicks_url ON article_clicks(url)`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_clicks_time ON article_clicks(clicked_at)`);
   const { rows } = await pool.query(`SELECT COUNT(*) FROM articles`);
   console.log(`DB: ${rows[0].count} artiklar i databasen`);
 }
