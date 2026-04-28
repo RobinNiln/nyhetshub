@@ -64,8 +64,8 @@
 
     /* Header */
     header { border-bottom:1px solid var(--border); padding:0 20px; position:sticky; top:0; z-index:100; background:var(--header-bg); backdrop-filter:blur(12px); }
-    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:80px; gap:16px; }
-    .logo img { height:60px; width:auto; display:block; filter:none; }
+    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:100px; gap:16px; }
+    .logo img { height:80px; width:auto; display:block; filter:none; }
     [data-theme="dark"] .logo img { filter:invert(1); }
     .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
     .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
@@ -74,7 +74,7 @@
     /* Mobil: större logga */
     @media(max-width:600px){
       .header-inner { height:68px; }
-      .logo img { height:44px; }
+      .logo img { height:52px; }
     }
 
     /* Mode */
@@ -162,6 +162,11 @@
 
 <nav aria-label="Kategorier"><div class="nav-inner" id="tab-nav"></div></nav>
 
+<!-- Sport undermeny -->
+<div id="sport-subnav" style="display:none; border-bottom:1px solid var(--border); background:var(--nav-bg);">
+  <div class="nav-inner" style="padding-left:24px; gap:2px;"></div>
+</div>
+
 <div class="mobile-trending" id="mobile-trending-box">
   <div class="widget-title">🔥 Trending</div>
   <div id="trending-mobile" role="list"></div>
@@ -202,7 +207,6 @@
 
 <script>
 const CATS = [
-  {id:'alla',sv:'Alla',en:'All'},
   {id:'nyheter',sv:'Nyheter',en:'News'},
   {id:'politik',sv:'Politik',en:'Politics'},
   {id:'naringsliv',sv:'Näringsliv',en:'Business'},
@@ -211,6 +215,20 @@ const CATS = [
   {id:'kultur',sv:'Kultur',en:'Culture'},
   {id:'utrikes',sv:'Utrikes',en:'World'},
 ];
+
+const SPORT_SUBS = [
+  {id:'sport',sv:'Alla sporter',en:'All sports'},
+  {id:'fotboll',sv:'⚽ Fotboll',en:'⚽ Football'},
+  {id:'allsvenskan',sv:'Allsvenskan',en:'Allsvenskan'},
+  {id:'superettan',sv:'Superettan',en:'Superettan'},
+  {id:'damallsvenskan',sv:'Damallsvenskan',en:'Damallsvenskan'},
+  {id:'landslaget_fotboll',sv:'Landslaget',en:'National team'},
+  {id:'hockey',sv:'🏒 Hockey',en:'🏒 Hockey'},
+  {id:'shl',sv:'SHL',en:'SHL'},
+  {id:'hockeyallsvenskan',sv:'Hockeyallsvenskan',en:'Hockeyallsvenskan'},
+  {id:'landslaget_hockey',sv:'Landslaget',en:'National team'},
+];
+
 const CAT_LABELS = {nyheter:'Nyheter',sport:'Sport',naringsliv:'Näringsliv',kultur:'Kultur',tech:'Tech',politik:'Politik',utrikes:'Utrikes'};
 const ALL_REGIONS = [
   'Blekinge','Dalarna','Gotland','Gävleborg','Halland',
@@ -220,14 +238,16 @@ const ALL_REGIONS = [
   'Örebro','Östergötland'
 ];
 
-let mode = 'national', lang = 'sv', current = 'alla';
+let mode = 'national', lang = 'sv', current = 'nyheter', sportSub = null;
 
 function setMode(m, el) {
   mode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  current = m === 'national' ? 'alla' : ALL_REGIONS[0];
+  current = m === 'national' ? 'nyheter' : ALL_REGIONS[0];
+  sportSub = null;
   renderTabs();
+  renderSportSubs();
   load();
 }
 
@@ -235,7 +255,7 @@ function renderTabs() {
   const nav = document.getElementById('tab-nav');
   if (mode === 'national') {
     nav.innerHTML = CATS.map(c =>
-      `<button class="cat-btn${c.id===current?' active':''}" onclick="selectTab('${c.id}',this)">${lang==='sv'?c.sv:c.en}</button>`
+      `<button class="cat-btn${c.id===current&&!sportSub?' active':''}" onclick="selectTab('${c.id}',this)">${lang==='sv'?c.sv:c.en}</button>`
     ).join('');
   } else {
     document.getElementById('btn-regional').classList.add('active');
@@ -246,30 +266,54 @@ function renderTabs() {
   }
 }
 
+function renderSportSubs() {
+  const container = document.getElementById('sport-subnav');
+  if (current === 'sport' && mode === 'national') {
+    container.style.display = 'block';
+    container.querySelector('.nav-inner').innerHTML = SPORT_SUBS.map(s =>
+      `<button class="cat-btn${sportSub===s.id||(!sportSub&&s.id==='sport')?' active':''}" onclick="selectSportSub('${s.id}',this)">${lang==='sv'?s.sv:s.en}</button>`
+    ).join('');
+  } else {
+    container.style.display = 'none';
+  }
+}
+
+function selectSportSub(id, el) {
+  sportSub = id === 'sport' ? null : id;
+  document.querySelectorAll('#sport-subnav .cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  load();
+}
+
 function selectTab(val, el) {
   current = decodeURIComponent(val);
+  sportSub = null;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  const newUrl = mode === 'national'
-    ? (current === 'alla' ? '/' : `/?category=${current}`)
-    : `/?region=${encodeURIComponent(current)}`;
+  const newUrl = mode === 'national' ? `/?category=${current}` : `/?region=${encodeURIComponent(current)}`;
   history.pushState({}, '', newUrl);
+  renderSportSubs();
   load();
 }
 
 async function load() {
   document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
   try {
-    const url = mode === 'national'
-      ? `/api/news?category=${encodeURIComponent(current)}`
-      : `/api/news?region=${encodeURIComponent(current)}`;
+    let url;
+    if (mode === 'regional') {
+      url = `/api/news?region=${encodeURIComponent(current)}`;
+    } else if (sportSub) {
+      url = `/api/news?sport=${encodeURIComponent(sportSub)}`;
+    } else {
+      url = `/api/news?category=${encodeURIComponent(current)}`;
+    }
     const res = await fetch(url);
     const articles = await res.json();
     renderGrid(articles);
     renderTrending(articles.slice(0, 7));
     document.getElementById('status-bar').innerHTML =
       `<span class="live-dot"></span>${articles.length} nyheter`;
-    const label = mode === 'regional' ? current : (CAT_LABELS[current] || 'Alla');
+    const label = mode === 'regional' ? current : (CAT_LABELS[current] || current);
     document.title = `${label} – Skime`;
   } catch(e) {
     document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
@@ -339,6 +383,7 @@ if (savedTheme === 'dark') {
 }
 
 renderTabs();
+renderSportSubs();
 load();
 setInterval(load, 15 * 60 * 1000);
 </script>
