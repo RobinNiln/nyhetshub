@@ -226,11 +226,6 @@ const ALL_REGIONS = [
 
 let mode = 'national', lang = 'sv', current = 'alla';
 
-// Läs URL-parametrar vid start
-const params = new URLSearchParams(window.location.search);
-if (params.get('category')) current = params.get('category');
-if (params.get('region')) { mode = 'regional'; current = params.get('region'); }
-
 function setMode(m, el) {
   mode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
