@@ -64,14 +64,13 @@
 
     /* Header */
     header { border-bottom:1px solid var(--border); padding:0 20px; position:sticky; top:0; z-index:100; background:var(--header-bg); backdrop-filter:blur(12px); }
-    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:100px; gap:16px; }
-    .logo img { height:80px; width:auto; display:block; filter:none; }
+    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:120px; gap:16px; }
+    .logo img { height:100px; width:auto; display:block; filter:none; }
     [data-theme="dark"] .logo img { filter:invert(1); }
     .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
     .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
     .pill-btn:hover { border-color:var(--red); color:var(--text); }
 
-    /* Mobil: större logga */
     @media(max-width:600px){
       .header-inner { height:68px; }
       .logo img { height:52px; }
@@ -181,6 +180,10 @@
     <div class="widget">
       <div class="widget-title" id="t-trending">🔥 Trending</div>
       <div id="trending" role="list"></div>
+    </div>
+    <div class="widget">
+      <div class="widget-title">📈 Mest läst idag</div>
+      <div id="most-read" role="list"></div>
     </div>
   </aside>
 </div>
@@ -342,7 +345,7 @@ function renderGrid(articles) {
     </div>`;
     return `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
       <div class="card-top"><span class="badge">${label}</span></div>
-      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url">${a.title}</a>
+      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url" onclick="trackClick('${a.url}')">${a.title}</a>
       ${a.ingress ? `<div class="card-ingress" itemprop="description">${a.ingress}</div>` : ''}
       ${sourcesHtml}
       <div class="card-time"><time itemprop="datePublished" datetime="${a.published_at}">${time}</time></div>
@@ -383,10 +386,34 @@ if (savedTheme === 'dark') {
   document.getElementById('theme-btn').textContent = '☀️';
 }
 
+function trackClick(url) {
+  fetch('/api/click', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url })
+  }).catch(() => {});
+}
+
+async function loadMostRead() {
+  try {
+    const res = await fetch('/api/most-read');
+    const articles = await res.json();
+    const html = articles.map((a, i) =>
+      `<div class="trend-item" role="listitem">
+        <span class="trend-num">${i+1}</span>
+        <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
+      </div>`
+    ).join('');
+    document.getElementById('most-read').innerHTML = html || '<div style="color:var(--muted);font-size:0.8rem">Ingen data ännu</div>';
+  } catch(e) {}
+}
+
 renderTabs();
 renderSportSubs();
 load();
+loadMostRead();
 setInterval(load, 15 * 60 * 1000);
+setInterval(loadMostRead, 5 * 60 * 1000);
 </script>
 </body>
 </html>
