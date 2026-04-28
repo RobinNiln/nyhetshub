@@ -67,7 +67,7 @@ app.get('/om-oss', (req, res) => {
   <p>SVT, Sveriges Radio, DN, SvD, Aftonbladet, Expressen, DI, Breakit, Sydsvenskan, GP, HD, Borås Tidning, NT, Corren, MVT, Barometern, UNT, Norran, NSD, Norrbottens-Kuriren, Piteå-Tidningen, Eskilstuna-Kuriren, Södermanlands Nyheter, Strengnäs Tidning, Enköpings-Posten, Vimmerby Tidning, Västerviks-Tidningen, Gotlands Allehanda samt SVT:s lokala redaktioner i alla 21 län.</p>
 
   <h2>Kontakt</h2>
-  <p>Frågor eller synpunkter? Hör av dig till <a href="mailto:hej@skime.se">hej@skime.se</a></p>
+  <p>Vi återkommer med kontaktmöjligheter inom kort.</p>
 </body>
 </html>`);
 });
@@ -108,7 +108,7 @@ app.get('/integritetspolicy', (req, res) => {
   <p>Skime länkar till externa webbplatser. Vi ansvarar inte för innehållet eller integritetspolicyn hos dessa sajter.</p>
 
   <h2>Kontakt</h2>
-  <p>Frågor om vår integritetspolicy? Kontakta oss på <a href="mailto:hej@skime.se">hej@skime.se</a></p>
+  <p>Har du frågor om vår integritetspolicy är du välkommen att återkomma.</p>
 </body>
 </html>`);
 });
