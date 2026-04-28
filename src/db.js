@@ -45,13 +45,34 @@ async function boost(keyword) {
   );
 }
 
-async function get({ category, region } = {}) {
+const SPORT_KEYWORDS = {
+  fotboll:           ['fotboll','football'],
+  allsvenskan:       ['allsvenskan'],
+  superettan:        ['superettan'],
+  damallsvenskan:    ['damallsvenskan'],
+  landslaget_fotboll:['svenska fotbollslandslaget','herrlandslaget','landslagstruppen','landslaget i fotboll'],
+  hockey:            ['hockey','ishockey'],
+  shl:               ['shl','swedish hockey league'],
+  hockeyallsvenskan: ['hockeyallsvenskan'],
+  landslaget_hockey: ['tre kronor','hockeylandslaget','landslaget i hockey'],
+};
+
+async function get({ category, region, sport } = {}) {
   const conditions = [`fetched_at > NOW() - INTERVAL '24 hours'`];
   const params = [];
 
   if (region) {
     params.push(region);
     conditions.push(`region = $${params.length}`);
+  } else if (sport && SPORT_KEYWORDS[sport]) {
+    // Filtrera sport-underkategori via title-sökning
+    conditions.push(`category = 'sport'`);
+    const kws = SPORT_KEYWORDS[sport];
+    const kwConditions = kws.map(kw => {
+      params.push(`%${kw}%`);
+      return `title ILIKE $${params.length}`;
+    });
+    conditions.push(`(${kwConditions.join(' OR ')})`);
   } else if (category && category !== 'alla') {
     params.push(category);
     conditions.push(`category = $${params.length}`);
