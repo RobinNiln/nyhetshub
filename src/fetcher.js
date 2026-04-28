@@ -29,11 +29,30 @@ const SKIP_PATTERNS = [
   /glädjebeskedet.*sänder/i,
   /följ.*snacket/i,
   /hockeysnacket/i,
+  // Ledare och opinion – aldrig med för objektivitetens skull
+  /^ledare[:\.\s]/i,
+  /^ledar[:\.\s]/i,
+  /\bledarartikel\b/i,
+  /^krönika[:\.\s]/i,
+  /\bkrönika\b/i,
+  /^kolumn[:\.\s]/i,
+  /^debatt[:\.\s]/i,
+  /^opinion[:\.\s]/i,
+  /^kommentar[:\.\s]/i,
+  /^analys[:\.\s]/i,
+  /^insändare[:\.\s]/i,
   /insändare\./i,
+  /^replik[:\.\s]/i,
+  /^chefredaktör/i,
+  /^chefredaktören/i,
 ];
 
-function shouldSkip(title) {
-  return SKIP_PATTERNS.some(p => p.test(title));
+function shouldSkip(title, url = '') {
+  if (SKIP_PATTERNS.some(p => p.test(title))) return true;
+  // Filtrera ledare/opinion via URL-sökväg
+  const urlLower = url.toLowerCase();
+  const skipPaths = ['/ledare/', '/ledar/', '/kronika/', '/krönika/', '/debatt/', '/opinion/', '/kommentar/', '/insandare/', '/insändare/', '/kolumn/'];
+  return skipPaths.some(p => urlLower.includes(p));
 }
 
 const SOURCES = {
@@ -212,7 +231,7 @@ async function fetchSources(sources) {
       const feed = await parser.parseURL(source.url);
       for (const item of feed.items.slice(0, 15)) {
         if (!item.title || !item.link) continue;
-        if (shouldSkip(item.title)) continue;
+        if (shouldSkip(item.title, item.link)) continue;
         await save({
           title: item.title.trim(),
           url: item.link,
