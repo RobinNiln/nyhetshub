@@ -6,45 +6,35 @@
   <title>Skime – Vi sweper nyhetsinternet åt dig</title>
   <meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och 40+ medier – nationellt och regionalt.">
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-  <link rel="canonical" href="https://nyhetshub.se/">
-  <link rel="alternate" hreflang="sv" href="https://nyhetshub.se/">
-  <link rel="alternate" hreflang="en" href="https://nyhetshub.se/?lang=en">
-  <link rel="alternate" hreflang="x-default" href="https://nyhetshub.se/">
-
-  <!-- Open Graph -->
+  <link rel="canonical" href="https://www.skime.se/">
+  <link rel="alternate" hreflang="sv" href="https://www.skime.se/">
+  <link rel="alternate" hreflang="en" href="https://www.skime.se/?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://www.skime.se/">
   <meta property="og:title" content="Skime – Vi sweper nyhetsinternet åt dig">
   <meta property="og:description" content="Nyheter från alla stora svenska medier, samlat och rankat i realtid.">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://nyhetshub.se/">
+  <meta property="og:url" content="https://www.skime.se/">
   <meta property="og:locale" content="sv_SE">
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Skime – Svenska nyheter">
   <meta name="twitter:description" content="Nyheter från alla stora svenska medier, samlat och rankat i realtid.">
-
-  <!-- Schema.org WebSite (ersätts dynamiskt av server vid behov) -->
   <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Skime",
-    "url": "https://skime.se",
-    "description": "Aggregerad svensk nyhetstjänst – nyheter från SVT, DN, Aftonbladet och 40+ medier",
-    "inLanguage": ["sv", "en"],
-    "potentialAction": {
-      "@type": "SearchAction",
-      "target": "https://nyhetshub.se/?category={search_term_string}",
-      "query-input": "required name=search_term_string"
-    }
-  }
+  {"@context":"https://schema.org","@type":"WebSite","name":"Skime","url":"https://www.skime.se","description":"Aggregerad svensk nyhetstjänst","inLanguage":["sv","en"]}
   </script>
-
-  <!-- Preconnect -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
+  <!-- Google AdSense -->
+  <meta name="google-adsense-account" content="ca-pub-5482392840942272">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5482392840942272" crossorigin="anonymous"></script>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-KSKGKZS2NX"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-KSKGKZS2NX');
+  </script>
   <style>
     :root {
       --red: #2563eb;
@@ -71,40 +61,60 @@
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.2s,color 0.2s; }
-    header { border-bottom:1px solid var(--border); padding:0 24px; position:sticky; top:0; z-index:100; background:var(--header-bg); backdrop-filter:blur(12px); }
-    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:110px; gap:16px; }
-    .logo img { filter: none; } [data-theme="dark"] .logo img { filter: invert(1); } .logo { font-family:'Syne',sans-serif; font-size:1.35rem; font-weight:800; letter-spacing:-1px; }
-    .logo em { color:var(--red); font-style:normal; }
+
+    /* Header */
+    header { border-bottom:1px solid var(--border); padding:0 20px; position:sticky; top:0; z-index:100; background:var(--header-bg); backdrop-filter:blur(12px); }
+    .header-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; height:80px; gap:16px; }
+    .logo img { height:60px; width:auto; display:block; filter:none; }
+    [data-theme="dark"] .logo img { filter:invert(1); }
     .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
     .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
     .pill-btn:hover { border-color:var(--red); color:var(--text); }
-    .ad-top { border-bottom:1px solid var(--border); padding:8px; text-align:center; min-height:58px; display:flex; align-items:center; justify-content:center; background:var(--nav-bg); }
-    .ad-label { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; border:1px dashed var(--border); padding:14px 40px; border-radius:4px; }
-    .mode-bar { border-bottom:1px solid var(--border); padding:0 24px; background:var(--nav-bg); }
+
+    /* Mobil: större logga */
+    @media(max-width:600px){
+      .header-inner { height:68px; }
+      .logo img { height:44px; }
+    }
+
+    /* Mode */
+    .mode-bar { border-bottom:1px solid var(--border); padding:0 20px; background:var(--nav-bg); }
     .mode-inner { max-width:1200px; margin:0 auto; display:flex; }
-    .mode-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:13px 18px; cursor:pointer; font-size:0.88rem; font-weight:600; font-family:'Syne',sans-serif; transition:all 0.15s; }
+    .mode-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); padding:12px 16px; cursor:pointer; font-size:0.88rem; font-weight:600; font-family:'Syne',sans-serif; transition:all 0.15s; }
     .mode-btn.active { color:var(--red); border-bottom-color:var(--red); }
+
+    /* Nav */
     nav { border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; background:var(--nav-bg); }
     nav::-webkit-scrollbar { display:none; }
-    .nav-inner { max-width:1200px; margin:0 auto; padding:6px 24px; display:flex; gap:4px; }
-    .cat-btn { background:none; border:1px solid transparent; color:var(--muted); padding:6px 14px; cursor:pointer; font-size:0.8rem; border-radius:20px; transition:all 0.15s; font-family:'Inter',sans-serif; white-space:nowrap; }
+    .nav-inner { max-width:1200px; margin:0 auto; padding:6px 20px; display:flex; gap:4px; }
+    .cat-btn { background:none; border:1px solid transparent; color:var(--muted); padding:6px 12px; cursor:pointer; font-size:0.8rem; border-radius:20px; transition:all 0.15s; font-family:'Inter',sans-serif; white-space:nowrap; }
     .cat-btn:hover { color:var(--text); border-color:var(--border); }
     .cat-btn.active { color:var(--red); border-color:var(--red); background:rgba(37,99,235,0.06); }
-    .layout { max-width:1200px; margin:20px auto; padding:0 24px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
-    @media(max-width:860px){ .layout{grid-template-columns:1fr;padding:0 16px;} .sidebar{display:none;} }
+
+    /* Layout */
+    .layout { max-width:1200px; margin:20px auto; padding:0 20px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
+    @media(max-width:860px){ .layout{grid-template-columns:1fr; padding:0 12px;} .sidebar{display:none;} }
+
+    /* Mobil trending */
     .mobile-trending { display:none; }
     @media(max-width:860px){
-      .mobile-trending { display:block; margin:16px 16px 0; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
+      .mobile-trending { display:block; margin:12px 12px 0; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; }
     }
+
     .status-bar { font-size:0.72rem; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
     .live-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:pulse 2s infinite; flex-shrink:0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:10px; align-content:start; }
+
+    /* Grid */
+    #news-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:10px; align-content:start; }
+    @media(max-width:600px){ #news-grid { grid-template-columns:1fr; } }
+
+    /* Kort */
     .card { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; display:flex; flex-direction:column; gap:9px; transition:background 0.15s,border-color 0.15s; }
     .card:hover { background:var(--hover); border-color:#ccc; }
     .card-top { display:flex; align-items:center; gap:6px; }
     .badge { margin-left:auto; font-size:0.63rem; color:var(--muted); background:rgba(0,0,0,0.04); padding:2px 7px; border-radius:10px; border:1px solid var(--border); white-space:nowrap; }
-    .card-title { color:var(--text); text-decoration:none; font-size:0.88rem; font-weight:600; line-height:1.5; display:block; }
+    .card-title { color:var(--text); text-decoration:none; font-size:0.9rem; font-weight:600; line-height:1.5; display:block; }
     .card-title:hover { color:var(--red); }
     .card-ingress { font-size:0.8rem; color:var(--ingress); line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
     .card-time { font-size:0.68rem; color:var(--muted); }
@@ -112,7 +122,8 @@
     .source-link { font-size:0.68rem; font-weight:600; color:var(--red); text-decoration:none; text-transform:uppercase; letter-spacing:0.5px; padding:2px 7px; border:1px solid rgba(37,99,235,0.2); border-radius:10px; transition:all 0.15s; }
     .source-link:hover { background:rgba(37,99,235,0.08); border-color:var(--red); }
     .source-count { font-size:0.68rem; color:var(--muted); padding:2px 7px; border:1px solid var(--border); border-radius:10px; }
-    .ad-feed { background:var(--card); border:1px dashed var(--border); border-radius:6px; min-height:90px; display:flex; align-items:center; justify-content:center; }
+
+    /* Sidebar */
     .sidebar { display:flex; flex-direction:column; gap:14px; }
     .widget { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
     .widget-title { font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:12px; }
@@ -121,40 +132,26 @@
     .trend-num { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:800; color:var(--border); min-width:18px; line-height:1.5; }
     .trend-item a { font-size:0.8rem; color:var(--text); text-decoration:none; line-height:1.4; }
     .trend-item a:hover { color:var(--red); }
+
     .state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--muted); }
     .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 10px; }
     @keyframes spin { to{transform:rotate(360deg)} }
+
     footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
     footer a { color:var(--muted); text-decoration:none; }
     footer a:hover { color:var(--red); }
   </style>
-  <!-- Google AdSense -->
-  <meta name="google-adsense-account" content="ca-pub-5482392840942272">
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5482392840942272" crossorigin="anonymous"></script>
-
-  <!-- Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-KSKGKZS2NX"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-KSKGKZS2NX');
-  </script>
 </head>
 <body>
 <header>
   <div class="header-inner">
-    <div class="logo"><a href="/"><img src="/logo1.png" alt="Skime" style="height:90px;width:auto;display:block"></a></div>
+    <div class="logo"><a href="/"><img src="/logo1.png" alt="Skime – Vi sweper nyhetsinternet åt dig"></a></div>
     <div class="header-right">
       <button class="pill-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Växla mörkt läge">🌙</button>
       <button class="pill-btn" onclick="toggleLang()" id="lang-btn" aria-label="Byt språk">EN</button>
     </div>
   </div>
 </header>
-
-<div class="ad-top" aria-label="Annons">
-  <div class="ad-label">Annons 728×90</div>
-</div>
 
 <div class="mode-bar" role="navigation" aria-label="Nyhetsnivå">
   <div class="mode-inner">
@@ -165,7 +162,6 @@
 
 <nav aria-label="Kategorier"><div class="nav-inner" id="tab-nav"></div></nav>
 
-<!-- Trending på mobil – visas ovanför nyhetsflödet -->
 <div class="mobile-trending" id="mobile-trending-box">
   <div class="widget-title">🔥 Trending</div>
   <div id="trending-mobile" role="list"></div>
@@ -177,9 +173,6 @@
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
   </main>
   <aside class="sidebar" aria-label="Sidebar">
-    <div class="widget" style="min-height:260px;display:flex;align-items:center;justify-content:center;" aria-label="Annons">
-      <div class="ad-label">Annons 300×250</div>
-    </div>
     <div class="widget">
       <div class="widget-title" id="t-trending">🔥 Trending</div>
       <div id="trending" role="list"></div>
@@ -199,9 +192,8 @@
     <a href="/?category=utrikes">Utrikes</a>
   </p>
   <p style="margin-top:16px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.6">
-    Skime är en oberoende nyhetstjänst som aggregerar och länkar till nyheter från svenska medier. 
-    Allt redaktionellt innehåll tillhör respektive källa och publicist. 
-    Skime skapar inget eget nyhetsinnehåll – klicka alltid på rubriken eller källan för att läsa hela artikeln hos originalpublicisten.
+    Skime aggregerar och länkar till nyheter från svenska medier. Allt innehåll tillhör respektive källa.
+    Klicka alltid på rubriken eller källan för att läsa hela artikeln.
   </p>
   <p style="margin-top:10px">
     <a href="/om-oss">Om Skime</a> · <a href="/integritetspolicy">Integritetspolicy</a>
@@ -258,7 +250,6 @@ function selectTab(val, el) {
   current = decodeURIComponent(val);
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  // Uppdatera URL utan reload
   const newUrl = mode === 'national'
     ? (current === 'alla' ? '/' : `/?category=${current}`)
     : `/?region=${encodeURIComponent(current)}`;
@@ -278,7 +269,6 @@ async function load() {
     renderTrending(articles.slice(0, 7));
     document.getElementById('status-bar').innerHTML =
       `<span class="live-dot"></span>${articles.length} nyheter`;
-    // Uppdatera page title dynamiskt
     const label = mode === 'regional' ? current : (CAT_LABELS[current] || 'Alla');
     document.title = `${label} – Skime`;
   } catch(e) {
@@ -296,7 +286,6 @@ function renderGrid(articles) {
       ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : '';
     const label = a.region || CAT_LABELS[a.category] || a.category;
-    const ad = (i > 0 && i % 9 === 0) ? `<div class="ad-feed"><div class="ad-label">Annons</div></div>` : '';
     const sources = a.sources || [{ name: a.source, url: a.url }];
     const visibleSources = sources.slice(0, 4);
     const extraCount = sources.length - visibleSources.length;
@@ -306,41 +295,23 @@ function renderGrid(articles) {
       ).join('')}
       ${extraCount > 0 ? `<span class="source-count">+${extraCount} till</span>` : ''}
     </div>`;
-    return ad + `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
-      <div class="card-top">
-        <span class="badge">${label}</span>
-      </div>
-      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer"
-         itemprop="headline url">${a.title}</a>
+    return `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
+      <div class="card-top"><span class="badge">${label}</span></div>
+      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url">${a.title}</a>
       ${a.ingress ? `<div class="card-ingress" itemprop="description">${a.ingress}</div>` : ''}
       ${sourcesHtml}
-      <div class="card-time">
-        <time itemprop="datePublished" datetime="${a.published_at}">${time}</time>
-      </div>
+      <div class="card-time"><time itemprop="datePublished" datetime="${a.published_at}">${time}</time></div>
     </article>`;
   }).join('');
 }
 
 function renderTrending(articles) {
-  // Smartare trending: sortera på antal källor * recency
-  const now = Date.now();
-  const scored = articles
-    .map(a => {
-      const sourceCount = (a.sources || [{ name: a.source }]).length;
-      const ageHours = (now - new Date(a.published_at)) / (1000 * 60 * 60);
-      const recency = Math.max(0, 1 - ageHours / 24); // 1.0 = ny, 0.0 = 24h gammal
-      return { ...a, trendScore: sourceCount * (1 + recency) };
-    })
-    .sort((a, b) => b.trendScore - a.trendScore)
-    .slice(0, 7);
-
-  const html = scored.map((a, i) =>
+  const html = articles.map((a, i) =>
     `<div class="trend-item" role="listitem">
       <span class="trend-num">${i+1}</span>
       <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
     </div>`
   ).join('');
-
   document.getElementById('trending').innerHTML = html;
   document.getElementById('trending-mobile').innerHTML = html;
 }
@@ -361,7 +332,6 @@ function toggleLang() {
   renderTabs();
 }
 
-// Återställ tema från localStorage
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'dark') {
   document.documentElement.setAttribute('data-theme', 'dark');
@@ -370,7 +340,7 @@ if (savedTheme === 'dark') {
 
 renderTabs();
 load();
-setInterval(load, 30 * 60 * 1000);
+setInterval(load, 15 * 60 * 1000);
 </script>
 </body>
 </html>
