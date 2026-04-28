@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cron = require('node-cron');
 const { init, get, lastFetched } = require('./db');
 const { fetchAll } = require('./fetcher');
 
@@ -20,21 +21,12 @@ const ALL_REGIONS = [
 
 const CATEGORIES = ['nyheter','politik','naringsliv','sport','tech','kultur','utrikes'];
 
-let fetching = false;
-
-async function refreshIfStale() {
-  if (fetching) return;
-  const last = await lastFetched();
-  if (!last || (Date.now() - new Date(last)) > 30 * 60 * 1000) {
-    fetching = true;
-    fetchAll().finally(() => { fetching = false; });
-  }
-}
+// Hämta nyheter var 15:e minut automatiskt
+cron.schedule('*/15 * * * *', fetchAll);
 
 // ── API ───────────────────────────────────────────────────────
 app.get('/api/news', async (req, res) => {
   try {
-    await refreshIfStale();
     const articles = await get({ category: req.query.category, region: req.query.region });
     res.json(articles);
   } catch (e) {
