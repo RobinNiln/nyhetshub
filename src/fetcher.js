@@ -201,11 +201,14 @@ const SOURCES = {
 
 const KEYWORDS = {
   sport:      ['fotboll','hockey','tennis','golf','allsvenskan','superettan','nhl','nba','vm ','em ','match','spelare','tränar','lag ','shl ','damallsvenskan'],
-  naringsliv: ['börsen','aktier','ekonomi','inflation','ränta','riksbank','företag','förvärv','vinst','omsättning'],
-  kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen','artist'],
-  tech:       ['ai ','artificiell intelligens','chatgpt','tech','app ','startup','microsoft','google','apple','cybersäkerhet','hack'],
-  politik:    ['riksdag','regering','minister','statsminister','parti','val ','riksdagen','eu ','nato '],
-  utrikes:    ['usa ','trump','biden','ryssland','kina','ukraina','mellanöstern','fn ','nato ','internationell','konflikt'],
+  naringsliv: ['börsen','aktier','ekonomi','inflation','ränta','riksbank','förvärv','vinst','omsättning','kvartalsrapport','investering','börsnot'],
+  kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen','artist','kulturhus'],
+  tech:       ['ai ','artificiell intelligens','chatgpt','tech','startup','microsoft','google','apple','cybersäkerhet','hack','algoritm'],
+  // Samhälle – infrastruktur, sjukvård, skola, brott, bostäder
+  samhalle:   ['sjukhus','vård','region ','1177','ambulans','skola','förskola','gymnasium','bostäder','hyresrätt','infrastruktur','järnväg','motorväg','polis','brott','rättegång','dom ','häkta','gripen','brand ','räddningstjänst'],
+  // Politik – strikt: partier, val, riksdag, regering som politisk aktör
+  politik:    ['riksdag','statsminister','riksdagen','socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet','centerpartiet','liberalerna','kristdemokraterna','miljöpartiet','partiet','partiledare','valet ','valresultat','opposition','koalition','eu-kommissionen','nato-toppmöte'],
+  utrikes:    ['usa ','trump','biden','ryssland','kina','ukraina','mellanöstern','fn ','nato ','internationell','konflikt','gaza','israel','putin'],
 };
 
 function categorize(title, sourceName) {
