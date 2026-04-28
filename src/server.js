@@ -116,6 +116,11 @@ app.get('/integritetspolicy', (req, res) => {
 app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 
 // ── robots.txt ────────────────────────────────────────────────
+app.get('/ads.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('google.com, pub-5482392840942272, DIRECT, f08c47fec0942fa0');
+});
+
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.send(`User-agent: *
