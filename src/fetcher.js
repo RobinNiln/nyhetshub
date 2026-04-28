@@ -9,6 +9,7 @@ const parser = new Parser({
 });
 
 const SKIP_PATTERNS = [
+  // Dagsammanfattningar
   /nyheter från dagen/i,
   /dagens nyheter i korthet/i,
   /veckans nyheter/i,
@@ -16,6 +17,37 @@ const SKIP_PATTERNS = [
   /tipsa svt/i,
   /nyhetsbrev/i,
   /prenumerera/i,
+  /kontakta svt/i,
+  // Fastigheter
+  /kvadratmeter.*salt/i,
+  /salt för.*kronor/i,
+  /fastighetsaffär/i,
+  /priset.*kronor/i,
+  /hus.*salt/i,
+  /lägenhet.*salt/i,
+  /villa.*salt/i,
+  /radhus.*salt/i,
+  /kedjehus.*salt/i,
+  /bostadsrätt.*salt/i,
+  // Nyföretagsregistreringar
+  /startar nytt.*företag/i,
+  /nystartat.*företag/i,
+  /nytt.*företag startar/i,
+  /registrerades.*bolagsverket/i,
+  /startades \d+ /i,
+  /nyetablering/i,
+  /får tillskott.*nytt företag/i,
+  // Trafik-notiser
+  /stillastående.*korfält/i,
+  /stopp.*körfält/i,
+  /körfält.*blockerat/i,
+  /trafiken påverkas av/i,
+  // Övrigt skräp
+  /följ.*snacket/i,
+  /hockeysnacket/i,
+  /vi sänder.*matcher/i,
+  /vi fortsätter sända/i,
+  /glädjebeskedet.*sänder/i,
 ];
 
 function shouldSkip(title) {
