@@ -158,29 +158,22 @@ GET ${SITE_URL}/api/regions`);
 // ── sitemap.xml ───────────────────────────────────────────────
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    const articles = await get({});
     const now = new Date().toISOString();
 
     const staticUrls = [
-      { loc: SITE_URL, priority: '1.0' },
+      { loc: `${SITE_URL}`, priority: '1.0' },
+      { loc: `${SITE_URL}/om-oss`, priority: '0.8' },
+      { loc: `${SITE_URL}/integritetspolicy`, priority: '0.5' },
       ...CATEGORIES.map(c => ({ loc: `${SITE_URL}/?category=${c}`, priority: '0.8' })),
       ...ALL_REGIONS.map(r => ({ loc: `${SITE_URL}/?region=${encodeURIComponent(r)}`, priority: '0.7' })),
     ];
 
-    const articleUrls = articles.slice(0, 100).map(a => ({
-      loc: a.url,
-      lastmod: a.published_at ? new Date(a.published_at).toISOString() : now,
-      priority: '0.6'
-    }));
-
-    const allUrls = [...staticUrls, ...articleUrls];
-
     res.type('application/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${allUrls.map(u => `  <url>
+${staticUrls.map(u => `  <url>
     <loc>${u.loc}</loc>
-    ${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : `<lastmod>${now}</lastmod>`}
+    <lastmod>${now}</lastmod>
     <priority>${u.priority}</priority>
   </url>`).join('\n')}
 </urlset>`);
