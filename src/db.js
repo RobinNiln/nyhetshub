@@ -37,15 +37,14 @@ async function save(article) {
 }
 
 async function boost(keyword) {
+  // Boost begränsad – max 10 per artikel så score inte skenar
   await pool.query(
-    `UPDATE articles SET score = score + 1
+    `UPDATE articles SET score = LEAST(score + 1, 10)
      WHERE title ILIKE $1 AND fetched_at > NOW() - INTERVAL '3 hours'`,
     [`%${keyword}%`]
   );
 }
 
-// Extraherar de första 4 orden ur en titel som grupperingsnyckel
-// Exempel: "Misstänkte galaskytten åtalas för mordförsök" -> "misstänkte galaskytten åtalas för"
 async function get({ category, region } = {}) {
   const conditions = [`fetched_at > NOW() - INTERVAL '24 hours'`];
   const params = [];
@@ -58,16 +57,16 @@ async function get({ category, region } = {}) {
     conditions.push(`category = $${params.length}`);
   }
 
-  // Hämta alla artiklar inom filtret
+  // Hämta alla artiklar, sortera på publiceringstid primärt
   const { rows } = await pool.query(`
     SELECT title, url, source, category, region, ingress, published_at, score
     FROM articles
     WHERE ${conditions.join(' AND ')}
-    ORDER BY score DESC, published_at DESC
+    ORDER BY published_at DESC, score DESC
     LIMIT 300
   `, params);
 
-  // Gruppera liknande rubriker baserat på de första 5 orden
+  // Gruppera liknande rubriker
   const groups = [];
   const seen = new Map();
 
@@ -80,14 +79,11 @@ async function get({ category, region } = {}) {
       .join(' ');
 
     if (seen.has(key)) {
-      // Lägg till källa i befintlig grupp
       const group = seen.get(key);
       if (group.sources.length < 6) {
         group.sources.push({ name: row.source, url: row.url });
       }
-      group.score += row.score;
     } else {
-      // Ny grupp
       const group = {
         title: row.title,
         url: row.url,
@@ -104,10 +100,7 @@ async function get({ category, region } = {}) {
     }
   }
 
-  // Sortera efter score och returnera top 60
-  return groups
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 60);
+  return groups.slice(0, 60);
 }
 
 async function lastFetched() {
