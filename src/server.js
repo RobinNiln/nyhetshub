@@ -44,38 +44,59 @@ app.get('/om-oss', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Om Skime – Vi sweper nyhetsinternet åt dig</title>
-  <meta name="description" content="Skime är en oberoende svensk nyhetstjänst som aggregerar nyheter från SVT, DN, Aftonbladet och 40+ medier i realtid.">
-  <link rel="canonical" href="https://skime.se/om-oss">
+  <title>Vad är Skime? – Vi sweper nyhetsinternet åt dig</title>
+  <meta name="description" content="Skime samlar de senaste nyheterna från över 40 svenska medier – utan prerolls, utan inloggning, utan krångel.">
+  <link rel="canonical" href="https://www.skime.se/om-oss">
   <style>
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; max-width:700px; margin:60px auto; padding:0 24px; color:#111; line-height:1.7; }
-    h1 { font-size:2rem; font-weight:800; margin-bottom:8px; }
-    h2 { font-size:1.2rem; font-weight:700; margin:32px 0 8px; }
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; max-width:700px; margin:60px auto; padding:0 24px; color:#111; line-height:1.8; }
+    h1 { font-size:2.2rem; font-weight:800; margin-bottom:12px; letter-spacing:-1px; }
+    h2 { font-size:1.15rem; font-weight:700; margin:40px 0 8px; color:#111; }
+    p { margin-bottom:16px; color:#333; font-size:1rem; }
+    .lead { font-size:1.15rem; color:#444; margin-bottom:32px; }
+    .highlight { background:#f0f5ff; border-left:3px solid #2563eb; padding:16px 20px; border-radius:4px; margin:32px 0; }
+    .highlight p { margin:0; color:#1e3a8a; font-weight:500; }
     a { color:#2563eb; }
     .back { display:inline-block; margin-bottom:32px; color:#888; text-decoration:none; font-size:0.9rem; }
     .back:hover { color:#111; }
+    footer { margin-top:60px; padding-top:24px; border-top:1px solid #e5e5e5; font-size:0.8rem; color:#aaa; }
   </style>
 </head>
 <body>
   <a class="back" href="/">← Tillbaka till Skime</a>
-  <h1>Om Skime</h1>
-  <p>Skime är en oberoende svensk nyhetstjänst som automatiskt samlar, rankar och presenterar nyheter från Sveriges ledande medier – nationellt och regionalt.</p>
+  <h1>Vad är Skime?</h1>
+  <p class="lead">Skime är en svensk nyhetstjänst som samlar det senaste från landets ledande medier – på ett ställe, utan krångel.</p>
 
-  <h2>Vad vi gör</h2>
-  <p>Vi sweper nyhetsinternet åt dig. Skime hämtar nyheter från över 40 svenska medier var 30:e minut och rankar dem efter hur många källor som rapporterar samma händelse. Ju fler medier som skriver om en nyhet, desto viktigare bedömer vi att den är.</p>
+  <div class="highlight">
+    <p>Vi sweper nyhetsinternet åt dig. Du behöver inte göra det.</p>
+  </div>
 
-  <h2>Vad vi inte gör</h2>
-  <p>Skime skapar inget eget redaktionellt innehåll. Vi är en aggregator – inte en redaktion. Allt innehåll tillhör respektive källa och publicist. Vi länkar alltid till originalkällan.</p>
+  <h2>Enkelt, snabbt, rent</h2>
+  <p>Vi tror att nyheter ska vara lätta att ta till sig. Ingen ska behöva klicka sig igenom prerolls, sitta och vänta på att en video ska laddas eller stöta på pop-ups som kräver att man stänger tre fönster innan man ens sett rubriken. Skime visar rubriken, en kort ingress och var du kan läsa mer. Sedan är det upp till dig.</p>
 
-  <h2>Källor</h2>
-  <p>SVT, Sveriges Radio, DN, SvD, Aftonbladet, Expressen, DI, Breakit, Sydsvenskan, GP, HD, Borås Tidning, NT, Corren, MVT, Barometern, UNT, Norran, NSD, Norrbottens-Kuriren, Piteå-Tidningen, Eskilstuna-Kuriren, Södermanlands Nyheter, Strengnäs Tidning, Enköpings-Posten, Vimmerby Tidning, Västerviks-Tidningen, Gotlands Allehanda samt SVT:s lokala redaktioner i alla 21 län.</p>
+  <h2>Samlat från de bästa källorna</h2>
+  <p>Vi hämtar nyheter var 15:e minut från över 40 svenska medier – nationella som SVT, SR, DN, SvD, Aftonbladet, Expressen och DI, men också lokala tidningar från alla 21 svenska län. En nyhet som rapporteras av många källor lyfts automatiskt fram. Det är vår enkla modell för att avgöra vad som är viktigt just nu.</p>
 
-  <h2>Kontakt</h2>
-  <p>Vi återkommer med kontaktmöjligheter inom kort.</p>
+  <h2>Inga egna åsikter</h2>
+  <p>Skime är inte en redaktion. Vi skriver inga egna nyheter, tar inga politiska ställningstaganden och har inga egna agendor. Vi är ett fönster mot det svenska medielandskapet – inte en röst i det.</p>
+
+  <h2>Inga ledare, alltid objektivt</h2>
+  <p>Skime plockar aldrig in ledartexter eller opinionsmaterial. Vi visar nyheter – inte åsikter. Det är ett aktivt val vi gör för att hålla sajten så objektiv som möjligt och låta dig bilda din egen uppfattning.</p>
+
+  <h2>Inga ledare eller krönikor</h2>
+  <p>Vi plockar aldrig in ledartexter, krönikor, debattartiklar eller opinionsmaterial. Det är ett medvetet val för objektivitetens skull. Skime ska spegla vad som händer – inte vad någon tycker om det.</p>
+
+  <h2>En sak vi inte kan styra</h2>
+  <p>Vissa artiklar hos källorna ligger bakom betalväggar eller kräver prenumeration. Det är källornas beslut, inte vårt. Vi visar alltid vem som är källan så att du vet vad du klickar på.</p>
+
+  <h2>Gratis, alltid</h2>
+  <p>Skime är gratis att använda. Det finns inga konton, inga prenumerationer och ingen data vi samlar in om dig för att sälja vidare. Sajten finansieras av annonser.</p>
+
+  <footer>
+    <p>© 2025 Skime · <a href="/integritetspolicy">Integritetspolicy</a></p>
+  </footer>
 </body>
 </html>`);
 });
-
 app.get('/integritetspolicy', (req, res) => {
   res.send(`<!DOCTYPE html>
 <html lang="sv">
