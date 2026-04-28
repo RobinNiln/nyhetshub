@@ -76,6 +76,10 @@ async function get({ category, region, sport } = {}) {
   } else if (category && category !== 'alla') {
     params.push(category);
     conditions.push(`category = $${params.length}`);
+    // Nationella kategorier visar bara artiklar utan region
+    if (category !== 'sport') {
+      conditions.push(`region IS NULL`);
+    }
   }
 
   // Hämta alla artiklar, sortera på publiceringstid primärt
