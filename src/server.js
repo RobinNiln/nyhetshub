@@ -19,7 +19,7 @@ const ALL_REGIONS = [
   'Örebro','Östergötland'
 ];
 
-const CATEGORIES = ['nyheter','politik','naringsliv','sport','tech','kultur','utrikes'];
+const CATEGORIES = ['nyheter','politik','samhalle','naringsliv','sport','tech','kultur','utrikes'];
 
 // Hämta nyheter var 15:e minut automatiskt
 cron.schedule('*/15 * * * *', fetchAll);
