@@ -25,6 +25,49 @@ const CATEGORIES = ['nyheter','politik','samhalle','naringsliv','sport','tech','
 cron.schedule('*/15 * * * *', fetchAll);
 
 // ── API ───────────────────────────────────────────────────────
+// Klick-tracking – spara när någon klickar på en artikel
+app.post('/api/click', express.json(), async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'Missing url' });
+    const { Pool } = require('pg');
+    const pool = new (require('pg').Pool)({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    await pool.query(`
+      INSERT INTO article_clicks (url, clicked_at)
+      VALUES ($1, NOW())
+    `, [url]);
+    res.json({ ok: true });
+  } catch(e) {
+    res.json({ ok: false });
+  }
+});
+
+// Mest läst – senaste 24 timmar
+app.get('/api/most-read', async (req, res) => {
+  try {
+    const { Pool } = require('pg');
+    const pool = new (require('pg').Pool)({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    const { rows } = await pool.query(`
+      SELECT a.title, a.url, COUNT(c.url) as clicks
+      FROM articles a
+      JOIN article_clicks c ON a.url = c.url
+      WHERE c.clicked_at > NOW() - INTERVAL '24 hours'
+      GROUP BY a.title, a.url
+      ORDER BY clicks DESC
+      LIMIT 7
+    `);
+    res.json(rows);
+  } catch(e) {
+    res.json([]);
+  }
+});
+
 app.get('/api/news', async (req, res) => {
   try {
     const articles = await get({
