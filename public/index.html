@@ -92,6 +92,10 @@
     .cat-btn.active { color:var(--red); border-color:var(--red); background:rgba(37,99,235,0.06); }
     .layout { max-width:1200px; margin:20px auto; padding:0 24px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
     @media(max-width:860px){ .layout{grid-template-columns:1fr;padding:0 16px;} .sidebar{display:none;} }
+    .mobile-trending { display:none; }
+    @media(max-width:860px){
+      .mobile-trending { display:block; margin:16px 16px 0; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
+    }
     .status-bar { font-size:0.72rem; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
     .live-dot { width:6px; height:6px; background:#22c55e; border-radius:50%; animation:pulse 2s infinite; flex-shrink:0; }
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
@@ -128,7 +132,7 @@
 <body>
 <header>
   <div class="header-inner">
-    <div class="logo"><a href="/"><img src="/logo1.png" alt="Skime" style="height:90px;width:auto;display:block"></a></div>
+    <div class="logo"><a href="/"><img src="/logo2.png" alt="Skime" style="height:90px;width:auto;display:block"></a></div>
     <div class="header-right">
       <button class="pill-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Växla mörkt läge">🌙</button>
       <button class="pill-btn" onclick="toggleLang()" id="lang-btn" aria-label="Byt språk">EN</button>
@@ -148,6 +152,12 @@
 </div>
 
 <nav aria-label="Kategorier"><div class="nav-inner" id="tab-nav"></div></nav>
+
+<!-- Trending på mobil – visas ovanför nyhetsflödet -->
+<div class="mobile-trending" id="mobile-trending-box">
+  <div class="widget-title">🔥 Trending</div>
+  <div id="trending-mobile" role="list"></div>
+</div>
 
 <div class="layout">
   <main id="main-content">
@@ -297,12 +307,27 @@ function renderGrid(articles) {
 }
 
 function renderTrending(articles) {
-  document.getElementById('trending').innerHTML = articles.map((a, i) =>
+  // Smartare trending: sortera på antal källor * recency
+  const now = Date.now();
+  const scored = articles
+    .map(a => {
+      const sourceCount = (a.sources || [{ name: a.source }]).length;
+      const ageHours = (now - new Date(a.published_at)) / (1000 * 60 * 60);
+      const recency = Math.max(0, 1 - ageHours / 24); // 1.0 = ny, 0.0 = 24h gammal
+      return { ...a, trendScore: sourceCount * (1 + recency) };
+    })
+    .sort((a, b) => b.trendScore - a.trendScore)
+    .slice(0, 7);
+
+  const html = scored.map((a, i) =>
     `<div class="trend-item" role="listitem">
       <span class="trend-num">${i+1}</span>
       <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
     </div>`
   ).join('');
+
+  document.getElementById('trending').innerHTML = html;
+  document.getElementById('trending-mobile').innerHTML = html;
 }
 
 function toggleTheme() {
