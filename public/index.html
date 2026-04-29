@@ -134,6 +134,9 @@
     .trend-item a { font-size:0.8rem; color:var(--text); text-decoration:none; line-height:1.4; }
     .trend-item a:hover { color:var(--red); }
 
+    .topic-pill { display:inline-block; padding:4px 10px; background:rgba(37,99,235,0.08); border:1px solid rgba(37,99,235,0.2); border-radius:20px; font-size:0.75rem; font-weight:600; color:var(--red); text-decoration:none; transition:all 0.15s; }
+    .topic-pill:hover { background:rgba(37,99,235,0.15); border-color:var(--red); }
+
     .state { grid-column:1/-1; text-align:center; padding:80px 20px; color:var(--muted); }
     .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 10px; }
     @keyframes spin { to{transform:rotate(360deg)} }
@@ -180,6 +183,10 @@
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
   </main>
   <aside class="sidebar" aria-label="Sidebar">
+    <div class="widget">
+      <div class="widget-title">🏷️ Snackas om</div>
+      <div id="trending-topics" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
+    </div>
     <div class="widget">
       <div class="widget-title" id="t-trending">🔥 Trending</div>
       <div id="trending" role="list"></div>
@@ -392,6 +399,18 @@ if (savedTheme === 'dark') {
   document.getElementById('theme-btn').textContent = '☀️';
 }
 
+async function loadTopics() {
+  try {
+    const res = await fetch('/api/trending-topics');
+    const topics = await res.json();
+    const container = document.getElementById('trending-topics');
+    if (!container) return;
+    container.innerHTML = topics.map(t =>
+      `<a class="topic-pill" href="/topic/${t.slug}">#${t.word}</a>`
+    ).join('') || '<span style="font-size:0.78rem;color:var(--muted)">Laddar...</span>';
+  } catch(e) {}
+}
+
 function trackClick(url) {
   fetch('/api/click', {
     method: 'POST',
@@ -418,8 +437,10 @@ renderTabs();
 renderSportSubs();
 load();
 loadMostRead();
+loadTopics();
 setInterval(load, 15 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);
+setInterval(loadTopics, 60 * 60 * 1000);
 </script>
 </body>
 </html>
