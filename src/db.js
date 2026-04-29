@@ -53,15 +53,27 @@ async function boost(keyword) {
 }
 
 const SPORT_KEYWORDS = {
-  fotboll:           ['fotboll','football'],
-  allsvenskan:       ['allsvenskan'],
-  superettan:        ['superettan'],
-  damallsvenskan:    ['damallsvenskan'],
-  landslaget_fotboll:['svenska fotbollslandslaget','herrlandslaget','landslagstruppen','landslaget i fotboll'],
-  hockey:            ['hockey','ishockey'],
-  shl:               ['shl','swedish hockey league'],
-  hockeyallsvenskan: ['hockeyallsvenskan'],
-  landslaget_hockey: ['tre kronor','hockeylandslaget','landslaget i hockey'],
+  allsvenskan: [
+    'allsvenskan','djurgården','hammarby','malmö ff','ifk göteborg','ifk norrköping',
+    'iff','aik ','brommapojkarna','sirius','häcken','elfsborg','kalmar ff',
+    'västerås sk','halmstad','mjällby','göteborg fc','örebro sk','gais',
+    'degerfors','bp ','fotbollsallsvenskan'
+  ],
+  damallsvenskan: [
+    'damallsvenskan','damfotboll','rosengård','djurgårdens dam','hammarby dam',
+    'göteborg dam','linköping fc','piteå if dam','kif örebro','vittsjo','eskilstuna'
+  ],
+  landslaget_fotboll: [
+    'herrlandslaget','svenska landslaget','blågult','vm-kval','em-kval',
+    'andersson tränar','zlatans','ibrahimovic','landslagsuttagen',
+    'svenska fotbollsförbundet','sfv ','landslagstruppen'
+  ],
+  shl: [
+    'shl ','swedish hockey league','rögle','skellefteå aik','frölunda','djurgårdens hockey',
+    'brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71',
+    'timrå','oskarshamn','leksand','modo','sm-final','sm-guld hockey',
+    'tre kronor','ishockeyförbundet'
+  ],
 };
 
 async function get({ category, region, sport } = {}) {
