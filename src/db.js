@@ -68,7 +68,12 @@ const SPORT_KEYWORDS = {
     'andersson tränar','zlatans','ibrahimovic','landslagsuttagen',
     'svenska fotbollsförbundet','sfv ','landslagstruppen'
   ],
-  shl: [
+  vm2026: [
+    'vm 2026','fotbolls-vm','world cup 2026','vm-slutspel','vm-gruppspel',
+    'vm-kval','vm-biljett','usa 2026','kanada 2026','mexiko 2026',
+    'fifa vm','vm-trupp','vm-uttagen','vm-premiar','vm-final 2026',
+    'fotbolls vm','världsmästerskapet 2026'
+  ],
     'shl ','swedish hockey league','rögle','skellefteå aik','frölunda','djurgårdens hockey',
     'brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71',
     'timrå','oskarshamn','leksand','modo','sm-final','sm-guld hockey',
