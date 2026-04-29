@@ -68,6 +68,188 @@ app.get('/api/most-read', async (req, res) => {
   }
 });
 
+// ── TRENDING TOPICS ──────────────────────────────────────────────────────────
+
+const STOPWORDS = new Set([
+  // Svenska småord
+  'och','att','för','inte','med','den','det','som','på','av','en','ett','är',
+  'var','har','har','hade','ska','kan','till','från','om','när','under','efter',
+  'över','inom','utan','samt','men','eller','även','också','sedan','redan',
+  'detta','dessa','detta','detta','hela','andra','alla','många','flera',
+  'varje','något','någon','några','vilka','vilket','vilken','denna','dessa',
+  'hans','hennes','deras','vår','våra','ditt','dina','sina','sitt','sin',
+  'just','dock','dock','ändå','ändå','bara','bort','fram','igen','kvar',
+  'länge','länge','lite','mycket','mer','mest','mindre','minst','nästan',
+  'aldrig','alltid','ofta','sällan','nog','faktiskt','verkligen','ungefär',
+  'kommer','gjorde','gick','fick','blev','tagit','tagits','säger','enligt',
+  'mot','hos','vid','kring','bland','bakom','framför','utanför','innanför',
+  'trots','trots','pga','via','resp','dvs','osv','etc',
+  // Engelska småord
+  'the','and','for','with','that','this','from','have','will','after',
+  'about','into','they','their','there','been','were','would','could',
+  // Källnamn – ska ej bli hashtaggar
+  'svt','aftonbladet','expressen','sydsvenskan','dn','svd','sr','gp',
+  'di','norran','barometern','corren','bt','nt','unt','nsd','vlt','na',
+  'hockeysverige','fotbollskanalen','breakit','tv4','sverigesradio',
+  // Vanliga nyhetsord som inte ger värde
+  'polisen','räddningstjänsten','kommunen','regionen','rapporten',
+  'beslutet','frågan','saken','händelsen','situationen','problemet',
+]);
+
+const MIN_LENGTH = 4;
+const MIN_ARTICLES = 3;
+
+let topicsCache = [];
+let topicsCacheTime = 0;
+
+function extractTopics(articles) {
+  const wordCount = new Map();
+
+  for (const article of articles) {
+    const words = article.title
+      .replace(/[–—\-]/g, ' ')
+      .split(/\s+/)
+      .map(w => w.replace(/[^a-zåäöA-ZÅÄÖ]/g, ''))
+      .filter(w => w.length >= MIN_LENGTH);
+
+    const seen = new Set();
+    for (const word of words) {
+      const lower = word.toLowerCase();
+      if (STOPWORDS.has(lower)) continue;
+      if (seen.has(lower)) continue;
+      seen.add(lower);
+
+      // Prioritera ord som börjar med versal (egennamn)
+      const isProperNoun = word[0] === word[0].toUpperCase() && word[0] !== word[0].toLowerCase();
+      const weight = isProperNoun ? 2 : 1;
+      wordCount.set(lower, (wordCount.get(lower) || 0) + weight);
+    }
+  }
+
+  return Array.from(wordCount.entries())
+    .filter(([, count]) => count >= MIN_ARTICLES)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([word]) => {
+      // Kapitalisera första bokstaven
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    });
+}
+
+function slugify(word) {
+  return word.toLowerCase()
+    .replace(/å/g,'a').replace(/ä/g,'a').replace(/ö/g,'o')
+    .replace(/[^a-z0-9]/g,'');
+}
+
+async function getTopics() {
+  const now = Date.now();
+  if (topicsCache.length && now - topicsCacheTime < 60 * 60 * 1000) {
+    return topicsCache;
+  }
+  try {
+    const { Pool } = require('pg');
+    const pool = new (require('pg').Pool)({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    const { rows } = await pool.query(`
+      SELECT title FROM articles
+      WHERE fetched_at > NOW() - INTERVAL '3 hours'
+      AND region IS NULL
+    `);
+    topicsCache = extractTopics(rows);
+    topicsCacheTime = now;
+  } catch(e) {
+    console.error('Topics error:', e.message);
+  }
+  return topicsCache;
+}
+
+app.get('/api/trending-topics', async (req, res) => {
+  const topics = await getTopics();
+  res.json(topics.map(t => ({ word: t, slug: slugify(t) })));
+});
+
+// Topic-sida – /topic/:slug
+app.get('/topic/:slug', async (req, res) => {
+  const slug = req.params.slug;
+  const topics = await getTopics();
+  const match = topics.find(t => slugify(t) === slug);
+  const keyword = match || slug;
+
+  try {
+    const { Pool } = require('pg');
+    const pool = new (require('pg').Pool)({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    const { rows } = await pool.query(`
+      SELECT title, url, source, ingress, published_at, category
+      FROM articles
+      WHERE title ILIKE $1
+      AND fetched_at > NOW() - INTERVAL '24 hours'
+      ORDER BY published_at DESC
+      LIMIT 60
+    `, [`%${keyword}%`]);
+
+    const cards = rows.map(a => {
+      const time = a.published_at
+        ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+        : '';
+      return `<article style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;">
+        <a href="${a.url}" target="_blank" rel="noopener noreferrer" style="color:#111;text-decoration:none;font-size:0.9rem;font-weight:600;line-height:1.5;">${a.title}</a>
+        ${a.ingress ? `<p style="font-size:0.8rem;color:#555;margin:0;line-height:1.45;">${a.ingress}</p>` : ''}
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:0.68rem;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">${a.source}</span>
+          <span style="font-size:0.68rem;color:#999;">${time}</span>
+        </div>
+      </article>`;
+    }).join('');
+
+    res.send(`<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>#${keyword} – Skime</title>
+  <meta name="description" content="Senaste nyheterna om ${keyword} från svenska medier – samlat på Skime.">
+  <link rel="canonical" href="https://www.skime.se/topic/${slug}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f4f4f4;color:#111;min-height:100vh}
+    header{background:#fff;border-bottom:1px solid #e5e5e5;padding:0 20px}
+    .header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;height:80px;gap:16px}
+    .logo img{height:60px;width:auto}
+    .layout{max-width:1200px;margin:32px auto;padding:0 20px}
+    h1{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:6px}
+    .meta{font-size:0.8rem;color:#888;margin-bottom:24px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
+    .empty{text-align:center;padding:60px;color:#999}
+    @media(max-width:600px){.grid{grid-template-columns:1fr}.header-inner{height:60px}.logo img{height:44px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="logo"><a href="/"><img src="/Skimelogo.png" alt="Skime"></a></div>
+  </div>
+</header>
+<div class="layout">
+  <h1>#${keyword}</h1>
+  <p class="meta">${rows.length} nyheter de senaste 24 timmarna</p>
+  ${rows.length ? `<div class="grid">${cards}</div>` : '<div class="empty">Inga nyheter hittades om detta ämne just nu.</div>'}
+  <p style="margin-top:32px;font-size:0.8rem;color:#999"><a href="/" style="color:#2563eb">← Tillbaka till Skime</a></p>
+</div>
+</body>
+</html>`);
+  } catch(e) {
+    res.status(500).send('Fel vid hämtning av artiklar.');
+  }
+});
+
 app.get('/api/news', async (req, res) => {
   try {
     const articles = await get({
@@ -227,6 +409,8 @@ GET ${SITE_URL}/api/regions`);
 app.get('/sitemap.xml', async (req, res) => {
   try {
     const now = new Date().toISOString();
+    const topics = await getTopics();
+    const topicUrls = topics.map(t => ({ loc: `${SITE_URL}/topic/${slugify(t)}`, priority: '0.6' }));
 
     const staticUrls = [
       { loc: `${SITE_URL}`, priority: '1.0' },
@@ -234,6 +418,7 @@ app.get('/sitemap.xml', async (req, res) => {
       { loc: `${SITE_URL}/integritetspolicy`, priority: '0.5' },
       ...CATEGORIES.map(c => ({ loc: `${SITE_URL}/?category=${c}`, priority: '0.8' })),
       ...ALL_REGIONS.map(r => ({ loc: `${SITE_URL}/?region=${encodeURIComponent(r)}`, priority: '0.7' })),
+      ...topicUrls,
     ];
 
     res.type('application/xml');
