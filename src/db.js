@@ -74,6 +74,7 @@ const SPORT_KEYWORDS = {
     'fifa vm','vm-trupp','vm-uttagen','vm-premiar','vm-final 2026',
     'fotbolls vm','världsmästerskapet 2026'
   ],
+  shl: [
     'shl ','swedish hockey league','rögle','skellefteå aik','frölunda','djurgårdens hockey',
     'brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71',
     'timrå','oskarshamn','leksand','modo','sm-final','sm-guld hockey',
