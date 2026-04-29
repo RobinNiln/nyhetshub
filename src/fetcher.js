@@ -75,10 +75,32 @@ const SOURCES = {
 
   // ── SPORT-KÄLLOR (nationella) ─────────────────────────────────────────────
   sport_national: [
-    { name: 'SVT Sport',        url: 'https://www.svt.se/sport/rss.xml' },
-    { name: 'Aftonbladet Sport', url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/' },
-    { name: 'Expressen Sport',  url: 'https://feeds.expressen.se/sport/' },
-    { name: 'DN Sport',         url: 'https://www.dn.se/rss/sport' },
+    { name: 'SVT Sport',          url: 'https://www.svt.se/sport/rss.xml' },
+    { name: 'Aftonbladet Sport',  url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/' },
+    { name: 'Expressen Sport',    url: 'https://feeds.expressen.se/sport/' },
+    { name: 'DN Sport',           url: 'https://www.dn.se/rss/sport' },
+    { name: 'GP Sport',           url: 'https://www.gp.se/rss/sport' },
+    { name: 'Sydsvenskan Sport',  url: 'https://www.sydsvenskan.se/sport/rss.xml' },
+    // Fotboll
+    { name: 'Fotbollskanalen',    url: 'https://www.fotbollskanalen.se/rss' },
+    { name: 'Fotbolldirekt',      url: 'https://www.fotbolldirekt.se/rss' },
+    // Hockey
+    { name: 'Hockeysverige',      url: 'https://www.hockeysverige.se/rss' },
+    { name: 'Hockeyexpressen',    url: 'https://www.hockeyexpressen.se/rss' },
+  ],
+
+  // ── SPORT-KÄLLOR (lokala – bidrar till ligafiltrering) ────────────────────
+  sport_local: [
+    // Allsvenskan-lag – lokaltidningar
+    { name: 'Barometern',         url: 'https://www.barometern.se/rss/sport',      region: 'Kalmar' },
+    { name: 'Borås Tidning',      url: 'https://www.bt.se/rss/sport',              region: 'Västra Götaland' },
+    { name: 'Corren',             url: 'https://www.corren.se/rss/sport',          region: 'Östergötland' },
+    { name: 'NT',                 url: 'https://www.nt.se/rss/sport',              region: 'Östergötland' },
+    { name: 'Norran',             url: 'https://www.norran.se/rss/sport',          region: 'Västerbotten' },
+    { name: 'Norrbottens-Kuriren',url: 'https://www.kuriren.nu/rss/sport',         region: 'Norrbotten' },
+    { name: 'HD Sport',           url: 'https://www.hd.se/rss/sport',              region: 'Skåne' },
+    { name: 'Sydsvenskan Sport',  url: 'https://www.sydsvenskan.se/sport/rss.xml', region: 'Skåne' },
+    { name: 'Expressen Sportbladet', url: 'https://feeds.expressen.se/sport/',     region: null },
   ],
 
   // ── REGIONALA KÄLLOR ──────────────────────────────────────────────────────
@@ -258,6 +280,7 @@ async function fetchAll() {
   const all = [
     ...SOURCES.national,
     ...SOURCES.sport_national,
+    ...SOURCES.sport_local,
     ...SOURCES.regional
   ];
   await fetchSources(all);
