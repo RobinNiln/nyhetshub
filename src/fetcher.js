@@ -29,7 +29,16 @@ const SKIP_PATTERNS = [
   /glädjebeskedet.*sänder/i,
   /följ.*snacket/i,
   /hockeysnacket/i,
-  // Ledare och opinion – aldrig med för objektivitetens skull
+  // Tekniska problem och e-tidning
+  /e-tidningen/i,
+  /tekniska problem med/i,
+  /problem med vår/i,
+  /just nu är det tekniska/i,
+  /veckans klickraket/i,
+  /klickraket/i,
+  /avsnitt \d+:/i,
+  /säsong \d+/i,
+  /poddavsnitt/i,
   /^ledare[:\.\s]/i,
   /^ledar[:\.\s]/i,
   /\bledarartikel\b/i,
