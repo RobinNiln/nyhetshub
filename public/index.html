@@ -356,17 +356,7 @@ function renderGrid(articles) {
     return;
   }
   document.getElementById('news-grid').innerHTML = articles.map((a, i) => {
-    const adHtml = (i > 0 && i % 9 === 0) ? `
-      <div style="grid-column:1/-1;text-align:center;">
-        <ins class="adsbygoogle"
-          style="display:block"
-          data-ad-client="ca-pub-5482392840942272"
-          data-ad-slot="auto"
-          data-ad-format="fluid"
-          data-ad-layout="in-article"
-          data-full-width-responsive="true"></ins>
-        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-      </div>` : '';
+    const adHtml = (i > 0 && i % 9 === 0) ? '<div style="grid-column:1/-1;text-align:center;"><ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-5482392840942272" data-ad-slot="auto" data-ad-format="fluid" data-ad-layout="in-article" data-full-width-responsive="true"></ins></div>' : '';
 
     const time = a.published_at
       ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
@@ -389,6 +379,8 @@ function renderGrid(articles) {
       <div class="card-time"><time itemprop="datePublished" datetime="${a.published_at}">${time}</time></div>
     </article>`;
   }).join('');
+  // Initiera eventuella nya annonser i flödet
+  try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
 }
 
 function renderTrending(articles) {
