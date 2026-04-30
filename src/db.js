@@ -62,6 +62,7 @@ const SPORT_KEYWORDS = {
     'göteborg fc','örebro sk fotboll','gais','degerfors if',
     'allsvenskt','allsvenska','serieledare fotboll'
   ],
+  allsvenskan_exclude: ['hockeyallsvenskan','hockey','ishockey','shl'],
   damallsvenskan: [
     'damallsvenskan','damfotboll','rosengård','djurgårdens dam','hammarby dam',
     'göteborg dam','linköping fc','piteå if dam','kif örebro','vittsjo','eskilstuna'
@@ -101,7 +102,14 @@ async function get({ category, region, sport } = {}) {
       return `title ILIKE $${params.length}`;
     });
     conditions.push(`(${kwConditions.join(' OR ')})`);
-  } else if (category === 'nyheter') {
+    // Exkludera ord som inte ska vara med
+    const excludeKey = sport + '_exclude';
+    if (SPORT_KEYWORDS[excludeKey]) {
+      SPORT_KEYWORDS[excludeKey].forEach(kw => {
+        params.push(`%${kw}%`);
+        conditions.push(`title NOT ILIKE $${params.length}`);
+      });
+    } else if (category === 'nyheter') {
     // Nyheter = top stories från nationella källor – aldrig sport eller regionalt
     conditions.push(`region IS NULL`);
     conditions.push(`category != 'sport'`);
