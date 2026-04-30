@@ -102,8 +102,9 @@ async function get({ category, region, sport } = {}) {
     });
     conditions.push(`(${kwConditions.join(' OR ')})`);
   } else if (category === 'nyheter') {
-    // Nyheter = top stories – det som flest skriver om, oavsett kategori
+    // Nyheter = top stories från nationella källor – aldrig sport eller regionalt
     conditions.push(`region IS NULL`);
+    conditions.push(`category != 'sport'`);
   } else if (category && category !== 'alla') {
     params.push(category);
     conditions.push(`category = $${params.length}`);
