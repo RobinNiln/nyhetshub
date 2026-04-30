@@ -55,15 +55,13 @@ async function boost(keyword) {
 
 const SPORT_KEYWORDS = {
   allsvenskan: [
-    'allsvenskan', 'fotbollsallsvenskan',
-    'djurgårdens ff', 'djurgården ff', 'hammarby if', 'hammarby fotboll',
-    'malmö ff', 'ifk göteborg', 'ifk norrköping',
-    'brommapojkarna', 'if sirius', 'häcken', 'if elfsborg', 'kalmar ff',
-    'västerås sk fotboll', 'halmstad bk', 'mjällby aif',
-    'göteborg fc', 'örebro sk fotboll', 'gais', 'degerfors if',
-    'allsvenskt', 'allsvenska', 'serieledare fotboll'
+    'allsvenskan', 'fotbollsallsvenskan', 'allsvenskt', 'allsvenska',
+    'djurgården', 'hammarby', 'malmö ff', 'ifk göteborg', 'ifk norrköping',
+    'brommapojkarna', 'sirius fc', 'häcken', 'elfsborg', 'kalmar ff',
+    'västerås sk', 'halmstad bk', 'mjällby', 'göteborg fc',
+    'örebro sk', 'gais', 'degerfors'
   ],
-  allsvenskan_exclude: ['hockeyallsvenskan', 'hockey', 'ishockey', 'shl'],
+  allsvenskan_exclude: ['hockeyallsvenskan', 'ishockey'],
   damallsvenskan: [
     'damallsvenskan', 'damfotboll', 'rosengård', 'djurgårdens dam',
     'hammarby dam', 'göteborg dam', 'linköping fc', 'piteå if dam',
