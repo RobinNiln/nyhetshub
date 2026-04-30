@@ -366,6 +366,14 @@ app.get('/integritetspolicy', (req, res) => {
 app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 
 // ── robots.txt ────────────────────────────────────────────────
+// Redirect skime.se → www.skime.se
+app.use((req, res, next) => {
+  if (req.hostname === 'skime.se') {
+    return res.redirect(301, `https://www.skime.se${req.originalUrl}`);
+  }
+  next();
+});
+
 app.get('/ads.txt', (req, res) => {
   res.type('text/plain');
   res.send('google.com, pub-5482392840942272, DIRECT, f08c47fec0942fa0');
