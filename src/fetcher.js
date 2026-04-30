@@ -70,6 +70,16 @@ const SKIP_PATTERNS = [
   /^replik[:\.\s]/i,
   /^chefredaktör/i,
   /^chefredaktören/i,
+  // Bolag och nyföretag
+  /nytt.*bolag/i,
+  /nystartat.*bolag/i,
+  /startar nytt.*bolag/i,
+  /holdingbolag/i,
+  /investmentbolag/i,
+  / ab startades/i,
+  /får nytt bolag/i,
+  /\d+-åring startar/i,
+  /konkurs för/i,
 ];
 
 function shouldSkip(title, url = '') {
