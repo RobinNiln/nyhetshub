@@ -172,6 +172,17 @@
   <div class="nav-inner" style="padding-left:24px; gap:2px;"></div>
 </div>
 
+<!-- Leaderboard annons -->
+<div style="max-width:1200px;margin:12px auto;padding:0 20px;text-align:center;">
+  <ins class="adsbygoogle"
+    style="display:block"
+    data-ad-client="ca-pub-5482392840942272"
+    data-ad-slot="auto"
+    data-ad-format="horizontal"
+    data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
 <div class="mobile-trending" id="mobile-trending-box">
   <div class="widget-title">🔥 Trending</div>
   <div id="trending-mobile" role="list"></div>
@@ -190,6 +201,15 @@
     <div class="widget">
       <div class="widget-title" id="t-trending">🔥 Trending</div>
       <div id="trending" role="list"></div>
+    </div>
+    <div class="widget" style="text-align:center;padding:8px;">
+      <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-5482392840942272"
+        data-ad-slot="auto"
+        data-ad-format="rectangle"
+        data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </div>
     <div class="widget">
       <div class="widget-title">📈 Mest läst idag</div>
@@ -336,6 +356,18 @@ function renderGrid(articles) {
     return;
   }
   document.getElementById('news-grid').innerHTML = articles.map((a, i) => {
+    const adHtml = (i > 0 && i % 9 === 0) ? `
+      <div style="grid-column:1/-1;text-align:center;">
+        <ins class="adsbygoogle"
+          style="display:block"
+          data-ad-client="ca-pub-5482392840942272"
+          data-ad-slot="auto"
+          data-ad-format="fluid"
+          data-ad-layout="in-article"
+          data-full-width-responsive="true"></ins>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      </div>` : '';
+
     const time = a.published_at
       ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
       : '';
@@ -349,7 +381,7 @@ function renderGrid(articles) {
       ).join('')}
       ${extraCount > 0 ? `<span class="source-count">+${extraCount} till</span>` : ''}
     </div>`;
-    return `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
+    return adHtml + `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
       <div class="card-top"><span class="badge">${label}</span></div>
       <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url" onclick="trackClick('${a.url}')">${a.title}</a>
       ${a.ingress ? `<div class="card-ingress" itemprop="description">${a.ingress}</div>` : ''}
