@@ -20,6 +20,8 @@ async function init() {
       fetched_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT');
+  await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS ingress TEXT');
   await pool.query(`
     CREATE TABLE IF NOT EXISTS article_clicks (
       id SERIAL PRIMARY KEY,
@@ -27,10 +29,10 @@ async function init() {
       clicked_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_clicks_url ON article_clicks(url)`);
-  await pool.query(`CREATE INDEX IF NOT EXISTS idx_clicks_time ON article_clicks(clicked_at)`);
-  const { rows } = await pool.query(`SELECT COUNT(*) FROM articles`);
-  console.log(`DB: ${rows[0].count} artiklar i databasen`);
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_url ON article_clicks(url)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_time ON article_clicks(clicked_at)');
+  const { rows } = await pool.query('SELECT COUNT(*) FROM articles');
+  console.log('DB: ' + rows[0].count + ' artiklar i databasen');
 }
 
 async function save(article) {
@@ -44,93 +46,95 @@ async function save(article) {
 }
 
 async function boost(keyword) {
-  // Boost begränsad – max 10 per artikel så score inte skenar
   await pool.query(
     `UPDATE articles SET score = LEAST(score + 1, 10)
      WHERE title ILIKE $1 AND fetched_at > NOW() - INTERVAL '3 hours'`,
-    [`%${keyword}%`]
+    ['%' + keyword + '%']
   );
 }
 
 const SPORT_KEYWORDS = {
   allsvenskan: [
-    'allsvenskan','fotbollsallsvenskan',
-    'djurgårdens ff','djurgården ff','hammarby if','hammarby fotboll',
-    'malmö ff','ifk göteborg','ifk norrköping',
-    'brommapojkarna','if sirius','häcken','if elfsborg','kalmar ff',
-    'västerås sk fotboll','halmstad bk','mjällby aif',
-    'göteborg fc','örebro sk fotboll','gais','degerfors if',
-    'allsvenskt','allsvenska','serieledare fotboll'
+    'allsvenskan', 'fotbollsallsvenskan',
+    'djurgårdens ff', 'djurgården ff', 'hammarby if', 'hammarby fotboll',
+    'malmö ff', 'ifk göteborg', 'ifk norrköping',
+    'brommapojkarna', 'if sirius', 'häcken', 'if elfsborg', 'kalmar ff',
+    'västerås sk fotboll', 'halmstad bk', 'mjällby aif',
+    'göteborg fc', 'örebro sk fotboll', 'gais', 'degerfors if',
+    'allsvenskt', 'allsvenska', 'serieledare fotboll'
   ],
-  allsvenskan_exclude: ['hockeyallsvenskan','hockey','ishockey','shl'],
+  allsvenskan_exclude: ['hockeyallsvenskan', 'hockey', 'ishockey', 'shl'],
   damallsvenskan: [
-    'damallsvenskan','damfotboll','rosengård','djurgårdens dam','hammarby dam',
-    'göteborg dam','linköping fc','piteå if dam','kif örebro','vittsjo','eskilstuna'
+    'damallsvenskan', 'damfotboll', 'rosengård', 'djurgårdens dam',
+    'hammarby dam', 'göteborg dam', 'linköping fc', 'piteå if dam',
+    'kif örebro', 'vittsjo', 'eskilstuna'
   ],
   landslaget_fotboll: [
-    'herrlandslaget','svenska landslaget','blågult','vm-kval','em-kval',
-    'andersson tränar','zlatans','ibrahimovic','landslagsuttagen',
-    'svenska fotbollsförbundet','sfv ','landslagstruppen'
+    'herrlandslaget', 'svenska landslaget', 'blågult', 'vm-kval', 'em-kval',
+    'andersson tränar', 'ibrahimovic', 'landslagsuttagen',
+    'svenska fotbollsförbundet', 'landslagstruppen'
   ],
   vm2026: [
-    'vm 2026','fotbolls-vm','world cup 2026','vm-slutspel','vm-gruppspel',
-    'vm-kval','vm-biljett','usa 2026','kanada 2026','mexiko 2026',
-    'fifa vm','vm-trupp','vm-uttagen','vm-premiar','vm-final 2026',
-    'fotbolls vm','världsmästerskapet 2026'
+    'vm 2026', 'fotbolls-vm', 'world cup 2026', 'vm-slutspel', 'vm-gruppspel',
+    'vm-kval', 'vm-biljett', 'usa 2026', 'kanada 2026', 'mexiko 2026',
+    'fifa vm', 'vm-trupp', 'vm-uttagen', 'vm-premiar', 'vm-final 2026',
+    'fotbolls vm', 'världsmästerskapet 2026'
   ],
   shl: [
-    'shl ','swedish hockey league','rögle','skellefteå aik','frölunda','djurgårdens hockey',
-    'brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71',
-    'timrå','oskarshamn','leksand','modo','sm-final','sm-guld hockey',
-    'tre kronor','ishockeyförbundet'
-  ],
+    'shl ', 'swedish hockey league', 'rögle', 'skellefteå aik', 'frölunda',
+    'djurgårdens hockey', 'brynäs', 'luleå hockey', 'linköping hc',
+    'örebro hockey', 'färjestad', 'hv71', 'timrå', 'oskarshamn',
+    'leksand', 'modo', 'sm-final', 'sm-guld hockey',
+    'tre kronor', 'ishockeyförbundet'
+  ]
 };
 
-async function get({ category, region, sport } = {}) {
-  const conditions = [`fetched_at > NOW() - INTERVAL '24 hours'`];
+async function get(opts) {
+  const category = opts && opts.category;
+  const region = opts && opts.region;
+  const sport = opts && opts.sport;
+
+  const conditions = ["fetched_at > NOW() - INTERVAL '24 hours'"];
   const params = [];
 
   if (region) {
     params.push(region);
-    conditions.push(`region = $${params.length}`);
+    conditions.push('region = $' + params.length);
   } else if (sport && SPORT_KEYWORDS[sport]) {
-    // Filtrera sport-underkategori via title-sökning
-    conditions.push(`category = 'sport'`);
+    conditions.push("category = 'sport'");
     const kws = SPORT_KEYWORDS[sport];
-    const kwConditions = kws.map(kw => {
-      params.push(`%${kw}%`);
-      return `title ILIKE $${params.length}`;
+    const kwConditions = kws.map(function(kw) {
+      params.push('%' + kw + '%');
+      return 'title ILIKE $' + params.length;
     });
-    conditions.push(`(${kwConditions.join(' OR ')})`);
-    // Exkludera ord som inte ska vara med
+    conditions.push('(' + kwConditions.join(' OR ') + ')');
     const excludeKey = sport + '_exclude';
     if (SPORT_KEYWORDS[excludeKey]) {
-      SPORT_KEYWORDS[excludeKey].forEach(kw => {
-        params.push(`%${kw}%`);
-        conditions.push(`title NOT ILIKE $${params.length}`);
+      SPORT_KEYWORDS[excludeKey].forEach(function(kw) {
+        params.push('%' + kw + '%');
+        conditions.push('title NOT ILIKE $' + params.length);
       });
-    } else if (category === 'nyheter') {
-    // Nyheter = top stories från nationella källor – aldrig sport eller regionalt
-    conditions.push(`region IS NULL`);
-    conditions.push(`category != 'sport'`);
+    }
+  } else if (category === 'nyheter') {
+    conditions.push('region IS NULL');
+    conditions.push("category != 'sport'");
   } else if (category && category !== 'alla') {
     params.push(category);
-    conditions.push(`category = $${params.length}`);
+    conditions.push('category = $' + params.length);
     if (category !== 'sport') {
-      conditions.push(`region IS NULL`);
+      conditions.push('region IS NULL');
     }
   }
 
-  // Hämta alla artiklar, sortera på publiceringstid primärt
-  const { rows } = await pool.query(`
-    SELECT title, url, source, category, region, ingress, published_at, score
-    FROM articles
-    WHERE ${conditions.join(' AND ')}
-    ORDER BY published_at DESC, score DESC
-    LIMIT 300
-  `, params);
+  const { rows } = await pool.query(
+    'SELECT title, url, source, category, region, ingress, published_at, score ' +
+    'FROM articles ' +
+    'WHERE ' + conditions.join(' AND ') + ' ' +
+    'ORDER BY published_at DESC, score DESC ' +
+    'LIMIT 300',
+    params
+  );
 
-  // Gruppera liknande rubriker
   const groups = [];
   const seen = new Map();
 
@@ -169,9 +173,9 @@ async function get({ category, region, sport } = {}) {
 
 async function lastFetched() {
   const { rows } = await pool.query(
-    `SELECT fetched_at FROM articles ORDER BY fetched_at DESC LIMIT 1`
+    'SELECT fetched_at FROM articles ORDER BY fetched_at DESC LIMIT 1'
   );
-  return rows[0]?.fetched_at || null;
+  return rows[0] ? rows[0].fetched_at : null;
 }
 
 module.exports = { init, save, boost, get, lastFetched };
