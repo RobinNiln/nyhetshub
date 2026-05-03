@@ -143,7 +143,25 @@
     .spinner { width:24px; height:24px; border:2px solid var(--border); border-top-color:var(--red); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 10px; }
     @keyframes spin { to{transform:rotate(360deg)} }
 
-    footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
+    .section-divider { display:flex; align-items:center; gap:10px; margin:20px 0 16px; }
+    .divider-line { height:0.5px; flex:1; background:var(--border); }
+    .divider-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); white-space:nowrap; }
+
+    .top-story-main { background:var(--card); border:1px solid var(--border); border-radius:8px; border-left:3px solid #2563eb; padding:18px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; }
+    .top-story-main:hover { background:var(--hover); }
+    .top-story-main .ts-meta { font-size:11px; color:#2563eb; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+    .top-story-main .ts-title { font-size:17px; font-weight:700; line-height:1.4; color:var(--text); margin-bottom:8px; font-family:'Syne',sans-serif; }
+    .top-story-main .ts-ingress { font-size:13px; color:var(--ingress); line-height:1.5; margin-bottom:12px; }
+
+    .top-stories-small { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .top-story-small { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px; cursor:pointer; transition:background 0.15s; }
+    .top-story-small:hover { background:var(--hover); }
+    .top-story-small .ts-meta { font-size:11px; color:#2563eb; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    .top-story-small .ts-title { font-size:14px; font-weight:600; line-height:1.4; color:var(--text); margin-bottom:10px; font-family:'Syne',sans-serif; }
+
+    @media(max-width:600px){ .top-stories-small { grid-template-columns:1fr; } }
+
+    .footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
     footer a { color:var(--muted); text-decoration:none; }
     footer a:hover { color:var(--red); }
   </style>
@@ -193,10 +211,36 @@
 
 <div class="layout">
   <main id="main-content">
+    <!-- Toppnyheter – visas bara på nyheter nationellt -->
+    <div id="top-stories-section" style="display:none; margin-bottom:20px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="width:3px;height:16px;background:#2563eb;border-radius:2px;"></div>
+        <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);">Toppnyheter</span>
+        <span class="live-dot"></span>
+      </div>
+      <div id="top-stories-grid"></div>
+      <div class="section-divider">
+        <div class="divider-line"></div>
+        <span class="divider-label">Senaste nytt</span>
+        <div class="divider-line"></div>
+      </div>
+    </div>
     <div class="status-bar" id="status-bar" aria-live="polite"></div>
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
   </main>
   <aside class="sidebar" aria-label="Sidebar">
+    <div class="widget">
+      <div class="widget-title">📌 Utforska</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
+        <a class="topic-pill" href="/topic/allsvenskan">Allsvenskan</a>
+        <a class="topic-pill" href="/topic/shl">SHL</a>
+        <a class="topic-pill" href="/topic/vm-2026">VM 2026</a>
+        <a class="topic-pill" href="/topic/valet-2026">Valet 2026</a>
+        <a class="topic-pill" href="/?category=utrikes">Utrikes</a>
+        <a class="topic-pill" href="/?category=naringsliv">Näringsliv</a>
+        <a class="topic-pill" href="/?category=tech">Tech</a>
+      </div>
+    </div>
     <div class="widget">
       <div class="widget-title">🏷️ Snackas om</div>
       <div id="trending-topics" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
@@ -318,6 +362,7 @@ function selectTab(val, el) {
   history.pushState({}, '', newUrl);
   renderSportSubs();
   load();
+  loadTopStories();
 }
 
 async function load() {
@@ -417,6 +462,48 @@ if (savedTheme === 'dark') {
   document.getElementById('theme-btn').textContent = '☀️';
 }
 
+async function loadTopStories() {
+  const section = document.getElementById('top-stories-section');
+  if (mode !== 'national' || current !== 'nyheter') {
+    section.style.display = 'none';
+    return;
+  }
+  try {
+    const res = await fetch('/api/top-stories');
+    const stories = await res.json();
+    if (!stories.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    const CAT = {nyheter:'Nyheter',politik:'Politik',samhalle:'Samhälle',naringsliv:'Näringsliv',sport:'Sport',tech:'Tech',kultur:'Kultur',utrikes:'Utrikes'};
+    const main = stories[0];
+    const small = stories.slice(1, 5);
+    const sourcesHtml = (a) => {
+      const vis = a.sources.slice(0,3);
+      const extra = a.sources.length - vis.length;
+      return vis.map(s => `<a class="source-link" href="${s.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${s.name}</a>`).join('')
+        + (extra > 0 ? `<span class="source-count">+${extra} till</span>` : '');
+    };
+    const time = (a) => a.published_at ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+
+    document.getElementById('top-stories-grid').innerHTML = `
+      <div class="top-story-main" onclick="window.open('${main.url}','_blank')" itemprop="headline">
+        <div class="ts-meta">${CAT[main.category]||main.category} · ${main.sources.length} ${main.sources.length===1?'källa':'källor'}</div>
+        <div class="ts-title">${main.title}</div>
+        ${main.ingress ? `<div class="ts-ingress">${main.ingress}</div>` : ''}
+        <div class="sources-row">${sourcesHtml(main)}</div>
+      </div>
+      <div class="top-stories-small">
+        ${small.map(a => `
+          <div class="top-story-small" onclick="window.open('${a.url}','_blank')">
+            <div class="ts-meta">${CAT[a.category]||a.category} · ${a.sources.length} ${a.sources.length===1?'källa':'källor'} · ${time(a)}</div>
+            <div class="ts-title">${a.title}</div>
+            <div class="sources-row">${sourcesHtml(a)}</div>
+          </div>`).join('')}
+      </div>`;
+  } catch(e) {
+    section.style.display = 'none';
+  }
+}
+
 async function loadTopics() {
   try {
     const res = await fetch('/api/trending-topics');
@@ -454,9 +541,11 @@ async function loadMostRead() {
 renderTabs();
 renderSportSubs();
 load();
+loadTopStories();
 loadMostRead();
 loadTopics();
 setInterval(load, 15 * 60 * 1000);
+setInterval(loadTopStories, 15 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);
 setInterval(loadTopics, 60 * 60 * 1000);
 </script>
