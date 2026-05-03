@@ -59,13 +59,36 @@ const SPORT_KEYWORDS = {
     'djurgården', 'hammarby', 'malmö ff', 'ifk göteborg', 'ifk norrköping',
     'brommapojkarna', 'sirius fc', 'häcken', 'elfsborg', 'kalmar ff',
     'västerås sk', 'halmstad bk', 'mjällby', 'göteborg fc',
-    'örebro sk', 'gais', 'degerfors'
+    'örebro sk', 'gais', 'degerfors', 'aik fotboll',
+    'fotbollssäsongen', 'seriepremiär', 'fotbollsmatch',
+    'allsvenska matchen', 'allsvenska tabellen'
   ],
   allsvenskan_exclude: ['hockeyallsvenskan', 'ishockey'],
+  allsvenskan_exclude_sources: ['Hockeysverige', 'Hockeyexpressen'],
   damallsvenskan: [
-    'damallsvenskan', 'damfotboll', 'rosengård', 'djurgårdens dam',
-    'hammarby dam', 'göteborg dam', 'linköping fc', 'piteå if dam',
-    'kif örebro', 'vittsjo', 'eskilstuna'
+    'damallsvenskan', 'damfotboll', 'damernas allsvenska',
+    'rosengård', 'fc rosengård',
+    'djurgårdens dam', 'djurgården dam',
+    'hammarby dam', 'bajen dam',
+    'göteborg dam', 'ikf göteborg dam',
+    'linköping fc', 'lfc dam',
+    'piteå if', 'piteå dam',
+    'kif örebro', 'vittsjo', 'vittsjö',
+    'eskilstuna united', 'eskilstuna dam',
+    'damernas fotboll', 'svenska damlandslaget',
+    'damfotbollen', 'damernas serie',
+    'wp women', 'damernas vm'
+  ],
+  vm2026: [
+    'vm 2026', 'fotbolls-vm', 'fotbolls vm', 'world cup 2026',
+    'vm-slutspel', 'vm-gruppspel', 'vm-kval', 'vm-biljett',
+    'usa 2026', 'kanada 2026', 'mexiko 2026', 'nordamerika vm',
+    'fifa vm', 'fifa world cup', 'vm-trupp', 'vm-uttagen',
+    'vm-premiar', 'vm-final 2026', 'världsmästerskapet 2026',
+    'vm-lottning', 'vm-grupp', 'vm-match', 'vm-spel',
+    'vm i fotboll', 'fotbolls-vm 2026', 'vm-biljetter',
+    'vm-spelschema', 'vm-arenor', 'vm-städer',
+    'trump vm', 'vm usa kanada'
   ],
   landslaget_fotboll: [
     'herrlandslaget', 'svenska landslaget', 'blågult', 'vm-kval', 'em-kval',
@@ -79,11 +102,12 @@ const SPORT_KEYWORDS = {
     'fotbolls vm', 'världsmästerskapet 2026'
   ],
   shl: [
-    'shl ', 'swedish hockey league', 'rögle', 'skellefteå aik', 'frölunda',
+    'shl', 'swedish hockey league', 'rögle', 'skellefteå aik', 'frölunda',
     'djurgårdens hockey', 'brynäs', 'luleå hockey', 'linköping hc',
     'örebro hockey', 'färjestad', 'hv71', 'timrå', 'oskarshamn',
-    'leksand', 'modo', 'sm-final', 'sm-guld hockey',
-    'tre kronor', 'ishockeyförbundet'
+    'leksand', 'modo hockey', 'sm-final hockey', 'sm-guld hockey',
+    'tre kronor', 'ishockeyförbundet', 'hockeyfinalen',
+    'shl-säsongen', 'shl-matchen', 'hockeysäsongen', 'slutspelet hockey'
   ]
 };
 
@@ -92,7 +116,7 @@ async function get(opts) {
   const region = opts && opts.region;
   const sport = opts && opts.sport;
 
-  const conditions = ["fetched_at > NOW() - INTERVAL '24 hours'"];
+  const conditions = ["fetched_at > NOW() - INTERVAL '36 hours'"];
   const params = [];
 
   if (region) {
@@ -113,6 +137,13 @@ async function get(opts) {
         conditions.push('title NOT ILIKE $' + params.length);
       });
     }
+    const excludeSourcesKey = sport + '_exclude_sources';
+    if (SPORT_KEYWORDS[excludeSourcesKey]) {
+      SPORT_KEYWORDS[excludeSourcesKey].forEach(function(src) {
+        params.push(src);
+        conditions.push('source != $' + params.length);
+      });
+    }
   } else if (category === 'nyheter') {
     conditions.push('region IS NULL');
     conditions.push("category != 'sport'");
@@ -129,7 +160,7 @@ async function get(opts) {
     'FROM articles ' +
     'WHERE ' + conditions.join(' AND ') + ' ' +
     'ORDER BY published_at DESC, score DESC ' +
-    'LIMIT 300',
+    'LIMIT 400',
     params
   );
 
@@ -166,7 +197,7 @@ async function get(opts) {
     }
   }
 
-  return groups.slice(0, 60);
+  return groups.slice(0, 80);
 }
 
 async function lastFetched() {
