@@ -68,13 +68,15 @@
     .logo img { height:100px; width:auto; display:block; filter:none; }
     [data-theme="dark"] .logo img { filter:invert(1); }
     .header-right { margin-left:auto; display:flex; gap:8px; align-items:center; }
+    .tagline { font-size:0.78rem; color:var(--muted); font-family:'Inter',sans-serif; letter-spacing:0.01em; white-space:nowrap; }
     .date-display { font-size:0.78rem; color:var(--muted); font-family:'Inter',sans-serif; white-space:nowrap; }
     .pill-btn { background:transparent; border:1px solid var(--border); color:var(--muted); padding:5px 13px; border-radius:20px; cursor:pointer; font-size:0.78rem; font-family:'Inter',sans-serif; transition:all 0.15s; }
     .pill-btn:hover { border-color:var(--red); color:var(--text); }
 
     @media(max-width:600px){
-      .header-inner { height:68px; }
-      .logo img { height:52px; }
+      .header-inner { height:auto; padding:10px 0; flex-wrap:wrap; }
+      .logo img { height:44px; }
+      .tagline { display:block; font-size:0.7rem; width:100%; order:3; padding:4px 0 6px; }
       .date-display { display:none; }
     }
 
@@ -150,8 +152,9 @@
 <header>
   <div class="header-inner">
     <div class="logo"><a href="/"><img src="/Skimelogo.png" alt="Skime – Vi sweper nyhetsinternet åt dig"></a></div>
-    <div id="header-date" class="date-display"></div>
+    <div class="tagline">Alla nyheter på ett ställe, utan krångel</div>
     <div class="header-right">
+      <div id="header-date" class="date-display"></div>
       <button class="pill-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Växla mörkt läge">🌙</button>
       <button class="pill-btn" onclick="toggleLang()" id="lang-btn" aria-label="Byt språk">EN</button>
     </div>
