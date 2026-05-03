@@ -207,4 +207,64 @@ async function lastFetched() {
   return rows[0] ? rows[0].fetched_at : null;
 }
 
-module.exports = { init, save, boost, get, lastFetched };
+async function getTopStories() {
+  // Hämta artiklar från senaste 12 timmar med minst 2 score (flest källor)
+  const { rows } = await pool.query(`
+    SELECT title, url, source, category, region, ingress, published_at, score
+    FROM articles
+    WHERE fetched_at > NOW() - INTERVAL '12 hours'
+    AND region IS NULL
+    AND score >= 2
+    ORDER BY published_at DESC, score DESC
+    LIMIT 400
+  `);
+
+  // Gruppera dubletter
+  const groups = [];
+  const seen = new Map();
+
+  for (const row of rows) {
+    const key = row.title
+      .toLowerCase()
+      .replace(/[^a-zåäö\s]/g, '')
+      .split(/\s+/)
+      .slice(0, 5)
+      .join(' ');
+
+    if (seen.has(key)) {
+      const group = seen.get(key);
+      if (group.sources.length < 6) {
+        group.sources.push({ name: row.source, url: row.url });
+      }
+    } else {
+      const group = {
+        title: row.title,
+        url: row.url,
+        source: row.source,
+        sources: [{ name: row.source, url: row.url }],
+        category: row.category,
+        region: row.region,
+        ingress: row.ingress,
+        published_at: row.published_at,
+        score: row.score
+      };
+      seen.set(key, group);
+      groups.push(group);
+    }
+  }
+
+  // Beräkna toppnyhet-score: källantal × recency_bonus
+  const now = Date.now();
+  const scored = groups.map(function(a) {
+    const ageHours = (now - new Date(a.published_at).getTime()) / (1000 * 60 * 60);
+    const recencyBonus = Math.max(0, 1 - (ageHours / 12)); // 1.0 → 0.0 över 12 timmar
+    const topScore = a.sources.length * (1 + recencyBonus);
+    return Object.assign({}, a, { topScore: topScore });
+  });
+
+  // Sortera på topScore, returnera top 5
+  scored.sort(function(a, b) { return b.topScore - a.topScore; });
+  return scored.slice(0, 5);
+}
+
+module.exports = { init, save, boost, get, lastFetched, getTopStories };
