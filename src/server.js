@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
-const { init, get, lastFetched } = require('./db');
+const { init, get, lastFetched, getTopStories } = require('./db');
 const { fetchAll } = require('./fetcher');
 
 const app = express();
@@ -295,6 +295,15 @@ app.get('/topic/:slug', async (req, res) => {
 </html>`);
   } catch(e) {
     res.status(500).send('Fel vid hämtning av artiklar.');
+  }
+});
+
+app.get('/api/top-stories', async (req, res) => {
+  try {
+    const stories = await getTopStories();
+    res.json(stories);
+  } catch(e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
