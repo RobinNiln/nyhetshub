@@ -171,12 +171,41 @@ app.get('/api/trending-topics', async (req, res) => {
   res.json(topics.map(t => ({ word: t, slug: slugify(t) })));
 });
 
+// Fasta topic-definitioner för viktiga ämnen
+const FIXED_TOPICS = {
+  'allsvenskan': {
+    title: 'Allsvenskan',
+    keywords: ['allsvenskan','malmö ff','djurgården','hammarby','ifk göteborg','ifk norrköping','häcken','elfsborg','kalmar ff','mjällby','gais','degerfors','brommapojkarna','västerås sk','örebro sk','halmstad bk','göteborg fc'],
+    desc: 'Senaste nytt från Allsvenskan – matcher, tabeller och transfernyheter.'
+  },
+  'shl': {
+    title: 'SHL',
+    keywords: ['shl','rögle','skellefteå aik','frölunda','djurgårdens hockey','brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71','timrå','oskarshamn','leksand','modo hockey','sm-final','tre kronor'],
+    desc: 'Senaste nytt från SHL – matcher, SM-slutspel och hockeynyheter.'
+  },
+  'vm-2026': {
+    title: 'VM 2026',
+    keywords: ['vm 2026','fotbolls-vm','world cup 2026','vm-kval','vm-trupp','fifa vm','vm-lottning','vm-grupp','vm-match','fotbolls vm','världsmästerskapet 2026'],
+    desc: 'Allt om fotbolls-VM 2026 i USA, Kanada och Mexiko.'
+  },
+  'valet-2026': {
+    title: 'Valet 2026',
+    keywords: ['valet 2026','riksdagsvalet','kommunalvalet','regionvalet','partiledardebatt','valrörelsen','valresultat','opinionsundersökning','väljarstöd','valmanifest','valanalys','valets'],
+    desc: 'Nyheter och analyser inför riksdagsvalet 2026.'
+  }
+};
+
 // Topic-sida – /topic/:slug
 app.get('/topic/:slug', async (req, res) => {
   const slug = req.params.slug;
+
+  // Kolla fasta topics först
+  const fixed = FIXED_TOPICS[slug];
   const topics = await getTopics();
   const match = topics.find(t => slugify(t) === slug);
-  const keyword = match || slug;
+  const keyword = fixed ? null : (match || slug);
+  const pageTitle = fixed ? fixed.title : (match || slug.charAt(0).toUpperCase() + slug.slice(1));
+  const pageDesc = fixed ? fixed.desc : `Senaste nyheterna om ${pageTitle} från svenska medier.`;
 
   try {
     const { Pool } = require('pg');
@@ -184,14 +213,31 @@ app.get('/topic/:slug', async (req, res) => {
       connectionString: process.env.DATABASE_URL,
       ssl: { rejectUnauthorized: false }
     });
-    const { rows } = await pool.query(`
-      SELECT title, url, source, ingress, published_at, category
-      FROM articles
-      WHERE title ILIKE $1
-      AND fetched_at > NOW() - INTERVAL '24 hours'
-      ORDER BY published_at DESC
-      LIMIT 60
-    `, [`%${keyword}%`]);
+
+    let rows;
+    if (fixed) {
+      const kwConditions = fixed.keywords.map((kw, i) => `title ILIKE $${i + 1}`);
+      const params = fixed.keywords.map(kw => `%${kw}%`);
+      const { rows: r } = await pool.query(`
+        SELECT title, url, source, ingress, published_at, category
+        FROM articles
+        WHERE (${kwConditions.join(' OR ')})
+        AND fetched_at > NOW() - INTERVAL '24 hours'
+        ORDER BY published_at DESC
+        LIMIT 60
+      `, params);
+      rows = r;
+    } else {
+      const { rows: r } = await pool.query(`
+        SELECT title, url, source, ingress, published_at, category
+        FROM articles
+        WHERE title ILIKE $1
+        AND fetched_at > NOW() - INTERVAL '24 hours'
+        ORDER BY published_at DESC
+        LIMIT 60
+      `, [`%${keyword}%`]);
+      rows = r;
+    }
 
     const cards = rows.map(a => {
       const time = a.published_at
@@ -212,8 +258,8 @@ app.get('/topic/:slug', async (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>#${keyword} – Skime</title>
-  <meta name="description" content="Senaste nyheterna om ${keyword} från svenska medier – samlat på Skime.">
+  <title>${pageTitle} – Skime</title>
+  <meta name="description" content="${pageDesc}">
   <link rel="canonical" href="https://www.skime.se/topic/${slug}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -225,7 +271,8 @@ app.get('/topic/:slug', async (req, res) => {
     .logo img{height:60px;width:auto}
     .layout{max-width:1200px;margin:32px auto;padding:0 20px}
     h1{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:6px}
-    .meta{font-size:0.8rem;color:#888;margin-bottom:24px}
+    .meta{font-size:0.8rem;color:#888;margin-bottom:8px}
+    .desc{font-size:0.9rem;color:#555;margin-bottom:24px}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
     .empty{text-align:center;padding:60px;color:#999}
     @media(max-width:600px){.grid{grid-template-columns:1fr}.header-inner{height:60px}.logo img{height:44px}}
@@ -238,7 +285,8 @@ app.get('/topic/:slug', async (req, res) => {
   </div>
 </header>
 <div class="layout">
-  <h1>#${keyword}</h1>
+  <h1>${pageTitle}</h1>
+  <p class="desc">${pageDesc}</p>
   <p class="meta">${rows.length} nyheter de senaste 24 timmarna</p>
   ${rows.length ? `<div class="grid">${cards}</div>` : '<div class="empty">Inga nyheter hittades om detta ämne just nu.</div>'}
   <p style="margin-top:32px;font-size:0.8rem;color:#999"><a href="/" style="color:#2563eb">← Tillbaka till Skime</a></p>
