@@ -264,7 +264,7 @@ const KEYWORDS = {
   // Samhälle – infrastruktur, sjukvård, skola, brott, bostäder
   samhalle:   ['sjukhus','vård','region ','1177','ambulans','skola','förskola','gymnasium','bostäder','hyresrätt','infrastruktur','järnväg','motorväg','polis','brott','rättegång','dom ','häkta','gripen','brand ','räddningstjänst'],
   // Politik – strikt: partier, val, riksdag, regering som politisk aktör
-  politik:    ['riksdag','statsminister','riksdagen','socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet','centerpartiet','liberalerna','kristdemokraterna','miljöpartiet','partiet','partiledare','valet ','valresultat','opposition','koalition','eu-kommissionen','nato-toppmöte'],
+  politik:    ['riksdag','statsminister','riksdagen','socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet','centerpartiet','liberalerna','kristdemokraterna','miljöpartiet','partiledare','partiledardebatt','valet ','valresultat','opposition','koalition','eu-kommissionen','nato-toppmöte','regering ','regeringen','minister ','ministern','finansminister','utrikesminister','justitieminister','debatt i riksdagen','budgetpropositionen','riksdagsvalet','kommunalvalet','svt:s partiledardebatt','partiernas','riksdagsbeslut','riksdagsval'],
   utrikes:    ['usa ','trump','biden','ryssland','kina','ukraina','mellanöstern','fn ','nato ','internationell','konflikt','gaza','israel','putin'],
 };
 
