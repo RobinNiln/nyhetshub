@@ -110,13 +110,28 @@ const SOURCES = {
 
   // ── SPORT-KÄLLOR (lokala) ────────────────────────────────────────────────
   sport_local: [
-    { name: 'Barometern Sport',      url: 'https://www.barometern.se/rss/sport',      region: null },
-    { name: 'Borås Tidning Sport',   url: 'https://www.bt.se/rss/sport',              region: null },
-    { name: 'Corren Sport',          url: 'https://www.corren.se/rss/sport',          region: null },
-    { name: 'NT Sport',              url: 'https://www.nt.se/rss/sport',              region: null },
-    { name: 'Norran Sport',          url: 'https://www.norran.se/rss/sport',          region: null },
-    { name: 'Norrbottens-Kuriren Sport', url: 'https://www.kuriren.nu/rss/sport',     region: null },
-    { name: 'HD Sport',              url: 'https://www.hd.se/rss/sport',              region: null },
+    { name: 'Barometern Sport',          url: 'https://www.barometern.se/rss/sport',        region: null },
+    { name: 'Borås Tidning Sport',       url: 'https://www.bt.se/rss/sport',                region: null },
+    { name: 'Corren Sport',              url: 'https://www.corren.se/rss/sport',            region: null },
+    { name: 'NT Sport',                  url: 'https://www.nt.se/rss/sport',                region: null },
+    { name: 'Norran Sport',              url: 'https://www.norran.se/rss/sport',            region: null },
+    { name: 'Norrbottens-Kuriren Sport', url: 'https://www.kuriren.nu/rss/sport',           region: null },
+    { name: 'HD Sport',                  url: 'https://www.hd.se/rss/sport',                region: null },
+    { name: 'NSD Sport',                 url: 'https://www.nsd.se/rss/sport',               region: null },
+    { name: 'UNT Sport',                 url: 'https://www.unt.se/rss/sport',               region: null },
+    { name: 'Kvällsposten Sport',        url: 'https://www.kvallsposten.se/rss/sport',      region: null },
+    { name: 'GT Sport',                  url: 'https://www.gt.se/rss/sport',                region: null },
+    { name: 'Jönköpings-Posten Sport',   url: 'https://www.jp.se/rss/sport',                region: null },
+    { name: 'Smålandsposten Sport',      url: 'https://www.smp.se/rss/sport',               region: null },
+    { name: 'Nerikes Allehanda Sport',   url: 'https://www.na.se/rss/sport',                region: null },
+  ],
+
+  // ── KULTUR-KÄLLOR (nationella) ───────────────────────────────────────────
+  kultur_national: [
+    { name: 'SvD Kultur',   url: 'https://www.svd.se/feed/articles.rss?tag=kultur' },
+    { name: 'DN Kultur',    url: 'https://www.dn.se/rss/kultur' },
+    { name: 'Nöjesguiden',  url: 'https://www.nojesguiden.se/rss' },
+    { name: 'Fokus',        url: 'https://www.fokus.se/feed' },
   ],
 
   // ── REGIONALA KÄLLOR ─────────────────────────────────────────────────────
@@ -246,8 +261,10 @@ const KEYWORDS = {
 };
 
 function categorize(title, sourceName) {
-  const sportSources = ['SVT Sport','Aftonbladet Sport','Expressen Sport','DN Sport','GP Sport','Sydsvenskan Sport','Fotbollskanalen','Fotbolldirekt','Hockeysverige','Hockeyexpressen','Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport'];
+  const sportSources = ['SVT Sport','Aftonbladet Sport','Expressen Sport','DN Sport','GP Sport','Sydsvenskan Sport','Fotbollskanalen','Fotbolldirekt','Hockeysverige','Hockeyexpressen','Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
+  const kulturSources = ['SvD Kultur','DN Kultur','Nöjesguiden','Fokus'];
   if (sportSources.includes(sourceName)) return 'sport';
+  if (kulturSources.includes(sourceName)) return 'kultur';
   const t = title.toLowerCase();
   for (const [cat, words] of Object.entries(KEYWORDS)) {
     if (words.some(w => t.includes(w))) return cat;
@@ -294,6 +311,7 @@ async function fetchAll() {
     ...SOURCES.national,
     ...SOURCES.sport_national,
     ...SOURCES.sport_local,
+    ...SOURCES.kultur_national,
     ...SOURCES.regional
   ];
   await fetchSources(all);
