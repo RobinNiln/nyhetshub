@@ -147,11 +147,13 @@ async function get(opts) {
   } else if (category === 'nyheter') {
     conditions.push('region IS NULL');
     conditions.push("category != 'sport'");
+    conditions.push("category != 'english'");
   } else if (category && category !== 'alla') {
     params.push(category);
     conditions.push('category = $' + params.length);
-    if (category !== 'sport') {
+    if (category !== 'sport' && category !== 'english') {
       conditions.push('region IS NULL');
+      conditions.push("category != 'english'");
     }
   }
 
