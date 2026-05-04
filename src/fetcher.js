@@ -126,7 +126,15 @@ const SOURCES = {
     { name: 'Nerikes Allehanda Sport',   url: 'https://www.na.se/rss/sport',                region: null },
   ],
 
-  // ── KULTUR-KÄLLOR (nationella) ───────────────────────────────────────────
+  // ── ENGELSKA KÄLLOR (internationella) ───────────────────────────────────
+  english: [
+    { name: 'BBC News',       url: 'http://feeds.bbci.co.uk/news/rss.xml' },
+    { name: 'Reuters',        url: 'https://feeds.reuters.com/reuters/topNews' },
+    { name: 'The Guardian',   url: 'https://www.theguardian.com/world/rss' },
+    { name: 'AP News',        url: 'https://rsshub.app/apnews/topics/apf-topnews' },
+    { name: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
+    { name: 'New York Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
+  ],
   kultur_national: [
     { name: 'SvD Kultur',   url: 'https://www.svd.se/feed/articles.rss?tag=kultur' },
     { name: 'DN Kultur',    url: 'https://www.dn.se/rss/kultur' },
@@ -263,8 +271,10 @@ const KEYWORDS = {
 function categorize(title, sourceName) {
   const sportSources = ['SVT Sport','Aftonbladet Sport','Expressen Sport','DN Sport','GP Sport','Sydsvenskan Sport','Fotbollskanalen','Fotbolldirekt','Hockeysverige','Hockeyexpressen','Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
   const kulturSources = ['SvD Kultur','DN Kultur','Nöjesguiden','Fokus'];
+  const englishSources = ['BBC News','Reuters','The Guardian','AP News','Al Jazeera','New York Times'];
   if (sportSources.includes(sourceName)) return 'sport';
   if (kulturSources.includes(sourceName)) return 'kultur';
+  if (englishSources.includes(sourceName)) return 'english';
   const t = title.toLowerCase();
   for (const [cat, words] of Object.entries(KEYWORDS)) {
     if (words.some(w => t.includes(w))) return cat;
@@ -311,6 +321,7 @@ async function fetchAll() {
     ...SOURCES.national,
     ...SOURCES.sport_national,
     ...SOURCES.sport_local,
+    ...SOURCES.english,
     ...SOURCES.kultur_national,
     ...SOURCES.regional
   ];
