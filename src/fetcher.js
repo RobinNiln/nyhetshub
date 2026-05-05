@@ -14,8 +14,14 @@ const SKIP_PATTERNS = [
   /tipsa oss/i, /tipsa svt/i,
   /nyhetsbrev/i, /prenumerera/i,
   /kontakta svt/i,
-  // Fastigheter
-  /kvadratmeter.*s(å|a)l(d|t)/i,
+  // Fastigheter - utökat
+  /ny ägare till/i,
+  /köpte.*villa/i,
+  /köpte.*hus/i,
+  /sålde.*villa/i,
+  /sålde.*hus/i,
+  /\d+-åring.*ägare/i,
+  /ny ägare/i,
   /s(å|a)l(d|t) för.*kronor/i,
   /fastighetsaffär/i,
   /priset.*kronor/i,
@@ -269,13 +275,27 @@ const KEYWORDS = {
 };
 
 function categorize(title, sourceName) {
-  const sportSources = ['SVT Sport','Aftonbladet Sport','Expressen Sport','DN Sport','GP Sport','Sydsvenskan Sport','Fotbollskanalen','Fotbolldirekt','Hockeysverige','Hockeyexpressen','Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
+  const sportSources = ['SVT Sport','Aftonbladet Sport','Expressen Sport','DN Sport','GP Sport','Sydsvenskan Sport','Fotbollskanalen','Fotbolldirekt','Hockeysverige','Hockeyexpressen'];
+  const sportLocalSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
   const kulturSources = ['SvD Kultur','DN Kultur','Nöjesguiden','Fokus'];
   const englishSources = ['BBC News','Reuters','The Guardian','AP News','Al Jazeera','New York Times'];
+
+  // Renodlade sportkällor – alltid sport
   if (sportSources.includes(sourceName)) return 'sport';
+  // Kultur-källor – alltid kultur
   if (kulturSources.includes(sourceName)) return 'kultur';
+  // Engelska källor – alltid english
   if (englishSources.includes(sourceName)) return 'english';
+
   const t = title.toLowerCase();
+
+  // Lokala sport-RSS – bara sport om titeln faktiskt handlar om sport
+  if (sportLocalSources.includes(sourceName)) {
+    const sportWords = ['fotboll','hockey','match','serie','allsvenskan','shl','lag ','spelare','tränar','säsong','final','derby','mål ','poäng','tabell','transfer','värvning','kontrakt','sport'];
+    if (sportWords.some(w => t.includes(w))) return 'sport';
+    // Annars kategorisera normalt
+  }
+
   for (const [cat, words] of Object.entries(KEYWORDS)) {
     if (words.some(w => t.includes(w))) return cat;
   }
