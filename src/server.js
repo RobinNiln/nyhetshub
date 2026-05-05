@@ -253,14 +253,77 @@ app.get('/topic/:slug', async (req, res) => {
       </article>`;
     }).join('');
 
+    // FAQ-innehåll för fasta topics
+    const FAQ = {
+      'allsvenskan': [
+        { q: 'Vad är Allsvenskan?', a: 'Allsvenskan är den högsta divisionen i svensk fotboll för herrar. Serien spelas varje år med 16 lag och avgör vilket lag som blir svenska mästare.' },
+        { q: 'Vilka lag spelar i Allsvenskan?', a: 'Allsvenskan 2026 innehåller lag som Malmö FF, Djurgårdens IF, Hammarby IF, IFK Göteborg, IFK Norrköping, Häcken, IF Elfsborg och fler.' },
+        { q: 'Var kan jag följa Allsvenskan-nyheter?', a: 'Skime samlar Allsvenskan-nyheter från SVT Sport, Aftonbladet Sport, Expressen Sport, Fotbollskanalen och lokaltidningar i realtid.' },
+      ],
+      'shl': [
+        { q: 'Vad är SHL?', a: 'SHL (Swedish Hockey League) är den högsta divisionen i svensk ishockey. Serien avgör vilket lag som blir svenska mästare i hockey.' },
+        { q: 'Vilka lag spelar i SHL?', a: 'SHL innehåller lag som Rögle BK, Skellefteå AIK, Frölunda, Djurgårdens Hockey, Brynäs, Luleå Hockey, Färjestad och fler.' },
+        { q: 'Var kan jag följa SHL-nyheter?', a: 'Skime samlar SHL-nyheter från Hockeysverige, SVT Sport, Expressen Sport och lokaltidningar i realtid.' },
+      ],
+      'vm-2026': [
+        { q: 'Var spelas fotbolls-VM 2026?', a: 'Fotbolls-VM 2026 spelas i USA, Kanada och Mexiko. Det är det första VM med 48 deltagande nationer.' },
+        { q: 'När spelas fotbolls-VM 2026?', a: 'Fotbolls-VM 2026 spelas sommaren 2026, med final den 19 juli 2026 på MetLife Stadium i New Jersey.' },
+        { q: 'Är Sverige med i VM 2026?', a: 'Sverige spelar VM-kval för att ta sig till VM 2026. Följ de senaste nyheterna om det svenska landslaget på Skime.' },
+      ],
+      'valet-2026': [
+        { q: 'När är riksdagsvalet 2026?', a: 'Riksdagsvalet 2026 hålls den andra söndagen i september 2026, det vill säga den 13 september 2026.' },
+        { q: 'Vilka partier ställer upp i valet 2026?', a: 'Alla riksdagspartier ställer upp: Socialdemokraterna, Moderaterna, Sverigedemokraterna, Centerpartiet, Vänsterpartiet, Kristdemokraterna, Liberalerna och Miljöpartiet.' },
+        { q: 'Var kan jag följa valrörelsen 2026?', a: 'Skime samlar de senaste valnyheterna från SVT, SR, DN, SvD, Aftonbladet och Expressen i realtid.' },
+      ],
+    };
+
+    const faqData = FAQ[slug] || [];
+    const faqSchema = faqData.length ? JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      'mainEntity': faqData.map(f => ({
+        '@type': 'Question',
+        'name': f.q,
+        'acceptedAnswer': { '@type': 'Answer', 'text': f.a }
+      }))
+    }) : null;
+
+    const collectionSchema = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      'name': `${pageTitle} – nyheter`,
+      'description': pageDesc,
+      'url': `https://www.skime.se/topic/${slug}`,
+      'about': { '@type': 'Thing', 'name': pageTitle },
+      'publisher': { '@type': 'Organization', 'name': 'Skime', 'url': 'https://www.skime.se' },
+      'numberOfItems': rows.length,
+      'dateModified': new Date().toISOString()
+    });
+
+    const faqHtml = faqData.length ? `
+      <div style="margin-top:32px;border-top:1px solid #e5e5e5;padding-top:24px;">
+        <h2 style="font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;margin-bottom:16px;color:#111;">Vanliga frågor om ${pageTitle}</h2>
+        ${faqData.map(f => `
+          <details style="margin-bottom:12px;border:1px solid #e5e5e5;border-radius:6px;padding:12px 16px;background:#fff;cursor:pointer;">
+            <summary style="font-weight:600;font-size:0.9rem;color:#111;list-style:none;">${f.q}</summary>
+            <p style="margin-top:8px;font-size:0.85rem;color:#555;line-height:1.6;">${f.a}</p>
+          </details>`).join('')}
+      </div>` : '';
+
     res.send(`<!DOCTYPE html>
 <html lang="sv">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${pageTitle} – Skime</title>
+  <title>${pageTitle} nyheter – Skime</title>
   <meta name="description" content="${pageDesc}">
   <link rel="canonical" href="https://www.skime.se/topic/${slug}">
+  <meta property="og:title" content="${pageTitle} nyheter – Skime">
+  <meta property="og:description" content="${pageDesc}">
+  <meta property="og:url" content="https://www.skime.se/topic/${slug}">
+  <meta property="og:type" content="website">
+  <script type="application/ld+json">${collectionSchema}</script>
+  ${faqSchema ? `<script type="application/ld+json">${faqSchema}</script>` : ''}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
@@ -272,9 +335,10 @@ app.get('/topic/:slug', async (req, res) => {
     .layout{max-width:1200px;margin:32px auto;padding:0 20px}
     h1{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;margin-bottom:6px}
     .meta{font-size:0.8rem;color:#888;margin-bottom:8px}
-    .desc{font-size:0.9rem;color:#555;margin-bottom:24px}
+    .desc{font-size:0.9rem;color:#555;margin-bottom:24px;line-height:1.6;}
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px}
     .empty{text-align:center;padding:60px;color:#999}
+    details summary::-webkit-details-marker{display:none}
     @media(max-width:600px){.grid{grid-template-columns:1fr}.header-inner{height:60px}.logo img{height:44px}}
   </style>
 </head>
@@ -287,8 +351,9 @@ app.get('/topic/:slug', async (req, res) => {
 <div class="layout">
   <h1>${pageTitle}</h1>
   <p class="desc">${pageDesc}</p>
-  <p class="meta">${rows.length} nyheter de senaste 24 timmarna</p>
+  <p class="meta">${rows.length} nyheter de senaste 24 timmarna · Uppdateras var 15:e minut</p>
   ${rows.length ? `<div class="grid">${cards}</div>` : '<div class="empty">Inga nyheter hittades om detta ämne just nu.</div>'}
+  ${faqHtml}
   <p style="margin-top:32px;font-size:0.8rem;color:#999"><a href="/" style="color:#2563eb">← Tillbaka till Skime</a></p>
 </div>
 </body>
@@ -442,33 +507,73 @@ app.get('/robots.txt', (req, res) => {
   res.send(`User-agent: *
 Allow: /
 
-Sitemap: ${SITE_URL}/sitemap.xml`);
+# AI-sökmotorer välkomna
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: ${SITE_URL}/sitemap.xml
+`);
 });
 
 // ── llms.txt (AI-sökmotorer) ──────────────────────────────────
 app.get('/llms.txt', (req, res) => {
   res.type('text/plain');
-  res.send(`# Skime
-
-> Skime aggregerar och rankar nyheter från Sveriges ledande medier i realtid.
+  res.send(`# Skime – Svensk nyhetsaggregator
+> Skime samlar, rankar och presenterar nyheter från Sveriges ledande medier i realtid. Alla nyheter på ett ställe, utan krångel.
 
 ## Vad är Skime?
-Skime är en svensk nyhetstjänst som samlar nyheter från SVT, SR, DN, SvD, Aftonbladet, Expressen, DI och ett 40-tal regionala tidningar. Nyheter rankas efter hur många källor som rapporterar samma händelse.
+Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 100 svenska och internationella medier och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter, tar inga redaktionella ställningstaganden och publicerar aldrig ledartexter eller opinionsmaterial.
+
+## Täckning
+- Nationella svenska nyheter: SVT, SR, DN, SvD, Aftonbladet, Expressen, DI, Breakit, GP, Sydsvenskan, TV4, Omni, TT
+- Sport: SVT Sport, Aftonbladet Sport, Expressen Sport, Fotbollskanalen, Hockeysverige och 14 lokala sportkällor
+- Regionalt: Minst 2-3 lokala källor per region, täcker alla 21 svenska län
+- Internationellt (engelska): BBC News, Reuters, The Guardian, AP News, Al Jazeera, New York Times
+- Kultur: SvD Kultur, DN Kultur, Nöjesguiden, Fokus
 
 ## Kategorier
-- Nationella nyheter: inrikes, utrikes, politik, näringsliv, sport, tech, kultur
-- Regionala nyheter: alla 21 svenska län
+- nyheter: Toppnyheter från nationella källor, rankade efter antal rapporterande källor
+- politik: Svenska partier, riksdag, regering, val
+- samhälle: Sjukvård, skola, infrastruktur, brott, bostäder
+- naringsliv: Börsen, ekonomi, företag, konjunktur
+- sport: Allsvenskan, Damallsvenskan, SHL, VM 2026, Herrlandslaget
+- tech: AI, startups, cybersäkerhet, tekniknyheter
+- kultur: Film, musik, konst, teater, litteratur
+- utrikes: Internationella nyheter på svenska
+- english: Internationella nyheter på engelska
 
-## Källor
-SVT, SR, DN, SvD, Aftonbladet, Expressen, DI, Breakit, Sydsvenskan, GP, Corren, NT, Barometern, UNT och fler.
+## Regioner
+Alla 21 svenska län: Blekinge, Dalarna, Gotland, Gävleborg, Halland, Jämtland, Jönköping, Kalmar, Kronoberg, Norrbotten, Skåne, Stockholm, Södermanland, Uppsala, Värmland, Västerbotten, Västernorrland, Västmanland, Västra Götaland, Örebro, Östergötland
+
+## Topic-sidor (ämnessamlingar)
+- ${SITE_URL}/topic/allsvenskan – Allsvenskan fotboll
+- ${SITE_URL}/topic/shl – SHL ishockey
+- ${SITE_URL}/topic/vm-2026 – Fotbolls-VM 2026
+- ${SITE_URL}/topic/valet-2026 – Riksdagsvalet 2026
+
+## Rankningsmodell
+Nyheter rankas med formeln: källantal × recency_bonus. Ju fler oberoende medier som rapporterar samma händelse, desto viktigare bedöms nyheten vara. Toppnyheter väljs från senaste 12 timmar med minst 2 rapporterande källor.
 
 ## Uppdateringsfrekvens
-Nyheter uppdateras var 30:e minut automatiskt.
+Nyheter hämtas automatiskt var 15:e minut, dygnet runt.
 
-## API
-GET ${SITE_URL}/api/news?category=nyheter
-GET ${SITE_URL}/api/news?region=Stockholm
-GET ${SITE_URL}/api/regions`);
+## Teknisk information
+- API: GET ${SITE_URL}/api/news?category=nyheter
+- API: GET ${SITE_URL}/api/news?region=Stockholm
+- API: GET ${SITE_URL}/api/top-stories
+- Sitemap: ${SITE_URL}/sitemap.xml
+
+## Kontakt och ägarskap
+Skime drivs av Robin Nilsson. Domän: skime.se. Registrerad i Sverige.`);
 });
 
 // ── sitemap.xml ───────────────────────────────────────────────
