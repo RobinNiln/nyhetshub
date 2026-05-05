@@ -148,6 +148,12 @@ async function get(opts) {
     conditions.push('region IS NULL');
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
+    // Exkludera lokala sport-RSS-källor från nationellt flöde
+    const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
+    localSportSources.forEach(function(src) {
+      params.push(src);
+      conditions.push('source != $' + params.length);
+    });
   } else if (category && category !== 'alla') {
     params.push(category);
     conditions.push('category = $' + params.length);
