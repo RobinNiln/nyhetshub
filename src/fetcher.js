@@ -72,6 +72,18 @@ const SKIP_PATTERNS = [
   /insändare\./i,
   /^replik[:\.\s]/i,
   /^chefredaktör/i,
+  // Reklam och prenumerationer
+  /spara \d+.*på.*plus/i,
+  /prenumerera nu/i,
+  /ett år för.*kronor/i,
+  /^chatta om/i,
+  /^börsmorgon \d+ /i,
+  /^just nu: spara/i,
+  // Lokalt skräp
+  /förrådstjuv/i,
+  /^min mening/i,
+  /^helt rätt –/i,
+  /^inpå livet/i,
 ];
 
 function shouldSkip(title, url = '') {
@@ -266,12 +278,12 @@ const SOURCES = {
 
 const KEYWORDS = {
   sport:      ['fotboll','hockey','tennis','golf','allsvenskan','superettan','nhl','nba','vm ','em ','match','spelare','tränar','shl ','damallsvenskan','ishockey','basketboll','friidrott','simning','cykling','boxning','mma','formel'],
-  naringsliv: ['börsen','aktier','ekonomi','inflation','ränta','riksbank','förvärv','vinst','omsättning','kvartalsrapport','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs'],
-  kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen','artist','kulturhus','tv-serie','premiär','spelfilm','dokumentär','utställning','festival','recension','årets '],
-  tech:       ['ai ','artificiell intelligens','chatgpt','tech','startup','microsoft','google','apple','cybersäkerhet','hack','algoritm','openai','robot','programvara','app ','iphone','android','tesla','chipset','halvledare'],
-  samhalle:   ['sjukhus','vård','1177','ambulans','skola','förskola','gymnasium','bostäder','hyresrätt','infrastruktur','järnväg','motorväg','polis','brott','rättegång','dom ','häkta','gripen','brand ','räddningstjänst','socialtjänst','äldreomsorg','migration','asyl'],
-  politik:    ['riksdag','statsminister','riksdagen','socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet','centerpartiet','liberalerna','kristdemokraterna','miljöpartiet','partiledare','partiledardebatt','valet ','valresultat','opposition','koalition','eu-kommissionen','nato-toppmöte','regering ','regeringen','minister ','finansminister','utrikesminister','justitieminister','riksdagsvalet','kommunalvalet','riksdagsbeslut','riksdagsval','budgetpropositionen'],
-  utrikes:    ['usa ','trump','biden','ryssland','kina','ukraina','mellanöstern','fn ','nato ','internationell','konflikt','gaza','israel','putin','eu ','europa','frankrike','tyskland','storbritannien','iran','nordkorea','klimat'],
+  naringsliv: ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','vinst','omsättning','förvärv','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs','vd ','vdn ','ränta','riksbank','inflation','bnp','ekonomi','analytiker','prognos','rusar','faller','rasar','stiger','lyfter','rekord','börs'],
+  kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen','artist','kulturhus','tv-serie','premiär','spelfilm','dokumentär','utställning','festival','recension','roman','författar'],
+  tech:       ['ai ','artificiell intelligens','chatgpt','openai','tech','startup','microsoft','google','apple','cybersäkerhet','hack','algoritm','robot','programvara','iphone','android','tesla','chipset','halvledare'],
+  samhalle:   ['sjukhus','vård','1177','ambulans','skola','förskola','gymnasium','bostäder','hyresrätt','järnväg','motorväg','polis','brott','rättegång','dom ','häkta','gripen','brand ','räddningstjänst','socialtjänst','äldreomsorg','migration','asyl','anhållen','åtalas','döms','fängelse','skjuten','skottlossning','mördad','explosion'],
+  politik:    ['riksdag','statsminister','riksdagen','socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet','centerpartiet','liberalerna','kristdemokraterna','miljöpartiet','partiledare','partiledardebatt','valet ','valresultat','opposition','koalition','riksdagsvalet','kommunalvalet','riksdagsbeslut','budgetpropositionen','valrörelsen','utrikesminister','justitieminister','finansminister','regeringen','statsråd'],
+  utrikes:    ['ukraina','mellanöstern','gaza','israel','putin','nordkorea','klimat','kriget','nato-toppmöte','fn-möte','trump','biden','ryssland','kina','usa '],
 };
 
 function categorize(title, sourceName) {
