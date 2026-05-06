@@ -469,7 +469,7 @@ if (savedTheme === 'dark') {
 async function loadTopStories() {
   const section = document.getElementById('top-stories-section');
   // Visa toppnyheter för alla kategorier utom sport-undermenyer, regionalt och english
-  if (mode !== 'national' || current === 'english' || sportSub) {
+  if (mode !== 'national' || sportSub) {
     section.style.display = 'none';
     return;
   }
