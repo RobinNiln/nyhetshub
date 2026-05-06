@@ -468,16 +468,18 @@ if (savedTheme === 'dark') {
 
 async function loadTopStories() {
   const section = document.getElementById('top-stories-section');
-  if (mode !== 'national' || current !== 'nyheter') {
+  // Visa toppnyheter för alla kategorier utom sport-undermenyer, regionalt och english
+  if (mode !== 'national' || current === 'english' || sportSub) {
     section.style.display = 'none';
     return;
   }
   try {
-    const res = await fetch('/api/top-stories');
+    const url = `/api/top-stories?category=${encodeURIComponent(current)}`;
+    const res = await fetch(url);
     const stories = await res.json();
     if (!stories.length) { section.style.display = 'none'; return; }
     section.style.display = 'block';
-    const CAT = {nyheter:'Nyheter',politik:'Politik',samhalle:'Samhälle',naringsliv:'Näringsliv',sport:'Sport',tech:'Tech',kultur:'Kultur',utrikes:'Utrikes'};
+    const CAT = {nyheter:'Nyheter',politik:'Politik',samhalle:'Samhälle',naringsliv:'Näringsliv',sport:'Sport',tech:'Tech',kultur:'Kultur',utrikes:'Utrikes',english:'English'};
     const main = stories[0];
     const small = stories.slice(1, 5);
     const sourcesHtml = (a) => {
@@ -489,20 +491,20 @@ async function loadTopStories() {
     const time = (a) => a.published_at ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
 
     document.getElementById('top-stories-grid').innerHTML = `
-      <div class="top-story-main" onclick="window.open('${main.url}','_blank')" itemprop="headline">
+      <div class="top-story-main" onclick="window.open('${main.url}','_blank')">
         <div class="ts-meta">${CAT[main.category]||main.category} · ${main.sources.length} ${main.sources.length===1?'källa':'källor'}</div>
         <div class="ts-title">${main.title}</div>
         ${main.ingress ? `<div class="ts-ingress">${main.ingress}</div>` : ''}
         <div class="sources-row">${sourcesHtml(main)}</div>
       </div>
-      <div class="top-stories-small">
+      ${small.length ? `<div class="top-stories-small">
         ${small.map(a => `
           <div class="top-story-small" onclick="window.open('${a.url}','_blank')">
             <div class="ts-meta">${CAT[a.category]||a.category} · ${a.sources.length} ${a.sources.length===1?'källa':'källor'} · ${time(a)}</div>
             <div class="ts-title">${a.title}</div>
             <div class="sources-row">${sourcesHtml(a)}</div>
           </div>`).join('')}
-      </div>`;
+      </div>` : ''}`;
   } catch(e) {
     section.style.display = 'none';
   }
