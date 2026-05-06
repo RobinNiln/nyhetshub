@@ -365,7 +365,7 @@ app.get('/topic/:slug', async (req, res) => {
 
 app.get('/api/top-stories', async (req, res) => {
   try {
-    const stories = await getTopStories();
+    const stories = await getTopStories(req.query.category || null);
     res.json(stories);
   } catch(e) {
     res.status(500).json({ error: e.message });
