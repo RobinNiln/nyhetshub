@@ -213,6 +213,11 @@
   <div class="nav-inner" style="padding-left:24px; gap:2px;"></div>
 </div>
 
+<!-- Näringsliv undermeny -->
+<div id="naringsliv-subnav" style="display:none; border-bottom:1px solid var(--border); background:var(--nav-bg);">
+  <div class="nav-inner" style="padding-left:24px; gap:2px;"></div>
+</div>
+
 <!-- Leaderboard annons -->
 <div style="max-width:1200px;margin:12px auto;padding:0 20px;text-align:center;">
   <ins class="adsbygoogle"
@@ -327,7 +332,12 @@ const ALL_REGIONS = [
   'Örebro','Östergötland'
 ];
 
-let mode = 'national', lang = 'sv', current = 'nyheter', sportSub = null;
+const NARINGSLIV_SUBS = [
+  {id:'naringsliv',sv:'Allt',en:'All'},
+  {id:'bors',sv:'📈 Börsen',en:'📈 Stock market'},
+];
+
+let mode = 'national', lang = 'sv', current = 'nyheter', sportSub = null, borsSub = null;
 
 function setMode(m, el) {
   mode = m;
@@ -365,6 +375,23 @@ function renderSportSubs() {
   } else {
     container.style.display = 'none';
   }
+  const nContainer = document.getElementById('naringsliv-subnav');
+  if (current === 'naringsliv' && mode === 'national') {
+    nContainer.style.display = 'block';
+    nContainer.querySelector('.nav-inner').innerHTML = NARINGSLIV_SUBS.map(s =>
+      `<button class="cat-btn${borsSub===s.id||(!borsSub&&s.id==='naringsliv')?' active':''}" onclick="selectNaringslivSub('${s.id}',this)">${lang==='sv'?s.sv:s.en}</button>`
+    ).join('');
+  } else {
+    nContainer.style.display = 'none';
+  }
+}
+
+function selectNaringslivSub(id, el) {
+  borsSub = id === 'naringsliv' ? null : id;
+  document.querySelectorAll('#naringsliv-subnav .cat-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  load();
+  loadTopStories();
 }
 
 function selectSportSub(id, el) {
@@ -377,6 +404,7 @@ function selectSportSub(id, el) {
 function selectTab(val, el) {
   current = decodeURIComponent(val);
   sportSub = null;
+  borsSub = null;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   const newUrl = mode === 'national' ? `/?category=${current}` : `/?region=${encodeURIComponent(current)}`;
@@ -394,6 +422,8 @@ async function load() {
       url = `/api/news?region=${encodeURIComponent(current)}`;
     } else if (sportSub) {
       url = `/api/news?sport=${encodeURIComponent(sportSub)}`;
+    } else if (borsSub === 'bors') {
+      url = `/api/news?category=bors`;
     } else {
       url = `/api/news?category=${encodeURIComponent(current)}`;
     }
