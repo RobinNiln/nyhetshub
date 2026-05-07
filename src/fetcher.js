@@ -336,24 +336,56 @@ function categorize(title, sourceName) {
 
   const t = title.toLowerCase();
 
-  // Lokala sport-RSS – bara sport om titeln faktiskt handlar om sport
-  if (sportLocalSources.includes(sourceName)) {
-    const sportWords = ['fotboll','hockey','match','serie','allsvenskan','shl','lag ','spelare','tränar','säsong','final','derby','mål ','poäng','tabell','transfer','värvning','kontrakt','sport'];
-    if (sportWords.some(w => t.includes(w))) return 'sport';
-    // Annars kategorisera normalt
-  }
+  // Alla sportkällor – hybrid-filter
+  if (sportSources.includes(sourceName) || sportLocalSources.includes(sourceName)) {
+    const sportWords = [
+      'fotboll','hockey','match','serie','allsvenskan','shl','lag ','spelare',
+      'tränar','tränarbytet','säsong','final','derby','mål ','poäng','tabell',
+      'transfer','värvning','kontrakt','sport','cupfinal','kval ','playoff',
+      'landslaget','vm ','em ','champions league','europa league','nhl','nba',
+      'tennis','golf','friidrott','simning','cykling','boxning','mma','formel',
+      'basketboll','handboll','innebandy','ishockey','damallsvenskan','seriematch',
+      'tränaren','spelaren','klubben','laget ','säsongen','turneringen','mästerskapet',
+      'medalj','rekord','skidåkning','skidor','längdåkning','backhoppning','skidskytte',
+      'speedway','motorsport','rallyt','atletik','rodd','kanot','ridsport','brottning',
+      'judo','taekwondo','fäktning','skytte','padel','esport','e-sport','triathlon',
+      'orienteringen','bordtennis','badminton','vattenspolo','beachvolley','rullskidor',
+      'guld','silver','bronze','sm-final','sm-guld','playoff','uppflyttning','nedflyttning',
+      'degradering','seriesegern','skyttekungen','mvp','draften','bytet','debuten'
+    ];
 
-  // Renodlade sportkällor – sport om titeln handlar om sport, annars nyheter/samhälle
-  if (sportSources.includes(sourceName)) {
-    const nonSportWords = ['who','hantavirus','virus','sjukdom','pandemi','smittspridning','dödsfall','sjukhus','vaccin','folkhälso','epidemi','cancer','alzheimer','hjärtinfarkt','stroke'];
-    if (nonSportWords.some(w => t.includes(w))) {
-      // Kategorisera som samhälle istället
-      for (const [cat, words] of Object.entries(KEYWORDS)) {
-        if (words.some(w => t.includes(w))) return cat;
-      }
-      return 'nyheter';
+    // Kända svenska sportprofiler och klubbar – triggar sport oavsett rubrik
+    const sportNames = [
+      // Fotboll
+      'zlatan','ibrahimovic','duplantis','pellegrino','hammarby','malmö ff','ifk göteborg',
+      'ifk norrköping','djurgården','häcken','elfsborg','kalmar ff','mjällby','degerfors',
+      'brommapojkarna','sirius','häcken','gais','örebro sk','halmstad','göteborg fc',
+      'rosengård','linköping fc','piteå if','kif örebro',
+      // Hockey
+      'rögle','skellefteå','frölunda','brynäs','luleå','färjestad','hv71','timrå',
+      'leksand','modo','tre kronor','forsberg','lundqvist','hedman',
+      // Landslag
+      'svenska landslaget','herrlandslaget','damlandslaget','blågult',
+      // Kända profiler
+      'armand duplantis','mondo','erik and','sara hector','frida karlsson',
+      'nils van der poel','anna hasselborg','ebba andersson','jonna sundling',
+      'henrik lundqvist','william nylander','victor hedman','rasmus dahlin',
+      'alexander isak','dejan kulusevski','viktor gyökeres','martin ödegaard',
+      'anthony elanga','zeki amdouni',
+      // Internationellt
+      'mbappe','haaland','vinicius','bellingham','salah','ronaldo','messi',
+      'sinner','alcaraz','djokovic','swiatek','mcilroy','scheffler',
+      'verstappen','hamilton','leclerc','norris'
+    ];
+
+    if (sportWords.some(w => t.includes(w))) return 'sport';
+    if (sportNames.some(n => t.includes(n))) return 'sport';
+
+    // Inte sport – kategorisera normalt
+    for (const [cat, words] of Object.entries(KEYWORDS)) {
+      if (words.some(w => t.includes(w))) return cat;
     }
-    return 'sport';
+    return 'nyheter';
   }
 
   for (const [cat, words] of Object.entries(KEYWORDS)) {
