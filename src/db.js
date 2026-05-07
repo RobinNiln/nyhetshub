@@ -144,6 +144,15 @@ async function get(opts) {
         conditions.push('source != $' + params.length);
       });
     }
+  } else if (category === 'sport') {
+    conditions.push("category = 'sport'");
+    conditions.push('region IS NULL');
+    // Lokala sport-RSS visas aldrig på nationellt sport-flöde
+    const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
+    localSportSources.forEach(function(src) {
+      params.push(src);
+      conditions.push('source != $' + params.length);
+    });
   } else if (category === 'bors') {
     conditions.push('region IS NULL');
     const borsWords = ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','analytiker','börsnot','stockholmsbörsen','omxs','nasdaq','warranter','fonder'];
@@ -248,6 +257,11 @@ async function getTopStories(category) {
   if (category && category !== 'nyheter') {
     params.push(category);
     conditions.push('category = $' + params.length);
+    // Exkludera lokala sport-RSS från toppnyheter oavsett kategori
+    localSportSources.forEach(function(src) {
+      params.push(src);
+      conditions.push('source != $' + params.length);
+    });
   } else {
     // Nyheter – exkludera sport och english och lokala sport-RSS
     conditions.push("category != 'sport'");
