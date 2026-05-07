@@ -7,25 +7,41 @@ const parser = new Parser({
 });
 
 const SKIP_PATTERNS = [
-  // Dagsammanfattningar och tips
+  // ── DAGSAMMANFATTNINGAR & META ───────────────────────────────────────────
   /nyheter från dagen/i,
   /dagens nyheter i korthet/i,
   /veckans nyheter/i,
-  /tipsa oss/i, /tipsa svt/i,
-  /nyhetsbrev/i, /prenumerera/i,
+  /tipsa oss/i,
+  /tipsa svt/i,
+  /nyhetsbrev/i,
   /kontakta svt/i,
-  // Fastigheter - utökat
+  /^skicka tips/i,
+  /^så bevakar vi/i,
+
+  // ── REKLAM & PRENUMERATIONER ─────────────────────────────────────────────
+  /spara \d+.*på.*plus/i,
+  /prenumerera nu/i,
+  /ett år för.*kronor/i,
+  /^chatta om/i,
+  /^börsmorgon \d+ /i,
+  /^just nu: spara/i,
+  /^just nu: prenumerera/i,
+  /köp.*biljett/i,
+  /vinn biljetter/i,
+
+  // ── FASTIGHETER ──────────────────────────────────────────────────────────
   /ny ägare till/i,
   /köpte.*villa/i,
   /köpte.*hus/i,
   /sålde.*villa/i,
   /sålde.*hus/i,
   /\d+-åring.*ägare/i,
-  /ny ägare/i,
   /s(å|a)l(d|t) för.*kronor/i,
   /fastighetsaffär/i,
   /priset.*kronor/i,
-  // Nyföretag – bara specifika mönster
+  /kvadratmeter.*s(å|a)l(d|t)/i,
+
+  // ── NYFÖRETAG ────────────────────────────────────────────────────────────
   /startar nytt.*företag/i,
   /nystartat.*företag/i,
   /nytt.*företag startar/i,
@@ -34,13 +50,17 @@ const SKIP_PATTERNS = [
   /holdingbolag/i,
   /investmentbolag/i,
   / ab startades/i,
-  // Sport-skräp
+  /nytt.*bolag.*startar/i,
+
+  // ── SPORT-SKRÄP ──────────────────────────────────────────────────────────
   /vi sänder.*matcher/i,
   /vi fortsätter sända/i,
-  /glädjebeskedet.*sänder/i,
   /följ.*snacket/i,
   /hockeysnacket/i,
-  // Smala rubriker
+  /^liverapportering/i,
+  /^livesändning/i,
+
+  // ── OFÖRSTÅELIGA/SMALA RUBRIKER ──────────────────────────────────────────
   /^hallå där/i,
   /^möt /i,
   /^porträtt:/i,
@@ -58,7 +78,15 @@ const SKIP_PATTERNS = [
   /tekniska problem med/i,
   /veckans klickraket/i,
   /klickraket/i,
-  // Ledare och opinion
+  /^tipset:/i,
+  /^quiz:/i,
+  /^test:/i,
+  /^listan:/i,
+  /^galleriet:/i,
+  /^direkt:/i,
+  /^just nu:/i,
+
+  // ── LEDARE & OPINION ─────────────────────────────────────────────────────
   /^ledare[:\.\s]/i,
   /^ledar[:\.\s]/i,
   /\bledarartikel\b/i,
@@ -72,24 +100,31 @@ const SKIP_PATTERNS = [
   /insändare\./i,
   /^replik[:\.\s]/i,
   /^chefredaktör/i,
-  // Reklam och prenumerationer
-  /spara \d+.*på.*plus/i,
-  /prenumerera nu/i,
-  /ett år för.*kronor/i,
-  /^chatta om/i,
-  /^börsmorgon \d+ /i,
-  /^just nu: spara/i,
-  // Lokalt skräp
-  /förrådstjuv/i,
   /^min mening/i,
   /^helt rätt –/i,
   /^inpå livet/i,
+
+  // ── LOKALT SKRÄP ─────────────────────────────────────────────────────────
+  /förrådstjuv/i,
+  /^två personbilar/i,
+  /i cirkulationsplats/i,
+  /krockat i korsning/i,
+  /^kungsgrillen/i,
+  /^restaurang.*stänger/i,
+  /^café.*öppnar/i,
+  /^ny restaurang/i,
 ];
 
 function shouldSkip(title, url = '') {
+  if (!title || title.trim().length < 15) return true;
   if (SKIP_PATTERNS.some(p => p.test(title))) return true;
   const urlLower = url.toLowerCase();
-  const skipPaths = ['/ledare/', '/ledar/', '/kronika/', '/krönika/', '/debatt/', '/opinion/', '/kommentar/', '/insandare/', '/insändare/', '/kolumn/'];
+  const skipPaths = [
+    '/ledare/', '/ledar/', '/kronika/', '/krönika/',
+    '/debatt/', '/opinion/', '/kommentar/', '/insandare/',
+    '/insändare/', '/kolumn/', '/podcast/', '/video/',
+    '/bildspel/', '/quiz/'
+  ];
   return skipPaths.some(p => urlLower.includes(p));
 }
 
