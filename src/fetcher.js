@@ -343,6 +343,19 @@ function categorize(title, sourceName) {
     // Annars kategorisera normalt
   }
 
+  // Renodlade sportkällor – sport om titeln handlar om sport, annars nyheter/samhälle
+  if (sportSources.includes(sourceName)) {
+    const nonSportWords = ['who','hantavirus','virus','sjukdom','pandemi','smittspridning','dödsfall','sjukhus','vaccin','folkhälso','epidemi','cancer','alzheimer','hjärtinfarkt','stroke'];
+    if (nonSportWords.some(w => t.includes(w))) {
+      // Kategorisera som samhälle istället
+      for (const [cat, words] of Object.entries(KEYWORDS)) {
+        if (words.some(w => t.includes(w))) return cat;
+      }
+      return 'nyheter';
+    }
+    return 'sport';
+  }
+
   for (const [cat, words] of Object.entries(KEYWORDS)) {
     if (words.some(w => t.includes(w))) return cat;
   }
