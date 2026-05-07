@@ -175,6 +175,14 @@ async function get(opts) {
       conditions.push('region IS NULL');
       conditions.push("category != 'english'");
     }
+    // Exkludera börsnyheter från generellt näringsliv-flöde
+    if (category === 'naringsliv') {
+      const borsExclude = ['börsen','aktier','aktien','aktiekurs','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','stockholmsbörsen','börsnot'];
+      borsExclude.forEach(function(w) {
+        params.push('%' + w + '%');
+        conditions.push('title NOT ILIKE $' + params.length);
+      });
+    }
   }
 
   const { rows } = await pool.query(
@@ -230,7 +238,9 @@ async function lastFetched() {
 }
 
 async function getTopStories(category) {
-  const conditions = ["fetched_at > NOW() - INTERVAL '12 hours'", 'region IS NULL', 'score >= 2'];
+  const isSport = category && (category === 'sport' || category === 'bors');
+  const scoreThreshold = isSport ? 1 : 2;
+  const conditions = ["fetched_at > NOW() - INTERVAL '12 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
