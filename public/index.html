@@ -343,7 +343,7 @@ function setMode(m, el) {
   mode = m;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  current = m === 'national' ? 'nyheter' : ALL_REGIONS[0];
+  current = m === 'national' ? 'nyheter' : (getRecentRegions()[0] || ALL_REGIONS[0]);
   sportSub = null;
   renderTabs();
   renderSportSubs();
@@ -359,10 +359,48 @@ function renderTabs() {
   } else {
     document.getElementById('btn-regional').classList.add('active');
     document.getElementById('btn-national').classList.remove('active');
-    nav.innerHTML = ALL_REGIONS.map(r =>
-      `<button class="cat-btn${r===current?' active':''}" onclick="selectTab('${encodeURIComponent(r)}',this)">${r}</button>`
-    ).join('');
+    const recent = getRecentRegions();
+    nav.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 0;">
+        <div style="position:relative;display:inline-flex;align-items:center;">
+          <select id="region-select" onchange="selectRegionFromDropdown(this.value)"
+            style="font-size:13px;padding:6px 32px 6px 14px;border-radius:20px;border:0.5px solid var(--border);background:var(--card);color:var(--text);appearance:none;cursor:pointer;font-family:'Inter',sans-serif;min-width:190px;">
+            <option value="">${lang==='sv'?'Välj region...':'Choose region...'}</option>
+            ${ALL_REGIONS.map(r => `<option value="${r}"${r===current?' selected':''}>${r}</option>`).join('')}
+          </select>
+          <span style="position:absolute;right:10px;pointer-events:none;font-size:12px;color:var(--muted);">▾</span>
+        </div>
+        ${recent.length ? `
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:11px;color:var(--muted);white-space:nowrap;">${lang==='sv'?'Senast besökt:':'Recent:'}</span>
+            ${recent.map(r => `<button onclick="selectRegionFromDropdown('${r}')"
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border);background:${r===current?'#2563eb':'var(--card)'};color:${r===current?'#fff':'var(--text)'};cursor:pointer;font-family:'Inter',sans-serif;">${r}</button>`).join('')}
+          </div>` : ''}
+      </div>`;
   }
+}
+
+function getRecentRegions() {
+  try {
+    return JSON.parse(localStorage.getItem('skime_recent_regions') || '[]').slice(0, 3);
+  } catch(e) { return []; }
+}
+
+function saveRecentRegion(region) {
+  try {
+    const recent = getRecentRegions().filter(r => r !== region);
+    recent.unshift(region);
+    localStorage.setItem('skime_recent_regions', JSON.stringify(recent.slice(0, 3)));
+  } catch(e) {}
+}
+
+function selectRegionFromDropdown(region) {
+  if (!region) return;
+  current = region;
+  saveRecentRegion(region);
+  renderTabs();
+  load();
+  loadTopStories();
 }
 
 function renderSportSubs() {
