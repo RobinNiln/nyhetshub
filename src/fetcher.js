@@ -140,7 +140,7 @@ const SOURCES = {
     { name: 'Expressen',     url: 'https://feeds.expressen.se/nyheter/' },
     { name: 'DI',            url: 'https://www.di.se/rss' },
     { name: 'Breakit',       url: 'https://www.breakit.se/feed/articles' },
-    { name: 'GP',            url: 'https://www.gp.se/rss/nyheter' },
+    { name: 'GP',            url: 'https://www.gp.se/feeds/feed.xml' },
     { name: 'Sydsvenskan',   url: 'https://www.sydsvenskan.se/rss.xml' },
     { name: 'TV4',           url: 'https://www.tv4.se/rss' },
     { name: 'Omni',          url: 'https://omni.se/rss' },
@@ -153,7 +153,7 @@ const SOURCES = {
     { name: 'Aftonbladet Sport',  url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/' },
     { name: 'Expressen Sport',    url: 'https://feeds.expressen.se/sport/' },
     { name: 'DN Sport',           url: 'https://www.dn.se/rss/sport' },
-    { name: 'GP Sport',           url: 'https://www.gp.se/rss/sport' },
+    { name: 'GP Sport',           url: 'https://www.gp.se/feeds/sport.xml' },
     { name: 'Sydsvenskan Sport',  url: 'https://www.sydsvenskan.se/sport/rss.xml' },
     { name: 'Fotbollskanalen',    url: 'https://www.fotbollskanalen.se/rss' },
     { name: 'Fotbolldirekt',      url: 'https://www.fotbolldirekt.se/rss' },
@@ -214,7 +214,7 @@ const SOURCES = {
 
     // Västra Götaland
     { name: 'SVT Göteborg',       url: 'https://www.svt.se/nyheter/lokalt/vast/rss.xml',        region: 'Västra Götaland' },
-    { name: 'GP',                 url: 'https://www.gp.se/rss/nyheter',                          region: 'Västra Götaland' },
+    { name: 'GP',                 url: 'https://www.gp.se/feeds/feed.xml',                          region: 'Västra Götaland' },
     { name: 'Bohuslänningen',     url: 'https://www.bohuslaningen.se/rss/nyheter',               region: 'Västra Götaland' },
     { name: 'TTELA',              url: 'https://www.ttela.se/rss/nyheter',                       region: 'Västra Götaland' },
     { name: 'Borås Tidning',      url: 'https://www.bt.se/rss.xml',                              region: 'Västra Götaland' },
