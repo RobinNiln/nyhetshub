@@ -553,13 +553,16 @@ if (savedTheme === 'dark') {
 
 async function loadTopStories() {
   const section = document.getElementById('top-stories-section');
-  // Visa toppnyheter för alla kategorier utom sport-undermenyer, regionalt och english
-  if (mode !== 'national' || sportSub) {
+  // Dölj toppnyheter för damallsvenskan (för lite flöde)
+  if (mode !== 'national' || (sportSub === 'damallsvenskan')) {
     section.style.display = 'none';
     return;
   }
   try {
-    const url = `/api/top-stories?category=${encodeURIComponent(current)}`;
+    let url = '/api/top-stories?category=' + encodeURIComponent(current);
+    if (sportSub && sportSub !== 'sport') {
+      url += '&sport=' + encodeURIComponent(sportSub);
+    }
     const res = await fetch(url);
     const stories = await res.json();
     if (!stories.length) { section.style.display = 'none'; return; }
