@@ -246,24 +246,41 @@ async function lastFetched() {
   return rows[0] ? rows[0].fetched_at : null;
 }
 
-async function getTopStories(category) {
-  const isSport = category && (category === 'sport' || category === 'bors');
+async function getTopStories(category, sport) {
+  const isSport = category === 'sport' || sport;
   const scoreThreshold = isSport ? 1 : 2;
   const conditions = ["fetched_at > NOW() - INTERVAL '12 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
 
-  if (category && category !== 'nyheter') {
+  const SPORT_KW = {
+    allsvenskan: ['allsvenskan','malmö ff','djurgården','hammarby','ifk göteborg','ifk norrköping','häcken','elfsborg','kalmar ff','mjällby','gais','degerfors','brommapojkarna','västerås sk','örebro sk','halmstad bk','göteborg fc'],
+    vm2026: ['vm 2026','fotbolls-vm','world cup 2026','vm-kval','vm-trupp','fifa vm','vm-lottning','vm-grupp','vm-match','fotbolls vm','världsmästerskapet 2026'],
+    landslaget_fotboll: ['herrlandslaget','svenska landslaget','blågult','vm-kval','em-kval','landslagstruppen','landslagsuttagen'],
+    shl: ['shl','rögle','skellefteå aik','frölunda','djurgårdens hockey','brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71','timrå','oskarshamn','leksand','modo hockey','sm-final hockey','tre kronor','hockeyfinalen'],
+  };
+
+  if (sport && SPORT_KW[sport]) {
+    // Sport-undermeny – filtrera på nyckelord
+    conditions.push("category = 'sport'");
+    localSportSources.forEach(function(src) {
+      params.push(src);
+      conditions.push('source != $' + params.length);
+    });
+    const kwConds = SPORT_KW[sport].map(function(kw) {
+      params.push('%' + kw + '%');
+      return 'title ILIKE $' + params.length;
+    });
+    conditions.push('(' + kwConds.join(' OR ') + ')');
+  } else if (category && category !== 'nyheter') {
     params.push(category);
     conditions.push('category = $' + params.length);
-    // Exkludera lokala sport-RSS från toppnyheter oavsett kategori
     localSportSources.forEach(function(src) {
       params.push(src);
       conditions.push('source != $' + params.length);
     });
   } else {
-    // Nyheter – exkludera sport och english och lokala sport-RSS
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
     localSportSources.forEach(function(src) {
