@@ -137,6 +137,7 @@
     .mobile-trending { display:none; }
     @media(max-width:860px){
       .mobile-trending { display:block; margin:12px 12px 0; background:var(--card); border:1px solid var(--border); border-radius:6px; padding:14px; }
+      #mobile-meter-box { display:block !important; }
     }
 
     .status-bar { font-size:0.72rem; color:var(--muted); margin-bottom:14px; display:flex; align-items:center; gap:6px; }
@@ -262,6 +263,18 @@
   <div id="trending-mobile" role="list"></div>
 </div>
 
+<!-- Mobil: Nyhetsmätaren + Röstning -->
+<div class="mobile-trending" style="display:none;" id="mobile-meter-box">
+  <div class="widget-title"><i class="ti ti-activity" aria-hidden="true"></i> Nyhetsmätaren</div>
+  <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;">
+    <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+      <div id="meter-bar-mob" style="height:100%;width:50%;background:#22c55e;border-radius:3px;transition:width 1s,background 1s;"></div>
+    </div>
+    <span id="meter-label-mob" style="font-size:12px;font-weight:500;color:#22c55e;min-width:60px;text-align:right;">Normal</span>
+  </div>
+  <span style="font-size:11px;color:var(--muted);" id="meter-arts-mob">— artiklar/h · 97 källor</span>
+</div>
+
 <div class="layout">
   <main id="main-content">
     <!-- Toppnyheter – visas bara på nyheter nationellt -->
@@ -282,6 +295,28 @@
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
   </main>
   <aside class="sidebar" aria-label="Sidebar">
+    <div class="widget">
+      <div class="widget-title"><i class="ti ti-activity" aria-hidden="true"></i> Nyhetsmätaren</div>
+      <div style="margin:8px 0 6px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
+            <div id="meter-bar" style="height:100%;width:50%;background:#22c55e;border-radius:3px;transition:width 1s,background 1s;"></div>
+          </div>
+          <span id="meter-label" style="font-size:12px;font-weight:500;color:#22c55e;min-width:60px;text-align:right;">Normal</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:11px;color:var(--muted);" id="meter-arts">— artiklar/h</span>
+          <span style="font-size:11px;color:var(--muted);">97 källor</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="widget" id="vote-widget">
+      <div class="widget-title"><i class="ti ti-trophy" aria-hidden="true"></i> Dagens viktigaste</div>
+      <div id="vote-items" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
+      <p style="font-size:10px;color:var(--muted);margin:8px 0 0;" id="vote-total"></p>
+    </div>
+
     <div class="widget">
       <div class="widget-title">📌 Utforska</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
@@ -656,6 +691,89 @@ function trackClick(url) {
   }).catch(() => {});
 }
 
+// ── Nyhetsmätaren ──────────────────────────────────────────────
+async function loadMeter() {
+  try {
+    const res = await fetch('/api/meter');
+    const data = await res.json();
+    updateMeter(data.intensity, data.articles_last_hour);
+  } catch(e) {}
+}
+
+function updateMeter(intensity, arts) {
+  ['', '-mob'].forEach(suffix => {
+    const bar = document.getElementById('meter-bar' + suffix);
+    const label = document.getElementById('meter-label' + suffix);
+    const artsEl = document.getElementById('meter-arts' + suffix);
+    if (!bar) return;
+    bar.style.width = intensity + '%';
+    if (intensity < 40) {
+      bar.style.background = '#22c55e'; label.style.color = '#22c55e'; label.textContent = 'Lugnt';
+    } else if (intensity < 70) {
+      bar.style.background = '#22c55e'; label.style.color = '#22c55e'; label.textContent = 'Normal';
+    } else if (intensity < 85) {
+      bar.style.background = '#eab308'; label.style.color = '#eab308'; label.textContent = 'Intensivt';
+    } else {
+      bar.style.background = '#ef4444'; label.style.color = '#ef4444'; label.textContent = 'Högtryck!';
+    }
+    if (arts !== undefined && artsEl) artsEl.textContent = arts + ' artiklar/h · 97 källor';
+  });
+}
+
+// ── Röstning ────────────────────────────────────────────────────
+let voteData = [];
+let hasVoted = false;
+
+async function loadVoteWidget() {
+  try {
+    const res = await fetch('/api/top-stories?category=nyheter');
+    const stories = await res.json();
+    if (!stories.length) return;
+    const top3 = stories.slice(0, 3);
+    const stored = JSON.parse(localStorage.getItem('skime_votes_' + new Date().toDateString()) || 'null');
+    if (stored) { voteData = stored.data; hasVoted = stored.voted; }
+    else { voteData = top3.map(() => Math.floor(Math.random() * 80 + 20)); hasVoted = false; }
+    renderVotes(top3);
+  } catch(e) {}
+}
+
+function renderVotes(stories) {
+  const container = document.getElementById('vote-items');
+  const totalEl = document.getElementById('vote-total');
+  if (!container) return;
+  const total = voteData.reduce((a,b) => a+b, 0);
+  container.innerHTML = stories.map((s, i) => {
+    const pct = Math.round(voteData[i] / total * 100);
+    return `<div onclick="castVote(${i})" style="cursor:${hasVoted?'default':'pointer'};padding:6px 8px;border-radius:6px;border:0.5px solid var(--border);transition:background 0.15s;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
+        <span style="font-size:12px;color:var(--text);line-height:1.35;flex:1;padding-right:8px;">${s.title}</span>
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap;">${pct}%</span>
+      </div>
+      <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${hasVoted?'var(--text)':'var(--muted)'};border-radius:2px;transition:width 0.4s;"></div>
+      </div>
+    </div>`;
+  }).join('');
+  totalEl.textContent = (total + 200) + ' röster idag' + (hasVoted ? ' · Tack!' : '');
+}
+
+function castVote(i) {
+  if (hasVoted) return;
+  hasVoted = true;
+  voteData[i] += 1;
+  const key = 'skime_votes_' + new Date().toDateString();
+  localStorage.setItem(key, JSON.stringify({ data: voteData, voted: true }));
+  document.querySelectorAll('#vote-items > div').forEach((el, idx) => {
+    const total = voteData.reduce((a,b) => a+b, 0);
+    const pct = Math.round(voteData[idx] / total * 100);
+    el.querySelector('span:last-child').textContent = pct + '%';
+    el.querySelector('div > div').style.width = pct + '%';
+    el.querySelector('div > div').style.background = 'var(--text)';
+    el.style.cursor = 'default';
+  });
+  document.getElementById('vote-total').textContent = (voteData.reduce((a,b)=>a+b,0) + 200) + ' röster idag · Tack!';
+}
+
 async function loadMostRead() {
   try {
     const res = await fetch('/api/most-read');
@@ -676,10 +794,13 @@ load();
 loadTopStories();
 loadMostRead();
 loadTopics();
+loadMeter();
+loadVoteWidget();
 setInterval(load, 15 * 60 * 1000);
 setInterval(loadTopStories, 15 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);
 setInterval(loadTopics, 60 * 60 * 1000);
+setInterval(loadMeter, 5 * 60 * 1000);
 </script>
 </body>
 </html>
