@@ -182,16 +182,16 @@
     .divider-line { height:0.5px; flex:1; background:var(--border); }
     .divider-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); white-space:nowrap; }
 
-    .top-story-main { background:var(--card); border:1px solid var(--border); border-radius:8px; border-left:3px solid #2563eb; padding:18px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; }
+    .top-story-main { background:var(--card); border:1px solid var(--border); border-radius:8px; border-left:3px solid var(--red); padding:18px; margin-bottom:8px; cursor:pointer; transition:background 0.15s; }
     .top-story-main:hover { background:var(--hover); }
-    .top-story-main .ts-meta { font-size:11px; color:#2563eb; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+    .top-story-main .ts-meta { font-size:11px; color:var(--red); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
     .top-story-main .ts-title { font-size:17px; font-weight:800; line-height:1.4; color:var(--text); margin-bottom:8px; font-family:'Inter',sans-serif; }
     .top-story-main .ts-ingress { font-size:13px; color:var(--ingress); line-height:1.5; margin-bottom:12px; }
 
     .top-stories-small { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
     .top-story-small { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px; cursor:pointer; transition:background 0.15s; }
     .top-story-small:hover { background:var(--hover); }
-    .top-story-small .ts-meta { font-size:11px; color:#2563eb; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
+    .top-story-small .ts-meta { font-size:11px; color:var(--red); font-weight:600; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px; }
     .top-story-small .ts-title { font-size:14px; font-weight:800; line-height:1.4; color:var(--text); margin-bottom:10px; font-family:'Inter',sans-serif; }
 
     @media(max-width:600px){ .top-stories-small { grid-template-columns:1fr; } }
@@ -267,7 +267,7 @@
     <!-- Toppnyheter – visas bara på nyheter nationellt -->
     <div id="top-stories-section" style="display:none; margin-bottom:20px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
-        <div style="width:3px;height:16px;background:#2563eb;border-radius:2px;"></div>
+        <div style="width:3px;height:16px;background:var(--red);border-radius:2px;"></div>
         <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);">Toppnyheter</span>
         <span class="live-dot"></span>
       </div>
@@ -402,7 +402,7 @@ function renderTabs() {
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
             <span style="font-size:11px;color:var(--muted);white-space:nowrap;">${lang==='sv'?'Senast besökt:':'Recent:'}</span>
             ${recent.map(r => `<button onclick="selectRegionFromDropdown('${r}')"
-              style="font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border);background:${r===current?'#2563eb':'var(--card)'};color:${r===current?'#fff':'var(--text)'};cursor:pointer;font-family:'Inter',sans-serif;">${r}</button>`).join('')}
+              style="font-size:12px;padding:4px 12px;border-radius:20px;border:0.5px solid var(--border);background:${r===current?'var(--red)':'var(--card)'};color:${r===current?'var(--bg)':'var(--text)'};cursor:pointer;font-family:'Inter',sans-serif;">${r}</button>`).join('')}
           </div>` : ''}
       </div>`;
   }
