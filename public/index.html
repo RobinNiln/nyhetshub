@@ -263,9 +263,9 @@
   <div id="trending-mobile" role="list"></div>
 </div>
 
-<!-- Mobil: Nyhetsläget just nu + Röstning -->
+<!-- Mobil: Nyhetsmätaren + Röstning -->
 <div class="mobile-trending" style="display:none;" id="mobile-meter-box">
-  <div class="widget-title"><i class="ti ti-activity" aria-hidden="true"></i> Nyhetsläget just nu</div>
+  <div class="widget-title">⚡ Nyhetsläget just nu</div>
   <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;">
     <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
       <div id="meter-bar-mob" style="height:100%;width:50%;background:#22c55e;border-radius:3px;transition:width 1s,background 1s;"></div>
@@ -296,7 +296,7 @@
   </main>
   <aside class="sidebar" aria-label="Sidebar">
     <div class="widget">
-      <div class="widget-title"><i class="ti ti-activity" aria-hidden="true"></i> Nyhetsläget just nu</div>
+      <div class="widget-title">⚡ Nyhetsläget just nu</div>
       <div style="margin:8px 0 6px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
           <div style="flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;">
@@ -309,12 +309,6 @@
           <span style="font-size:11px;color:var(--muted);">97 källor</span>
         </div>
       </div>
-    </div>
-
-    <div class="widget" id="vote-widget">
-      <div class="widget-title"><i class="ti ti-trophy" aria-hidden="true"></i> Dagens viktigaste</div>
-      <div id="vote-items" style="display:flex;flex-direction:column;gap:6px;margin-top:8px;"></div>
-      <p style="font-size:10px;color:var(--muted);margin:8px 0 0;" id="vote-total"></p>
     </div>
 
     <div class="widget">
@@ -691,7 +685,7 @@ function trackClick(url) {
   }).catch(() => {});
 }
 
-// ── Nyhetsläget just nu ──────────────────────────────────────────────
+// ── Nyhetsmätaren ──────────────────────────────────────────────
 async function loadMeter() {
   try {
     const res = await fetch('/api/meter');
