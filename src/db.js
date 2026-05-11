@@ -297,6 +297,22 @@ async function getTopStories(category, sport) {
     });
   }
 
+  // Extra filter för sport-toppnyheter – blockera uppenbart icke-sport
+  if (category === 'sport' || sport) {
+    const nonSportWords = [
+      'sanktioner','bosättare','israel','palestina','gaza','ukraina','ryssland',
+      'trump','biden','eu-kommissionen','nato','riksdag','regeringen','minister',
+      'börsen','aktier','inflation','ränta','skatt','budget',
+      'sjukhus','cancer','virus','pandemi','vaccin',
+      'brand ','olycka','mord','rättegång','häktad',
+      'klimat','utsläpp'
+    ];
+    nonSportWords.forEach(function(w) {
+      params.push('%' + w + '%');
+      conditions.push('title NOT ILIKE $' + params.length);
+    });
+  }
+
   const { rows } = await pool.query(
     'SELECT title, url, source, category, region, ingress, published_at, score ' +
     'FROM articles WHERE ' + conditions.join(' AND ') + ' ' +
