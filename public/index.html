@@ -437,6 +437,7 @@ function selectSportSub(id, el) {
   document.querySelectorAll('#sport-subnav .cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   load();
+  loadTopStories();
 }
 
 function selectTab(val, el) {
