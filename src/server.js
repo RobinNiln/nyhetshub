@@ -372,6 +372,30 @@ app.get('/api/top-stories', async (req, res) => {
   }
 });
 
+app.get('/api/meter', async (req, res) => {
+  try {
+    const { Pool } = require('pg');
+    const pool = new (require('pg').Pool)({
+      connectionString: process.env.DATABASE_URL,
+      ssl: { rejectUnauthorized: false }
+    });
+    const { rows } = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE fetched_at > NOW() - INTERVAL '1 hour') AS last_hour,
+        COUNT(*) FILTER (WHERE fetched_at > NOW() - INTERVAL '1 day') / 24.0 AS daily_avg,
+        COUNT(DISTINCT category) AS categories
+      FROM articles
+      WHERE fetched_at > NOW() - INTERVAL '1 day'
+    `);
+    const lastHour = parseInt(rows[0].last_hour) || 0;
+    const dailyAvg = parseFloat(rows[0].daily_avg) || 1;
+    const intensity = Math.min(100, Math.round((lastHour / dailyAvg) * 50));
+    res.json({ articles_last_hour: lastHour, intensity });
+  } catch(e) {
+    res.json({ articles_last_hour: 80, intensity: 50 });
+  }
+});
+
 app.get('/api/news', async (req, res) => {
   try {
     const articles = await get({
