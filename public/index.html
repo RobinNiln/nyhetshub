@@ -544,8 +544,6 @@ function toggleTheme() {
   document.getElementById('theme-btn').title = labels[next];
   localStorage.setItem('theme', next);
 }
-  localStorage.setItem('theme', dark ? 'light' : 'dark');
-}
 
 function toggleLang() {
   lang = lang === 'sv' ? 'en' : 'sv';
