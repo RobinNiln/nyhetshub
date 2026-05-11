@@ -62,6 +62,17 @@
       --nav-bg: #0a0a0a;
       --ingress: #999;
     }
+    [data-theme="dim"] {
+      --card: #2c2c2e;
+      --border: #3a3a3c;
+      --text: #f0f0f0;
+      --muted: #8e8e93;
+      --hover: #3a3a3c;
+      --bg: #1c1c1e;
+      --header-bg: rgba(28,28,30,0.97);
+      --nav-bg: #1c1c1e;
+      --ingress: #aeaeb2;
+    }
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.2s,color 0.2s; }
 
@@ -83,7 +94,7 @@
       .header-left { display:none; }
       .header-logo-text { font-size:18px; }
       .date-display { display:none; }
-      .header-tagline { text-align:left; }
+      .header-tagline { text-align:center; }
     }
 
     /* Mode */
@@ -524,9 +535,15 @@ function renderTrending(articles) {
 }
 
 function toggleTheme() {
-  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-  document.documentElement.setAttribute('data-theme', dark ? '' : 'dark');
-  document.getElementById('theme-btn').textContent = dark ? '🌙' : '☀️';
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'light' ? 'dim' : current === 'dim' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next === 'light' ? '' : next);
+  const icons = { light: '🌙', dim: '🌑', dark: '☀️' };
+  const labels = { light: 'Ljust läge', dim: 'Dim-läge', dark: 'Mörkt läge' };
+  document.getElementById('theme-btn').textContent = icons[next];
+  document.getElementById('theme-btn').title = labels[next];
+  localStorage.setItem('theme', next);
+}
   localStorage.setItem('theme', dark ? 'light' : 'dark');
 }
 
@@ -550,6 +567,11 @@ const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'dark') {
   document.documentElement.setAttribute('data-theme', 'dark');
   document.getElementById('theme-btn').textContent = '☀️';
+  document.getElementById('theme-btn').title = 'Mörkt läge';
+} else if (savedTheme === 'dim') {
+  document.documentElement.setAttribute('data-theme', 'dim');
+  document.getElementById('theme-btn').textContent = '🌑';
+  document.getElementById('theme-btn').title = 'Dim-läge';
 }
 
 async function loadTopStories() {
