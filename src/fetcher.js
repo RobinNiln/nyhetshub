@@ -317,7 +317,32 @@ const KEYWORDS = {
   kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen','artist','kulturhus','tv-serie','premiär','spelfilm','dokumentär','utställning','festival','recension','roman','författar'],
   tech:       ['ai ','artificiell intelligens','chatgpt','openai','tech','startup','microsoft','google','apple','cybersäkerhet','hack','algoritm','robot','programvara','iphone','android','tesla','chipset','halvledare'],
   samhalle:   ['sjukhus','vård','1177','ambulans','skola','förskola','gymnasium','bostäder','hyresrätt','järnväg','motorväg','polis','brott','rättegång','dom ','häkta','gripen','brand ','räddningstjänst','socialtjänst','äldreomsorg','migration','asyl','anhållen','åtalas','döms','fängelse','skjuten','skottlossning','mördad','explosion'],
-  politik:    ['riksdag','statsminister','riksdagen','socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet','centerpartiet','liberalerna','kristdemokraterna','miljöpartiet','partiledare','partiledardebatt','valet ','valresultat','opposition','koalition','riksdagsvalet','kommunalvalet','riksdagsbeslut','budgetpropositionen','valrörelsen','utrikesminister','justitieminister','finansminister','regeringen','statsråd'],
+  politik:    [
+    // Institutioner
+    'riksdag','riksdagen','riksdagsbeslut','riksdagsvalet','kommunalvalet','regionvalet',
+    'budgetpropositionen','budgetdebatten','statsbudgeten','valrörelsen','valresultat',
+    // Partier
+    'socialdemokraterna','moderaterna','sverigedemokraterna','vänsterpartiet',
+    'centerpartiet','liberalerna','kristdemokraterna','miljöpartiet',
+    's-partiets','m-partiets','sd-partiets','mp-partiets',
+    // Roller
+    'statsminister','statsministern','utrikesminister','justitieminister',
+    'finansminister','inrikesminister','försvarsminister','socialminister',
+    'partiledare','partiledardebatt','partiledaren','statsråd','statssekreterare',
+    'regeringen','regeringsbeslut','regeringsförklaring','oppositionen',
+    // Politik-termer
+    'valet ','koalition','majoriteten','minoritetsregering','riksdagsgrupp',
+    'lagstiftning','proposition','motion ','remiss','utskott','konstitutionsutskott',
+    'nato ','nato-','eu-kommissionen','eu-parlamentet','eu-valet',
+    'ulf kristersson','magdalena andersson','jimmie åkesson','nooshi dadgostar',
+    'annie lööf','johan pehrson','ebba busch','märta stenevi',
+    'tobias billström','maria malmer stenergard','paul engdahl',
+    'skattereform','skattehöjning','skattesänkning','reformer','välfärd',
+    'migrationsminister','migrationspolitik','integrationspolitik',
+    'försvarspolitik','säkerhetspolitik','klimatpolitik','energipolitik',
+    'kriminalvård','rättspolitik','skolpolitik','sjukvårdspolitik',
+    'partierna','riksdagspartiet','politikerna','partipolitik',
+  ],
   utrikes:    ['ukraina','mellanöstern','gaza','israel','putin','nordkorea','klimat','kriget','nato-toppmöte','fn-möte','trump','biden','ryssland','kina','usa '],
 };
 
