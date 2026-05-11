@@ -124,6 +124,13 @@ async function get(opts) {
     conditions.push('region = $' + params.length);
   } else if (sport && SPORT_KEYWORDS[sport]) {
     conditions.push("category = 'sport'");
+    conditions.push('region IS NULL');
+    // Exkludera lokala sport-RSS från underkategorier
+    const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
+    localSportSources.forEach(function(src) {
+      params.push(src);
+      conditions.push('source != $' + params.length);
+    });
     const kws = SPORT_KEYWORDS[sport];
     const kwConditions = kws.map(function(kw) {
       params.push('%' + kw + '%');
@@ -247,8 +254,9 @@ async function lastFetched() {
 }
 
 async function getTopStories(category, sport) {
-  const isSport = category === 'sport' || sport;
-  const scoreThreshold = isSport ? 1 : 2;
+  const isSportSub = !!sport;
+  const isSport = category === 'sport' || isSportSub;
+  const scoreThreshold = isSportSub ? 0 : (isSport ? 1 : 2);
   const conditions = ["fetched_at > NOW() - INTERVAL '12 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
