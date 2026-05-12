@@ -122,12 +122,18 @@
     .mode-btn.active { color:var(--text); background:var(--border); font-weight:600; }
 
     /* Nav */
-    nav { border-bottom:1px solid var(--border); overflow-x:auto; white-space:nowrap; scrollbar-width:none; background:var(--nav-bg); }
+    .nav-wrapper { position:relative; border-bottom:1px solid var(--border); background:var(--nav-bg); }
+    .nav-wrapper::after { content:''; position:absolute; right:0; top:0; bottom:0; width:32px; background:linear-gradient(to right, transparent, var(--nav-bg)); pointer-events:none; }
+    nav { overflow-x:auto; white-space:nowrap; scrollbar-width:none; }
     nav::-webkit-scrollbar { display:none; }
     .nav-inner { max-width:1200px; margin:0 auto; padding:6px 20px; display:flex; gap:4px; }
     .cat-btn { background:none; border:1px solid transparent; color:var(--muted); padding:6px 12px; cursor:pointer; font-size:0.8rem; border-radius:20px; transition:all 0.15s; font-family:'Inter',sans-serif; white-space:nowrap; }
     .cat-btn:hover { color:var(--text); border-color:var(--border); }
     .cat-btn.active { color:var(--red); border-color:var(--red); background:var(--accent-bg); }
+    @media(max-width:600px){
+      .nav-inner { padding:6px 12px; gap:3px; }
+      .cat-btn { font-size:0.75rem; padding:5px 10px; }
+    }
 
     /* Layout */
     .layout { max-width:1200px; margin:20px auto; padding:0 20px; display:grid; grid-template-columns:1fr 280px; gap:20px; }
@@ -235,7 +241,7 @@
   </div>
 </div>
 
-<nav aria-label="Kategorier"><div class="nav-inner" id="tab-nav"></div></nav>
+<div class="nav-wrapper"><nav aria-label="Kategorier"><div class="nav-inner" id="tab-nav"></div></nav></div>
 
 <!-- Sport undermeny -->
 <div id="sport-subnav" style="display:none; border-bottom:1px solid var(--border); background:var(--nav-bg);">
@@ -538,7 +544,26 @@ async function load() {
 
 function renderGrid(articles) {
   if (!articles.length) {
-    document.getElementById('news-grid').innerHTML = '<div class="state">Inga nyheter hittades.</div>';
+    const emptyMessages = {
+      nyheter: { icon: '📰', text: 'Inga nationella nyheter just nu', sub: 'Nyheter hämtas var 15:e minut – försök igen strax.' },
+      valet2026: { icon: '🗳️', text: 'Inga valnyheter just nu', sub: 'Valrörelsen hettar till – kom tillbaka senare.' },
+      samhalle: { icon: '🏙️', text: 'Inga samhällsnyheter just nu', sub: 'Nyheter uppdateras var 15:e minut.' },
+      naringsliv: { icon: '📈', text: 'Inga näringslivsnyheter just nu', sub: 'Börsen och bolagsnyheter hämtas löpande.' },
+      sport: { icon: '⚽', text: 'Inga sportnyheter just nu', sub: 'Matchresultat och transfernyheter uppdateras löpande.' },
+      tech: { icon: '💻', text: 'Inga technyheter just nu', sub: 'Nyheter om AI, startups och teknik hämtas var 15:e minut.' },
+      kultur: { icon: '🎭', text: 'Inga kulturnyheter just nu', sub: 'Film, musik och konst uppdateras löpande.' },
+      utrikes: { icon: '🌍', text: 'Inga utrikesnyheter just nu', sub: 'Internationella nyheter hämtas var 15:e minut.' },
+      english: { icon: '🌐', text: 'No international news right now', sub: 'News from BBC, Reuters and more updates every 15 minutes.' },
+      bors: { icon: '📊', text: 'Inga börsnyheter just nu', sub: 'Börsnyheter hämtas löpande under handelsdagen.' },
+    };
+    const cat = sportSub || borsSub || current;
+    const msg = emptyMessages[cat] || { icon: '📭', text: 'Inga nyheter hittades', sub: 'Försök igen om en stund.' };
+    document.getElementById('news-grid').innerHTML = `
+      <div class="state">
+        <div style="font-size:2rem;margin-bottom:12px;">${msg.icon}</div>
+        <div style="font-size:0.95rem;font-weight:500;color:var(--text);margin-bottom:6px;">${msg.text}</div>
+        <div style="font-size:0.8rem;color:var(--muted);">${msg.sub}</div>
+      </div>`;
     return;
   }
   document.getElementById('news-grid').innerHTML = articles.map((a, i) => {
