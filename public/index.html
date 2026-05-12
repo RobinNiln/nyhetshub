@@ -258,12 +258,7 @@
   <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
 </div>
 
-<div class="mobile-trending" id="mobile-trending-box">
-  <div class="widget-title">🔥 Trending</div>
-  <div id="trending-mobile" role="list"></div>
-</div>
-
-<!-- Mobil: Nyhetsmätaren + Röstning -->
+<!-- Mobil: Nyhetsläget just nu – överst -->
 <div class="mobile-trending" style="display:none;" id="mobile-meter-box">
   <div class="widget-title">⚡ Nyhetsläget just nu</div>
   <div style="display:flex;align-items:center;gap:8px;margin:8px 0 4px;">
@@ -293,6 +288,11 @@
     </div>
     <div class="status-bar" id="status-bar" aria-live="polite"></div>
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
+    <!-- Mobil: Trending efter nyhetsflödet -->
+    <div class="mobile-trending" id="mobile-trending-box" style="margin:12px 0 0;">
+      <div class="widget-title">🔥 Trending</div>
+      <div id="trending-mobile" role="list"></div>
+    </div>
   </main>
   <aside class="sidebar" aria-label="Sidebar">
     <div class="widget">
@@ -712,60 +712,6 @@ function updateMeter(intensity, arts) {
     }
     if (arts !== undefined && artsEl) artsEl.textContent = arts + ' artiklar/h · 97 källor';
   });
-}
-
-// ── Röstning ────────────────────────────────────────────────────
-let voteData = [];
-let hasVoted = false;
-
-async function loadVoteWidget() {
-  try {
-    const res = await fetch('/api/top-stories?category=nyheter');
-    const stories = await res.json();
-    if (!stories.length) return;
-    const top3 = stories.slice(0, 3);
-    const stored = JSON.parse(localStorage.getItem('skime_votes_' + new Date().toDateString()) || 'null');
-    if (stored) { voteData = stored.data; hasVoted = stored.voted; }
-    else { voteData = top3.map(() => Math.floor(Math.random() * 80 + 20)); hasVoted = false; }
-    renderVotes(top3);
-  } catch(e) {}
-}
-
-function renderVotes(stories) {
-  const container = document.getElementById('vote-items');
-  const totalEl = document.getElementById('vote-total');
-  if (!container) return;
-  const total = voteData.reduce((a,b) => a+b, 0);
-  container.innerHTML = stories.map((s, i) => {
-    const pct = Math.round(voteData[i] / total * 100);
-    return `<div onclick="castVote(${i})" style="cursor:${hasVoted?'default':'pointer'};padding:6px 8px;border-radius:6px;border:0.5px solid var(--border);transition:background 0.15s;">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;">
-        <span style="font-size:12px;color:var(--text);line-height:1.35;flex:1;padding-right:8px;">${s.title}</span>
-        <span style="font-size:11px;color:var(--muted);white-space:nowrap;">${pct}%</span>
-      </div>
-      <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;">
-        <div style="height:100%;width:${pct}%;background:${hasVoted?'var(--text)':'var(--muted)'};border-radius:2px;transition:width 0.4s;"></div>
-      </div>
-    </div>`;
-  }).join('');
-  totalEl.textContent = (total + 200) + ' röster idag' + (hasVoted ? ' · Tack!' : '');
-}
-
-function castVote(i) {
-  if (hasVoted) return;
-  hasVoted = true;
-  voteData[i] += 1;
-  const key = 'skime_votes_' + new Date().toDateString();
-  localStorage.setItem(key, JSON.stringify({ data: voteData, voted: true }));
-  document.querySelectorAll('#vote-items > div').forEach((el, idx) => {
-    const total = voteData.reduce((a,b) => a+b, 0);
-    const pct = Math.round(voteData[idx] / total * 100);
-    el.querySelector('span:last-child').textContent = pct + '%';
-    el.querySelector('div > div').style.width = pct + '%';
-    el.querySelector('div > div').style.background = 'var(--text)';
-    el.style.cursor = 'default';
-  });
-  document.getElementById('vote-total').textContent = (voteData.reduce((a,b)=>a+b,0) + 200) + ' röster idag · Tack!';
 }
 
 async function loadMostRead() {
