@@ -425,6 +425,7 @@ function renderTabs() {
     const recent = getRecentRegions();
     nav.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 0;">
+        <span style="font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;">Välj din region</span>
         <div style="position:relative;display:inline-flex;align-items:center;">
           <select id="region-select" onchange="selectRegionFromDropdown(this.value)"
             style="font-size:13px;padding:6px 32px 6px 14px;border-radius:20px;border:0.5px solid var(--border);background:var(--card);color:var(--text);appearance:none;cursor:pointer;font-family:'Inter',sans-serif;min-width:190px;">
