@@ -313,7 +313,8 @@ const SOURCES = {
 
 const KEYWORDS = {
   sport:      ['fotboll','hockey','tennis','golf','allsvenskan','superettan','nhl','nba','vm ','em ','match','spelare','tränar','shl ','damallsvenskan','ishockey','basketboll','friidrott','simning','cykling','boxning','mma','formel'],
-  naringsliv: ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','vinst','omsättning','förvärv','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs','vd ','vdn ','ränta','riksbank','inflation','bnp','ekonomi','analytiker','prognos','rusar','faller','rasar','stiger','lyfter','rekord','börs'],
+  naringsliv: ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','vinst','omsättning','förvärv','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs','vd ','vdn ','ränta','riksbank','inflation','bnp','ekonomi','analytiker','prognos','rusar','faller','rasar','stiger','lyfter','rekord','börs','lönsamhet','aktieägare','kvartalet','helåret','rörelseresultat','ebitda','börsvärde','notering','avnotering','utdelning','warranter','fonder'],
+  naringsliv_never: ['hamas','gaza','palestina','israel','ukraina','ryssland','sexuellt våld','terrorattack','krigsbrott','massaker','folkmord','humanitär','flyktingar','sanktioner'],
   kultur:     ['film','musik','konst','teater','bok','nobel','konsert','netflix','melodifestivalen','artist','kulturhus','tv-serie','premiär','spelfilm','dokumentär','utställning','festival','recension','roman','författar'],
   tech:       ['ai ','artificiell intelligens','chatgpt','openai','tech','startup','microsoft','google','apple','cybersäkerhet','hack','algoritm','robot','programvara','iphone','android','tesla','chipset','halvledare'],
   samhalle:   ['sjukhus','vård','1177','ambulans','skola','förskola','gymnasium','bostäder','hyresrätt','järnväg','motorväg','polis','brott','rättegång','dom ','häkta','gripen','brand ','räddningstjänst','socialtjänst','äldreomsorg','migration','asyl','anhållen','åtalas','döms','fängelse','skjuten','skottlossning','mördad','explosion'],
@@ -419,7 +420,13 @@ function categorize(title, sourceName) {
   }
 
   for (const [cat, words] of Object.entries(KEYWORDS)) {
-    if (words.some(w => t.includes(w))) return cat;
+    if (cat.endsWith('_never')) continue;
+    if (words.some(w => t.includes(w))) {
+      // Kolla om titeln innehåller ett "aldrig"-ord för denna kategori
+      const neverKey = cat + '_never';
+      if (KEYWORDS[neverKey] && KEYWORDS[neverKey].some(w => t.includes(w))) continue;
+      return cat;
+    }
   }
   return 'nyheter';
 }
