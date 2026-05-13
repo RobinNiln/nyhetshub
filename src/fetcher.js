@@ -188,11 +188,25 @@ const SOURCES = {
     { name: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
     { name: 'New York Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
   ],
+
+  // ── KULTUR-KÄLLOR (nationella) ───────────────────────────────────────────
   kultur_national: [
-    { name: 'SvD Kultur',   url: 'https://www.svd.se/feed/articles.rss?tag=kultur' },
-    { name: 'DN Kultur',    url: 'https://www.dn.se/rss/kultur' },
-    { name: 'Nöjesguiden',  url: 'https://www.nojesguiden.se/rss' },
-    { name: 'Fokus',        url: 'https://www.fokus.se/feed' },
+    { name: 'SvD Kultur',       url: 'https://www.svd.se/feed/articles.rss?tag=kultur' },
+    { name: 'DN Kultur',        url: 'https://www.dn.se/rss/kultur' },
+    { name: 'Nöjesguiden',      url: 'https://www.nojesguiden.se/rss' },
+    { name: 'Fokus',            url: 'https://www.fokus.se/feed' },
+    { name: 'Google News Kultur', url: 'https://news.google.com/rss/search?q=kultur+film+musik+teater&hl=sv&gl=SE&ceid=SE:sv' },
+    { name: 'Google News Nöje',   url: 'https://news.google.com/rss/search?q=nöje+premiär+konsert&hl=sv&gl=SE&ceid=SE:sv' },
+  ],
+
+  // ── GOOGLE NEWS KOMPLEMENT ────────────────────────────────────────────────
+  google_news: [
+    { name: 'Google News Valet',     url: 'https://news.google.com/rss/search?q=riksdagsvalet+2026+valrörelsen&hl=sv&gl=SE&ceid=SE:sv' },
+    { name: 'Google News Politik',   url: 'https://news.google.com/rss/search?q=riksdag+regering+partiledare&hl=sv&gl=SE&ceid=SE:sv' },
+    { name: 'Google News Tech',      url: 'https://news.google.com/rss/search?q=AI+tech+startup+Sverige&hl=sv&gl=SE&ceid=SE:sv' },
+    { name: 'Google News VM 2026',   url: 'https://news.google.com/rss/search?q=fotbolls-VM+2026&hl=sv&gl=SE&ceid=SE:sv' },
+    { name: 'Google News Allsvenskan', url: 'https://news.google.com/rss/search?q=allsvenskan+fotboll&hl=sv&gl=SE&ceid=SE:sv' },
+    { name: 'Google News SHL',       url: 'https://news.google.com/rss/search?q=SHL+ishockey+Sverige&hl=sv&gl=SE&ceid=SE:sv' },
   ],
 
   // ── REGIONALA KÄLLOR ─────────────────────────────────────────────────────
@@ -359,7 +373,15 @@ function categorize(title, sourceName) {
   const englishSources = ['BBC News','Reuters','The Guardian','AP News','Al Jazeera','New York Times'];
 
   // Renodlade sportkällor – alltid sport
-  if (sportSources.includes(sourceName)) return 'sport';
+  const googleNewsSources = ['Google News Valet','Google News Politik','Google News Tech','Google News VM 2026','Google News Allsvenskan','Google News SHL','Google News Kultur','Google News Nöje'];
+  if (googleNewsSources.includes(sourceName)) {
+    if (sourceName.includes('Valet') || sourceName.includes('Politik')) return 'valet2026';
+    if (sourceName.includes('Tech')) return 'tech';
+    if (sourceName.includes('VM 2026')) return 'sport';
+    if (sourceName.includes('Allsvenskan')) return 'sport';
+    if (sourceName.includes('SHL')) return 'sport';
+    if (sourceName.includes('Kultur') || sourceName.includes('Nöje')) return 'kultur';
+  }
   // Kultur-källor – alltid kultur
   if (kulturSources.includes(sourceName)) return 'kultur';
   // Engelska källor – alltid english
@@ -472,6 +494,7 @@ async function fetchAll() {
     ...SOURCES.sport_local,
     ...SOURCES.english,
     ...SOURCES.kultur_national,
+    ...SOURCES.google_news,
     ...SOURCES.regional
   ];
   await fetchSources(all);
