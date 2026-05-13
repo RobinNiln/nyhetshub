@@ -171,7 +171,7 @@
     /* Sidebar */
     .sidebar { display:flex; flex-direction:column; gap:14px; }
     .widget { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:16px; }
-    .widget-title { font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); margin-bottom:12px; }
+    .widget-title { font-family:'Inter',sans-serif; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:2px; color:var(--text); margin-bottom:12px; }
     .trend-item { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); align-items:flex-start; }
     .trend-item:last-child { border:none; padding-bottom:0; }
     .trend-num { font-family:'Syne',sans-serif; font-size:0.9rem; font-weight:800; color:var(--border); min-width:18px; line-height:1.5; }
@@ -296,7 +296,7 @@
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
     <!-- Mobil: Trending efter nyhetsflödet -->
     <div class="mobile-trending" id="mobile-trending-box" style="margin:12px 0 0;">
-      <div class="widget-title">🔥 Trending</div>
+      <div class="widget-title">🔥 Trendar</div>
       <div id="trending-mobile" role="list"></div>
     </div>
   </main>
@@ -334,7 +334,7 @@
       <div id="trending-topics" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
     </div>
     <div class="widget">
-      <div class="widget-title" id="t-trending">🔥 Trending</div>
+      <div class="widget-title" id="t-trending">🔥 Trendar</div>
       <div id="trending" role="list"></div>
     </div>
     <div class="widget">
