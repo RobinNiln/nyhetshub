@@ -307,7 +307,13 @@ async function getTopStories(category, sport) {
       'brand ','olycka','mord','rättegång','häktad',
       'klimat','utsläpp'
     ];
+    // Trav får aldrig vara översta toppnyheten – lägg den sist i rankingen
+    const travWords = ['trav','travet','travhäst','v75','v86','v64','jackpot trav','solvalla','åby','jägersro','bergsåker'];
     nonSportWords.forEach(function(w) {
+      params.push('%' + w + '%');
+      conditions.push('title NOT ILIKE $' + params.length);
+    });
+    travWords.forEach(function(w) {
       params.push('%' + w + '%');
       conditions.push('title NOT ILIKE $' + params.length);
     });
