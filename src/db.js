@@ -223,7 +223,9 @@ async function get(opts) {
 
     if (seen.has(key)) {
       const group = seen.get(key);
-      if (group.sources.length < 6) {
+      // Lägg bara till källan om den inte redan finns i gruppen
+      const sourceExists = group.sources.some(s => s.name === row.source);
+      if (!sourceExists && group.sources.length < 6) {
         group.sources.push({ name: row.source, url: row.url });
       }
     } else {
@@ -332,7 +334,8 @@ async function getTopStories(category, sport) {
     const key = row.title.toLowerCase().replace(/[^a-zåäö\s]/g, '').split(/\s+/).slice(0, 5).join(' ');
     if (seen.has(key)) {
       const group = seen.get(key);
-      if (group.sources.length < 6) group.sources.push({ name: row.source, url: row.url });
+      const sourceExists = group.sources.some(s => s.name === row.source);
+      if (!sourceExists && group.sources.length < 6) group.sources.push({ name: row.source, url: row.url });
     } else {
       const group = { title: row.title, url: row.url, source: row.source, sources: [{ name: row.source, url: row.url }], category: row.category, region: row.region, ingress: row.ingress, published_at: row.published_at, score: row.score };
       seen.set(key, group);
