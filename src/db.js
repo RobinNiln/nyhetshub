@@ -41,7 +41,7 @@ async function save(article) {
     `SELECT COUNT(*) FROM articles WHERE source = $1 AND fetched_at > NOW() - INTERVAL '36 hours'`,
     [article.source]
   );
-  if (parseInt(countRows[0].count) >= 10) return;
+  if (parseInt(countRows[0].count) >= 15) return;
 
   await pool.query(
     `INSERT INTO articles (title, url, source, category, region, ingress, published_at)
@@ -265,7 +265,7 @@ async function lastFetched() {
 async function getTopStories(category, sport) {
   const isSportSub = !!sport;
   const isSport = category === 'sport' || isSportSub;
-  const scoreThreshold = isSportSub ? 0 : (isSport ? 1 : 2);
+  const scoreThreshold = isSportSub ? 0 : 2; // Alltid minst 2 källor för toppnyheter
   const conditions = ["fetched_at > NOW() - INTERVAL '6 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
