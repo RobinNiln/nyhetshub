@@ -464,13 +464,26 @@ async function fetchSources(sources) {
   for (const source of sources) {
     try {
       const feed = await parser.parseURL(source.url);
-      for (const item of feed.items.slice(0, 20)) {
+      const isGoogleNews = source.name.startsWith('Google News');
+      const maxItems = isGoogleNews ? 5 : 20;
+      for (const item of feed.items.slice(0, maxItems)) {
         if (!item.title || !item.link) continue;
         if (shouldSkip(item.title, item.link)) continue;
+
+        // Extrahera riktigt källnamn från Google News
+        let sourceName = source.name;
+        if (isGoogleNews && item.source && item.source.title) {
+          sourceName = item.source.title;
+        } else if (isGoogleNews) {
+          // Försök extrahera från titeln – Google News format: "Rubrik - Källnamn"
+          const match = item.title.match(/\s[-–]\s([^-–]+)$/);
+          if (match) sourceName = match[1].trim();
+        }
+
         await save({
-          title: item.title.trim(),
+          title: item.title.replace(/\s[-–]\s[^-–]+$/, '').trim(), // Ta bort källnamn från titeln
           url: item.link,
-          source: source.name,
+          source: sourceName,
           category: categorize(item.title, source.name),
           region: source.region || null,
           ingress: snippet(item),
