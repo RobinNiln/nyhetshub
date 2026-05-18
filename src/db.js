@@ -300,6 +300,7 @@ async function getTopStories(category, sport) {
   } else {
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
+    conditions.push("category != 'kultur'");
     localSportSources.forEach(function(src) {
       params.push(src);
       conditions.push('source != $' + params.length);
