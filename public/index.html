@@ -657,7 +657,7 @@ async function loadTopStories() {
     }
     const res = await fetch(url);
     const stories = await res.json();
-    if (!stories.length) { section.style.display = 'none'; return; }
+    if (!stories.length || stories.length < 3) { section.style.display = 'none'; return; }
     section.style.display = 'block';
     const CAT = {nyheter:'Nyheter',politik:'Politik',samhalle:'Samhälle',naringsliv:'Näringsliv',sport:'Sport',tech:'Tech',kultur:'Kultur',utrikes:'Utrikes',english:'English'};
     const main = stories[0];
