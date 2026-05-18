@@ -645,6 +645,7 @@ app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.send(`User-agent: *
 Allow: /
+Disallow: /api/
 
 # AI-sökmotorer välkomna
 User-agent: GPTBot
@@ -658,6 +659,7 @@ Allow: /
 
 User-agent: Googlebot
 Allow: /
+Disallow: /api/
 
 Sitemap: ${SITE_URL}/sitemap.xml
 `);
