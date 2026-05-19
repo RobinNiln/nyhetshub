@@ -418,7 +418,7 @@ app.get('/om-oss', (req, res) => {
   <title>Om Skime – Alla svenska nyheter på ett ställe</title>
   <meta name="description" content="Skime är en oberoende svensk nyhetstjänst som samlar nyheter från 100+ svenska medier i realtid. Läs om hur vi väljer källor, hur algoritmen fungerar och varför Skime byggdes.">
   <link rel="canonical" href="https://www.skime.se/om-oss">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"AboutPage","name":"Om Skime","description":"Skime är en oberoende svensk nyhetstjänst som samlar nyheter från 100+ svenska medier i realtid.","url":"https://www.skime.se/om-oss","publisher":{"@type":"Organization","name":"Skime","url":"https://www.skime.se"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"AboutPage","name":"Om Skime","description":"Skime är en oberoende svensk nyhetstjänst som samlar nyheter från 100+ svenska medier i realtid.","url":"https://www.skime.se/om-oss","publisher":{"@type":"Organization","name":"Skime","url":"https://www.skime.se","logo":{"@type":"ImageObject","url":"https://www.skime.se/Skimelogo.png"}}}</script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;max-width:720px;margin:0 auto;padding:40px 24px 80px;color:#111;line-height:1.8;background:#fff;}
@@ -575,7 +575,7 @@ app.get('/kontakt', (req, res) => {
   <div class="divider"></div>
 
   <h2>Om Skime</h2>
-  <p>Skime är en oberoende svensk nyhetstjänst byggd och driven av Robin Nilsson. Läs mer på vår <a href="/om-oss">om-oss-sida</a>.</p>
+  <p>Skime är en oberoende svensk nyhetstjänst. Läs mer på vår <a href="/om-oss">om-oss-sida</a>.</p>
 
   <footer>
     <p>© 2026 Skime · <a href="/om-oss">Om oss</a> · <a href="/integritetspolicy">Integritetspolicy</a></p>
@@ -672,49 +672,66 @@ app.get('/llms.txt', (req, res) => {
 > Skime samlar, rankar och presenterar nyheter från Sveriges ledande medier i realtid. Alla nyheter på ett ställe, utan krångel.
 
 ## Vad är Skime?
-Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 100 svenska och internationella medier och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter, tar inga redaktionella ställningstaganden och publicerar aldrig ledartexter eller opinionsmaterial.
+Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 100 svenska och internationella medier och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter, tar inga redaktionella ställningstaganden och publicerar aldrig ledartexter, krönikor eller opinionsmaterial.
+
+## Unikhet
+Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar samma nyhet. En nyhet som 6 medier skriver om rankas högre än en nyhet från en enda källa. Formeln är: topScore = källantal × (1 + recency_bonus) där recency_bonus sjunker från 1.0 till 0 över 6 timmar.
 
 ## Täckning
-- Nationella svenska nyheter: SVT, SR, DN, SvD, Aftonbladet, Expressen, DI, Breakit, GP, Sydsvenskan, TV4, Omni, TT
-- Sport: SVT Sport, Aftonbladet Sport, Expressen Sport, Fotbollskanalen, Hockeysverige och 14 lokala sportkällor
+- Nationella svenska nyheter: SVT, SR, DN, SvD, Aftonbladet, Expressen, DI, Breakit, GP, TV4, Omni, TT
+- Sport nationellt: SVT Sport, Aftonbladet Sport, Expressen Sport, Fotbollskanalen, Fotbolldirekt, Hockeysverige, Hockeyexpressen
+- Sport lokalt: 14 lokala sportkällor
 - Regionalt: Minst 2-3 lokala källor per region, täcker alla 21 svenska län
 - Internationellt (engelska): BBC News, Reuters, The Guardian, AP News, Al Jazeera, New York Times
 - Kultur: SvD Kultur, DN Kultur, Nöjesguiden, Fokus
+- Google News-komplement för Valet 2026, Tech, VM 2026, Allsvenskan och SHL
 
 ## Kategorier
-- nyheter: Toppnyheter från nationella källor, rankade efter antal rapporterande källor
-- politik: Svenska partier, riksdag, regering, val
-- samhälle: Sjukvård, skola, infrastruktur, brott, bostäder
-- naringsliv: Börsen, ekonomi, företag, konjunktur
-- sport: Allsvenskan, Damallsvenskan, SHL, VM 2026, Herrlandslaget
+- nyheter: Riksnyheter från nationella källor, rankade efter källantal och aktualitet
+- sport: Allsvenskan, SHL, VM 2026, Herrlandslaget – med egna underflöden per liga
+- valet2026: Riksdagsvalet 2026, valrörelsen, partierna, partiledarna
+- naringsliv: Ekonomi, börsen, företag, konjunktur (med separat Börs-underkategori)
 - tech: AI, startups, cybersäkerhet, tekniknyheter
-- kultur: Film, musik, konst, teater, litteratur
 - utrikes: Internationella nyheter på svenska
-- english: Internationella nyheter på engelska
+- samhalle: Sjukvård, skola, brott, infrastruktur, bostäder
+- kultur: Film, musik, konst, teater, litteratur
+- english: Internationella nyheter på engelska från BBC, Reuters, Guardian, AP, Al Jazeera, NYT
 
-## Regioner
-Alla 21 svenska län: Blekinge, Dalarna, Gotland, Gävleborg, Halland, Jämtland, Jönköping, Kalmar, Kronoberg, Norrbotten, Skåne, Stockholm, Södermanland, Uppsala, Värmland, Västerbotten, Västernorrland, Västmanland, Västra Götaland, Örebro, Östergötland
+## Sport-undermenyer
+- Allsvenskan (herr fotboll Sverige)
+- Herrlandslaget (svenska fotbollslandslaget)
+- VM 2026 (fotbolls-VM i USA, Kanada, Mexiko)
+- SHL (Swedish Hockey League)
 
-## Topic-sidor (ämnessamlingar)
-- ${SITE_URL}/topic/allsvenskan – Allsvenskan fotboll
-- ${SITE_URL}/topic/shl – SHL ishockey
-- ${SITE_URL}/topic/vm-2026 – Fotbolls-VM 2026
-- ${SITE_URL}/topic/valet-2026 – Riksdagsvalet 2026
+## Regioner – alla 21 svenska län
+Blekinge, Dalarna, Gotland, Gävleborg, Halland, Jämtland, Jönköping, Kalmar, Kronoberg, Norrbotten, Skåne, Stockholm, Södermanland, Uppsala, Värmland, Västerbotten, Västernorrland, Västmanland, Västra Götaland, Örebro, Östergötland
+
+## Topic-sidor med FAQ
+- ${SITE_URL}/topic/allsvenskan – Allsvenskan fotboll, matcher, tabeller
+- ${SITE_URL}/topic/shl – SHL ishockey, SM-slutspel
+- ${SITE_URL}/topic/vm-2026 – Fotbolls-VM 2026 i USA/Kanada/Mexiko
+- ${SITE_URL}/topic/valet-2026 – Riksdagsvalet 2026, valrörelsen, opinionsundersökningar
 
 ## Rankningsmodell
-Nyheter rankas med formeln: källantal × recency_bonus. Ju fler oberoende medier som rapporterar samma händelse, desto viktigare bedöms nyheten vara. Toppnyheter väljs från senaste 12 timmar med minst 2 rapporterande källor.
+Nyheter rankas med formeln: källantal × recency_bonus. Ju fler oberoende medier som rapporterar samma händelse, desto viktigare bedöms nyheten vara. Toppnyheter väljs från senaste 6 timmar.
+
+## Filtrering
+Skime filtrerar aktivt bort: ledartexter, krönikor, debattartiklar, opinionsmaterial, reklam, prenumerationserbjudanden, fastighetsaffärer och nyföretagsnyheter.
 
 ## Uppdateringsfrekvens
-Nyheter hämtas automatiskt var 15:e minut, dygnet runt.
+Nyheter hämtas automatiskt var 15:e minut, dygnet runt. Databasen rymmer artiklar från senaste 36 timmar.
 
 ## Teknisk information
+- Byggd med: Node.js, Express, PostgreSQL, Railway
 - API: GET ${SITE_URL}/api/news?category=nyheter
 - API: GET ${SITE_URL}/api/news?region=Stockholm
 - API: GET ${SITE_URL}/api/top-stories
 - Sitemap: ${SITE_URL}/sitemap.xml
 
-## Kontakt och ägarskap
-Skime drivs av Robin Nilsson. Domän: skime.se. Registrerad i Sverige.`);
+## Ägarskap och kontakt
+Skime är en oberoende svensk nyhetstjänst. Domän: skime.se. Registrerad i Sverige 2026.
+Kontakt: ${SITE_URL}/kontakt
+LinkedIn: https://www.linkedin.com/company/skime/`);
 });
 
 // ── sitemap.xml ───────────────────────────────────────────────
@@ -782,13 +799,27 @@ app.get('/', async (req, res) => {
       `<li><a href="${a.url}">${a.title}</a> <span>(${a.source})</span></li>`
     ).join('\n');
 
+    const catDescriptions = {
+      nyheter: 'Senaste riksnyheterna från SVT, DN, Aftonbladet, Expressen och fler – rankade efter hur många källor som rapporterar samma händelse.',
+      sport: 'Senaste sportnyheter från Allsvenskan, SHL, VM 2026 och svenska landslaget – samlat från SVT Sport, Aftonbladet Sport och fler.',
+      valet2026: 'Senaste nytt inför riksdagsvalet 2026 – valrörelsen, partierna, opinionsundersökningar och partiledardebatter.',
+      naringsliv: 'Senaste ekonominyheter – börsen, kvartalsrapporter, företag och konjunktur från DI, SvD och fler.',
+      tech: 'Senaste technyheter om AI, startups och cybersäkerhet från svenska och internationella medier.',
+      utrikes: 'Senaste internationella nyheter på svenska – världspolitik, konflikter och globala händelser.',
+      samhalle: 'Senaste samhällsnyheter – sjukvård, skola, brott, bostäder och infrastruktur från svenska medier.',
+      kultur: 'Senaste kulturnyheter – film, musik, konst, teater och litteratur från DN Kultur, SvD Kultur och fler.',
+      english: 'Latest international news in English – aggregated from BBC, Reuters, The Guardian, AP News, Al Jazeera and New York Times.',
+    };
+
     const title = region
       ? `${region} nyheter – Skime`
-      : `Skime – Svenska nyheter samlat`;
+      : category
+        ? `${category.charAt(0).toUpperCase() + category.slice(1)} – Skime`
+        : `Skime – Svenska nyheter samlat`;
 
     const description = region
       ? `Senaste nyheterna från ${region}. Aggregerat från lokala medier i realtid.`
-      : `Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och 40+ medier – nationellt och regionalt.`;
+      : catDescriptions[category] || 'Skime samlar 100+ svenska medier på ett ställe – uppdaterat var 15:e minut, helt gratis.';
 
     const html = await require('fs').promises.readFile(
       path.join(__dirname, '../public/index.html'), 'utf8'
