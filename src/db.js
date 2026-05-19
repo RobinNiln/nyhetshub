@@ -41,7 +41,7 @@ async function save(article) {
     `SELECT COUNT(*) FROM articles WHERE source = $1 AND fetched_at > NOW() - INTERVAL '36 hours'`,
     [article.source]
   );
-  if (parseInt(countRows[0].count) >= 15) return;
+  if (parseInt(countRows[0].count) >= 20) return;
 
   await pool.query(
     `INSERT INTO articles (title, url, source, category, region, ingress, published_at)
@@ -179,15 +179,22 @@ async function get(opts) {
     conditions.push('region IS NULL');
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
+    conditions.push("category != 'kultur'");
     // Exkludera börsnyheter från nyhetsflödet
     const borsExclude = ['börsen','aktier','aktien','aktiekurs','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','stockholmsbörsen'];
     borsExclude.forEach(function(w) {
       params.push('%' + w + '%');
       conditions.push('title NOT ILIKE $' + params.length);
     });
-    // Exkludera lokala sport-RSS-källor från nationellt flöde
-    const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
-    localSportSources.forEach(function(src) {
+    // Exkludera sport- och kulturkällor från nationellt nyhetsflöde
+    const excludedSources = [
+      'Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport',
+      'Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport',
+      'GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport',
+      'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
+      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus'
+    ];
+    excludedSources.forEach(function(src) {
       params.push(src);
       conditions.push('source != $' + params.length);
     });
