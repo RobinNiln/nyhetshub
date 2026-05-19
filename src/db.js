@@ -291,6 +291,16 @@ async function getTopStories(category, sport) {
       params.push(src);
       conditions.push('source != $' + params.length);
     });
+    // Källundantag per sport (t.ex. Hockeysverige ska aldrig synas under Allsvenskan)
+    const sportExcludeSources = {
+      allsvenskan: ['Hockeysverige','Hockeyexpressen'],
+    };
+    if (sportExcludeSources[sport]) {
+      sportExcludeSources[sport].forEach(function(src) {
+        params.push(src);
+        conditions.push('source != $' + params.length);
+      });
+    }
     const kwConds = SPORT_KW[sport].map(function(kw) {
       params.push('%' + kw + '%');
       return 'title ILIKE $' + params.length;
