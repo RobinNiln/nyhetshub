@@ -271,8 +271,7 @@ async function lastFetched() {
 
 async function getTopStories(category, sport) {
   const isSportSub = !!sport;
-  const isSport = category === 'sport' || isSportSub;
-  const scoreThreshold = isSportSub ? 0 : 2; // Alltid minst 2 källor för toppnyheter
+  const scoreThreshold = isSportSub ? 0 : 1;
   const conditions = ["fetched_at > NOW() - INTERVAL '6 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
@@ -308,7 +307,12 @@ async function getTopStories(category, sport) {
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
     conditions.push("category != 'kultur'");
-    localSportSources.forEach(function(src) {
+    const excludedSources = [
+      ...localSportSources,
+      'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
+      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus'
+    ];
+    excludedSources.forEach(function(src) {
       params.push(src);
       conditions.push('source != $' + params.length);
     });
