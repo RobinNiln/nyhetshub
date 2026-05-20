@@ -304,7 +304,8 @@ async function get(opts) {
       'Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport',
       'GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport',
       'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
-      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus'
+      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus',
+      'Breakit','Google News Breakit'
     ];
     excludedSources.forEach(function(src) {
       params.push(src);
@@ -428,7 +429,8 @@ async function getTopStories(category, sport) {
     const excludedSources = [
       ...localSportSources,
       'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
-      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus'
+      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus',
+      'Breakit','Google News Breakit'
     ];
     excludedSources.forEach(function(src) {
       params.push(src);
