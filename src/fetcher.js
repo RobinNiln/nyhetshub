@@ -141,7 +141,7 @@ function shouldSkip(title, url = '') {
 // Bara dessa källor accepteras från Google News-flödet
 const GOOGLE_NEWS_WHITELIST = new Set([
   // Public service & nyhetsbyråer
-  'SVT', 'SVT Nyheter', 'Sveriges Radio', 'SR', 'TT', 'TT Nyhetsbyrån',
+  'SVT', 'SVT Nyheter', 'Sveriges Radio', 'SR',
   // Stora dagstidningar
   'Dagens Nyheter', 'DN', 'Dagens Nyheter (DN)',
   'Svenska Dagbladet', 'SvD',
@@ -154,7 +154,7 @@ const GOOGLE_NEWS_WHITELIST = new Set([
   // Affärsmedia
   'Dagens industri', 'DI', 'Breakit', 'Affärsvärlden',
   // Övriga etablerade nationella
-  'Omni', 'Fokus', 'Dagen', 'ETC', 'Nyheter Idag',
+  'Fokus', 'Dagen', 'ETC', 'Nyheter Idag',
   // Sport
   'Fotbollskanalen', 'Fotbolldirekt', 'Hockeysverige', 'Sportbladet',
   // Internationellt
@@ -167,7 +167,8 @@ const SOURCES = {
 
   // ── NATIONELLA KÄLLOR ────────────────────────────────────────────────────
   // BORTTAGNA: TT, GP, Omni, Breakit, Fokus (alla 404/format-fel)
-  // - TT, GP, Omni, Breakit hämtas istället via Google News-proxy nedan
+  // - GP, Breakit hämtas istället via Google News-proxy nedan
+  // - TT och Omni borttagna helt
   national: [
     { name: 'SVT',           url: 'https://www.svt.se/nyheter/rss.xml' },
     { name: 'SR',            url: 'https://api.sr.se/api/rss/program/83?format=1' },
@@ -352,16 +353,19 @@ const SOURCES = {
 
 // ── KÄLLVIKTNING ─────────────────────────────────────────────────────────────
 const SOURCE_WEIGHTS = {
-  'TT': 3, 'TT Nyhetsbyrån': 3,
+  // Tier 3 – public service & internationella nyhetsbyråer
   'SVT': 3, 'SVT Nyheter': 3, 'SR': 3, 'Sveriges Radio': 3,
   'BBC News': 3, 'BBC': 3,
-  'DN': 2, 'Dagens Nyheter': 2, 'SvD': 2, 'Svenska Dagbladet': 2,
+  'DN': 3, 'Dagens Nyheter': 3, 'SvD': 3, 'Svenska Dagbladet': 3,
+  // Tier 2.5 – stora kvällstidningar (Sveriges största nyhetssajter)
+  'Aftonbladet': 2.5, 'Expressen': 2.5,
+  // Tier 2 – övriga etablerade nationella medier
   'GP': 2, 'Göteborgs-Posten': 2,
-  'Aftonbladet': 2, 'Expressen': 2,
   'TV4': 2, 'TV4 Nyheterna': 2,
-  'Omni': 2, 'DI': 2, 'Dagens industri': 2,
+  'DI': 2, 'Dagens industri': 2,
   'The Guardian': 2, 'New York Times': 2,
   'Al Jazeera': 2, 'Sydsvenskan': 2, 'HD': 2,
+  // Tier 1 – branschmedier & specialiserade
   'Breakit': 1, 'Fokus': 1,
   'Fotbollskanalen': 1, 'Fotbolldirekt': 1,
   'Hockeysverige': 1,
@@ -429,7 +433,7 @@ function categorize(title, sourceName) {
     if (sourceName.includes('Allsvenskan')) return 'sport';
     if (sourceName.includes('SHL')) return 'sport';
     if (sourceName.includes('Kultur') || sourceName.includes('Nöje')) return 'kultur';
-    // TT/GP/Omni/Breakit-proxy: kategorisera baserat på titel
+    // GP/Breakit-proxy: kategorisera baserat på titel
   }
 
   if (kulturSources.includes(sourceName)) return 'kultur';
