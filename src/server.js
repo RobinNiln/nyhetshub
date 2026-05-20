@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
 const { init, get, lastFetched, getTopStories } = require('./db');
-const { fetchAll } = require('./fetcher');
+const { fetchAll, getHealthStatus } = require('./fetcher');
 
 const app = express();
 app.use(cors());
