@@ -113,6 +113,60 @@ const SKIP_PATTERNS = [
   /^restaurang.*stänger/i,
   /^café.*öppnar/i,
   /^ny restaurang/i,
+
+  // ── LISTICLES & KLICKBETEN (NYTT) ────────────────────────────────────────
+  /^här är \d+/i,
+  /^här är de \d+/i,
+  /^därför /i,
+  /^så här /i,
+  /^\d+ saker/i,
+  /^\d+ tecken/i,
+  /^\d+ tips/i,
+  /^\d+ knep/i,
+  /^\d+ sätt/i,
+  /^\d+ misstag/i,
+  /^topp \d+/i,
+  /allt du behöver veta/i,
+  /allt vi vet hittills/i,
+  /det här är/i,
+
+  // ── ÅSIKTER UTAN MARKÖR (NYTT) ───────────────────────────────────────────
+  /^därför är /i,
+  /^vi måste /i,
+  /^det är dags /i,
+  /^min syn på/i,
+  /^därför borde /i,
+  /^därför ska/i,
+  /^därför har/i,
+  /^varför /i,
+
+  // ── KÄNDISAR & SKVALLER (NYTT) ───────────────────────────────────────────
+  /\bkändis\b/i,
+  /\bskvaller\b/i,
+  /reality/i,
+  /paradise hotel/i,
+  /let's dance/i,
+  /så mycket tjänar/i,
+  /så mycket kostar/i,
+  /avslöjar.*om sin/i,
+  /öppnar upp om/i,
+  /berättar om sin kärlek/i,
+  /sambo/i,
+  /exet/i,
+  /ex-pojkvän/i,
+  /ex-flickvän/i,
+
+  // ── LIVSSTIL & MJUKA ÄMNEN (NYTT) ────────────────────────────────────────
+  /^därför blir du /i,
+  /forskaren: /i,
+  /experten: /i,
+  /så får du /i,
+  /så undviker du /i,
+  /detta händer när du /i,
+  /så blir du av med/i,
+  /horoskop/i,
+  /stjärntecken/i,
+  /så lyckas du/i,
 ];
 
 function shouldSkip(title, url = '') {
@@ -120,10 +174,18 @@ function shouldSkip(title, url = '') {
   if (SKIP_PATTERNS.some(p => p.test(title))) return true;
   const urlLower = url.toLowerCase();
   const skipPaths = [
+    // Befintliga
     '/ledare/', '/ledar/', '/kronika/', '/krönika/',
     '/debatt/', '/opinion/', '/kommentar/', '/insandare/',
     '/insändare/', '/kolumn/', '/podcast/', '/video/',
-    '/bildspel/', '/quiz/'
+    '/bildspel/', '/quiz/',
+    // NYA
+    '/noje/', '/nöje/', '/halsa/', '/hälsa/',
+    '/livsstil/', '/mat/', '/resor/', '/relationer/',
+    '/karriar/', '/karriär/',
+    '/tv-och-film/', '/kungligt/', '/familj/',
+    '/horoskop/', '/test/', '/quizet/',
+    '/reality/', '/skvaller/', '/kandisar/', '/kändisar/'
   ];
   return skipPaths.some(p => urlLower.includes(p));
 }
@@ -324,6 +386,34 @@ const SOURCES = {
   ]
 };
 
+// ── KÄLLVIKTNING ─────────────────────────────────────────────────────────────
+// Avgör hur mycket en källa väger i topp-algoritmen.
+// Tier 1 = "sanningskällor" (nyhetsbyråer + public service)
+// Tier 2 = stora etablerade medier
+// Tier 3 = mindre/specialiserade
+// Tier 4 = Google News-aggregat (lägst vikt)
+const SOURCE_WEIGHTS = {
+  // Tier 1 – nyhetsbyråer & public service (vikt 3)
+  'TT': 3, 'SVT': 3, 'SR': 3, 'Reuters': 3, 'AP News': 3, 'BBC News': 3,
+
+  // Tier 2 – stora etablerade medier (vikt 2)
+  'DN': 2, 'SvD': 2, 'GP': 2, 'Aftonbladet': 2, 'Expressen': 2,
+  'TV4': 2, 'Omni': 2, 'DI': 2, 'The Guardian': 2, 'New York Times': 2,
+  'Al Jazeera': 2, 'Sydsvenskan': 2, 'HD': 2,
+
+  // Tier 3 – branschmedier & specialiserade (vikt 1)
+  'Breakit': 1, 'Fotbollskanalen': 1, 'Fotbolldirekt': 1,
+  'Hockeysverige': 1, 'Hockeyexpressen': 1,
+
+  // Tier 4 – Google News (vikt 0.5) – sätts dynamiskt nedan
+};
+
+function getSourceWeight(sourceName) {
+  if (SOURCE_WEIGHTS[sourceName]) return SOURCE_WEIGHTS[sourceName];
+  if (sourceName.startsWith('Google News')) return 0.5;
+  return 1; // default för okända källor
+}
+
 const KEYWORDS = {
   sport:      ['fotboll','hockey','tennis','golf','allsvenskan','superettan','nhl','nba','vm ','em ','match','spelare','tränar','shl ','damallsvenskan','ishockey','basketboll','friidrott','simning','cykling','boxning','mma','formel'],
   naringsliv: ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','vinst','omsättning','förvärv','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs','vd ','vdn ','ränta','riksbank','inflation','bnp','ekonomi','analytiker','prognos','rusar','faller','rasar','stiger','lyfter','rekord','börs','lönsamhet','aktieägare','kvartalet','helåret','rörelseresultat','ebitda','börsvärde','notering','avnotering','utdelning','warranter','fonder'],
@@ -481,13 +571,14 @@ async function fetchSources(sources) {
         }
 
         await save({
-          title: item.title.replace(/\s[-–]\s[^-–]+$/, '').trim(), // Ta bort källnamn från titeln
+          title: item.title.replace(/\s[-–]\s[^-–]+$/, '').trim(),
           url: item.link,
           source: sourceName,
           category: categorize(item.title, source.name),
           region: source.region || null,
           ingress: snippet(item),
-          published_at: item.pubDate || new Date()
+          published_at: item.pubDate || new Date(),
+          source_weight: getSourceWeight(sourceName)  // NYTT: skicka med vikten
         });
         const kw = item.title.split(' ').find(w => w.length > 5);
         if (kw) await boost(kw);
@@ -512,4 +603,4 @@ async function fetchAll() {
   await fetchSources(all);
 }
 
-module.exports = { fetchAll, SOURCES };
+module.exports = { fetchAll, SOURCES, SOURCE_WEIGHTS, getSourceWeight };
