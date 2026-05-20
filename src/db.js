@@ -71,11 +71,10 @@ async function boost(keyword) {
 const TIER_1_BY_CATEGORY = {
   // Huvudnyheter – stora svenska & internationella nyhetsmedier
   nyheter: new Set([
-    'TT', 'TT Nyhetsbyrån',
     'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
     'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
     'Aftonbladet', 'Expressen',
-    'GP', 'Göteborgs-Posten', 'TV4', 'TV4 Nyheterna', 'Omni',
+    'GP', 'Göteborgs-Posten', 'TV4', 'TV4 Nyheterna',
     'BBC News', 'BBC', 'Reuters', 'AP News', 'The Guardian'
   ]),
 
@@ -85,14 +84,14 @@ const TIER_1_BY_CATEGORY = {
     'GP Sport', 'Sydsvenskan Sport',
     'Fotbollskanalen', 'Fotbolldirekt',
     'Hockeysverige', 'Hockeyexpressen',
-    'TT', 'TT Nyhetsbyrån', 'SVT'
+    'SVT'
   ]),
 
   // Näringsliv & ekonomi
   naringsliv: new Set([
     'DI', 'Dagens industri', 'SvD', 'Svenska Dagbladet',
     'DN', 'Dagens Nyheter', 'Breakit', 'Affärsvärlden',
-    'TT', 'TT Nyhetsbyrån', 'SVT', 'SVT Nyheter',
+    'SVT', 'SVT Nyheter',
     'Reuters', 'BBC News'
   ]),
 
@@ -100,23 +99,21 @@ const TIER_1_BY_CATEGORY = {
   tech: new Set([
     'Breakit', 'DI', 'Dagens industri',
     'SVT', 'SVT Nyheter', 'DN', 'Dagens Nyheter',
-    'SvD', 'Svenska Dagbladet', 'TT', 'TT Nyhetsbyrån',
+    'SvD', 'Svenska Dagbladet',
     'Reuters', 'BBC News'
   ]),
 
   // Valet 2026 & politik
   valet2026: new Set([
     'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'TT', 'TT Nyhetsbyrån',
     'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
     'Aftonbladet', 'Expressen', 'TV4', 'TV4 Nyheterna',
-    'GP', 'Göteborgs-Posten', 'Omni'
+    'GP', 'Göteborgs-Posten'
   ]),
 
   // Utrikes
   utrikes: new Set([
     'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'TT', 'TT Nyhetsbyrån',
     'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
     'BBC News', 'BBC', 'Reuters', 'AP News',
     'The Guardian', 'New York Times', 'Al Jazeera'
@@ -125,10 +122,9 @@ const TIER_1_BY_CATEGORY = {
   // Samhälle
   samhalle: new Set([
     'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'TT', 'TT Nyhetsbyrån',
     'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
     'Aftonbladet', 'Expressen', 'GP', 'Göteborgs-Posten',
-    'TV4', 'TV4 Nyheterna', 'Omni'
+    'TV4', 'TV4 Nyheterna'
   ]),
 
   // Kultur
@@ -150,28 +146,28 @@ const TIER_1_BY_SPORT = {
   allsvenskan: new Set([
     'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
     'GP Sport', 'Fotbollskanalen', 'Fotbolldirekt',
-    'TT', 'TT Nyhetsbyrån', 'SVT'
+    'SVT'
   ]),
   shl: new Set([
     'SVT Sport', 'Aftonbladet Sport', 'Expressen Sport',
     'Hockeysverige', 'Hockeyexpressen',
-    'TT', 'TT Nyhetsbyrån', 'SVT'
+    'SVT'
   ]),
   vm2026: new Set([
     'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
     'Fotbollskanalen', 'Fotbolldirekt',
     'BBC News', 'BBC', 'Reuters', 'The Guardian',
-    'TT', 'TT Nyhetsbyrån', 'SVT'
+    'SVT'
   ]),
   landslaget_fotboll: new Set([
     'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
     'Fotbollskanalen', 'Fotbolldirekt',
-    'TT', 'TT Nyhetsbyrån', 'SVT'
+    'SVT'
   ]),
   damallsvenskan: new Set([
     'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
     'Fotbollskanalen', 'Fotbolldirekt',
-    'TT', 'TT Nyhetsbyrån', 'SVT'
+    'SVT'
   ])
 };
 
