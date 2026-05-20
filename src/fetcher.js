@@ -239,9 +239,7 @@ const SOURCES = {
     { name: 'Google News SHL',         url: 'https://news.google.com/rss/search?q=SHL+ishockey+Sverige&hl=sv&gl=SE&ceid=SE:sv' },
 
     // NYTT: Proxy för trasiga källor
-    { name: 'Google News TT',          url: 'https://news.google.com/rss/search?q=site:tt.se&hl=sv&gl=SE&ceid=SE:sv' },
     { name: 'Google News GP',          url: 'https://news.google.com/rss/search?q=site:gp.se&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News Omni',        url: 'https://news.google.com/rss/search?q=site:omni.se&hl=sv&gl=SE&ceid=SE:sv' },
     { name: 'Google News Breakit',     url: 'https://news.google.com/rss/search?q=site:breakit.se&hl=sv&gl=SE&ceid=SE:sv' },
   ],
 
@@ -423,7 +421,7 @@ function categorize(title, sourceName) {
   }
 
   // Google News-källor – kategorisera efter sökterm
-  const googleNewsSources = ['Google News Valet','Google News Politik','Google News Tech','Google News VM 2026','Google News Allsvenskan','Google News SHL','Google News Kultur','Google News Nöje','Google News TT','Google News GP','Google News Omni','Google News Breakit'];
+  const googleNewsSources = ['Google News Valet','Google News Politik','Google News Tech','Google News VM 2026','Google News Allsvenskan','Google News SHL','Google News Kultur','Google News Nöje','Google News GP','Google News Breakit'];
   if (googleNewsSources.includes(sourceName)) {
     if (sourceName.includes('Valet') || sourceName.includes('Politik')) return 'valet2026';
     if (sourceName.includes('Tech')) return 'tech';
