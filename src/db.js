@@ -22,6 +22,9 @@ async function init() {
   `);
   await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT');
   await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS ingress TEXT');
+  // NYTT: källviktning lagras med varje artikel
+  await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_weight REAL DEFAULT 1');
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS article_clicks (
       id SERIAL PRIMARY KEY,
@@ -36,19 +39,21 @@ async function init() {
 }
 
 async function save(article) {
-  // Kontrollera max 10 artiklar per källa i databasen
+  // Kontrollera max 20 artiklar per källa i databasen
   const { rows: countRows } = await pool.query(
     `SELECT COUNT(*) FROM articles WHERE source = $1 AND fetched_at > NOW() - INTERVAL '36 hours'`,
     [article.source]
   );
   if (parseInt(countRows[0].count) >= 20) return;
 
+  // NYTT: sparar även source_weight (default 1 om inget skickas)
   await pool.query(
-    `INSERT INTO articles (title, url, source, category, region, ingress, published_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7)
+    `INSERT INTO articles (title, url, source, category, region, ingress, published_at, source_weight)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
      ON CONFLICT (url) DO NOTHING`,
     [article.title, article.url, article.source, article.category,
-     article.region || null, article.ingress || null, article.published_at]
+     article.region || null, article.ingress || null, article.published_at,
+     article.source_weight || 1]
   );
 }
 
@@ -59,6 +64,18 @@ async function boost(keyword) {
     ['%' + keyword + '%']
   );
 }
+
+// ── TIER-1 KÄLLOR ────────────────────────────────────────────────────────────
+// "Sanningskällor" – minst en av dessa måste rapportera om något
+// för att artikeln ska kunna bli toppnyhet
+const TIER_1_SOURCES = new Set([
+  'TT', 'TT Nyhetsbyrån',
+  'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
+  'BBC News', 'BBC',
+  'Reuters', 'AP News', 'AP',
+  'DN', 'Dagens Nyheter',
+  'SvD', 'Svenska Dagbladet'
+]);
 
 const SPORT_KEYWORDS = {
   allsvenskan: [
@@ -102,12 +119,6 @@ const SPORT_KEYWORDS = {
     'andersson tränar', 'ibrahimovic', 'landslagsuttagen',
     'svenska fotbollsförbundet', 'landslagstruppen'
   ],
-  vm2026: [
-    'vm 2026', 'fotbolls-vm', 'world cup 2026', 'vm-slutspel', 'vm-gruppspel',
-    'vm-kval', 'vm-biljett', 'usa 2026', 'kanada 2026', 'mexiko 2026',
-    'fifa vm', 'vm-trupp', 'vm-uttagen', 'vm-premiar', 'vm-final 2026',
-    'fotbolls vm', 'världsmästerskapet 2026'
-  ],
   shl: [
     'shl', 'swedish hockey league', 'rögle', 'skellefteå aik', 'frölunda',
     'djurgårdens hockey', 'brynäs', 'luleå hockey', 'linköping hc',
@@ -132,7 +143,6 @@ async function get(opts) {
   } else if (sport && SPORT_KEYWORDS[sport]) {
     conditions.push("category = 'sport'");
     conditions.push('region IS NULL');
-    // Exkludera lokala sport-RSS från underkategorier
     const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
     localSportSources.forEach(function(src) {
       params.push(src);
@@ -161,7 +171,6 @@ async function get(opts) {
   } else if (category === 'sport') {
     conditions.push("category = 'sport'");
     conditions.push('region IS NULL');
-    // Lokala sport-RSS visas aldrig på nationellt sport-flöde
     const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
     localSportSources.forEach(function(src) {
       params.push(src);
@@ -180,13 +189,11 @@ async function get(opts) {
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
     conditions.push("category != 'kultur'");
-    // Exkludera börsnyheter från nyhetsflödet
     const borsExclude = ['börsen','aktier','aktien','aktiekurs','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','stockholmsbörsen'];
     borsExclude.forEach(function(w) {
       params.push('%' + w + '%');
       conditions.push('title NOT ILIKE $' + params.length);
     });
-    // Exkludera sport- och kulturkällor från nationellt nyhetsflöde
     const excludedSources = [
       'Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport',
       'Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport',
@@ -205,7 +212,6 @@ async function get(opts) {
       conditions.push('region IS NULL');
       conditions.push("category != 'english'");
     }
-    // Exkludera börsnyheter från generellt näringsliv-flöde
     if (category === 'naringsliv') {
       const borsExclude = ['börsen','aktier','aktien','aktiekurs','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','stockholmsbörsen','börsnot'];
       borsExclude.forEach(function(w) {
@@ -215,8 +221,9 @@ async function get(opts) {
     }
   }
 
+  // NYTT: hämta även source_weight för viktning
   const { rows } = await pool.query(
-    'SELECT title, url, source, category, region, ingress, published_at, score ' +
+    'SELECT title, url, source, category, region, ingress, published_at, score, source_weight ' +
     'FROM articles ' +
     'WHERE ' + conditions.join(' AND ') + ' ' +
     'ORDER BY published_at DESC, score DESC ' +
@@ -237,7 +244,6 @@ async function get(opts) {
 
     if (seen.has(key)) {
       const group = seen.get(key);
-      // Lägg bara till källan om den inte redan finns i gruppen
       const sourceExists = group.sources.some(s => s.name === row.source);
       if (!sourceExists && group.sources.length < 6) {
         group.sources.push({ name: row.source, url: row.url });
@@ -247,7 +253,7 @@ async function get(opts) {
         title: row.title,
         url: row.url,
         source: row.source,
-        sources: [{ name: row.source, url: row.url }],
+        sources: [{ name: row.source, url: row.url, weight: row.source_weight || 1 }],
         category: row.category,
         region: row.region,
         ingress: row.ingress,
@@ -285,13 +291,11 @@ async function getTopStories(category, sport) {
   };
 
   if (sport && SPORT_KW[sport]) {
-    // Sport-undermeny – filtrera på nyckelord
     conditions.push("category = 'sport'");
     localSportSources.forEach(function(src) {
       params.push(src);
       conditions.push('source != $' + params.length);
     });
-    // Källundantag per sport (t.ex. Hockeysverige ska aldrig synas under Allsvenskan)
     const sportExcludeSources = {
       allsvenskan: ['Hockeysverige','Hockeyexpressen'],
     };
@@ -328,7 +332,6 @@ async function getTopStories(category, sport) {
     });
   }
 
-  // Extra filter för sport-toppnyheter – blockera uppenbart icke-sport
   if (category === 'sport' || sport) {
     const nonSportWords = [
       'sanktioner','bosättare','israel','palestina','gaza','ukraina','ryssland',
@@ -338,7 +341,6 @@ async function getTopStories(category, sport) {
       'brand ','olycka','mord','rättegång','häktad',
       'klimat','utsläpp'
     ];
-    // Trav får aldrig vara översta toppnyheten – lägg den sist i rankingen
     const travWords = ['trav','travet','travhäst','v75','v86','v64','jackpot trav','solvalla','åby','jägersro','bergsåker'];
     nonSportWords.forEach(function(w) {
       params.push('%' + w + '%');
@@ -350,8 +352,9 @@ async function getTopStories(category, sport) {
     });
   }
 
+  // NYTT: hämta även source_weight
   const { rows } = await pool.query(
-    'SELECT title, url, source, category, region, ingress, published_at, score ' +
+    'SELECT title, url, source, category, region, ingress, published_at, score, source_weight ' +
     'FROM articles WHERE ' + conditions.join(' AND ') + ' ' +
     'ORDER BY published_at DESC, score DESC LIMIT 400',
     params
@@ -364,22 +367,71 @@ async function getTopStories(category, sport) {
     if (seen.has(key)) {
       const group = seen.get(key);
       const sourceExists = group.sources.some(s => s.name === row.source);
-      if (!sourceExists && group.sources.length < 6) group.sources.push({ name: row.source, url: row.url });
+      if (!sourceExists && group.sources.length < 6) {
+        group.sources.push({ name: row.source, url: row.url, weight: row.source_weight || 1 });
+      }
     } else {
-      const group = { title: row.title, url: row.url, source: row.source, sources: [{ name: row.source, url: row.url }], category: row.category, region: row.region, ingress: row.ingress, published_at: row.published_at, score: row.score };
+      const group = {
+        title: row.title, url: row.url, source: row.source,
+        sources: [{ name: row.source, url: row.url, weight: row.source_weight || 1 }],
+        category: row.category, region: row.region, ingress: row.ingress,
+        published_at: row.published_at, score: row.score
+      };
       seen.set(key, group);
       groups.push(group);
     }
   }
 
+  // ── NY TOPP-ALGORITM MED KÄLLVIKTNING ───────────────────────────────────
   const now = Date.now();
+  const isMainNews = !category || category === 'nyheter' || category === 'alla';
+
   const scored = groups.map(function(a) {
     const ageHours = (now - new Date(a.published_at).getTime()) / (1000 * 60 * 60);
     const recencyBonus = Math.max(0, 1 - (ageHours / 6));
-    return Object.assign({}, a, { topScore: a.sources.length * (1 + recencyBonus) });
+
+    // SUMMAN av källornas vikter istället för bara antal
+    // Tier 1 (SVT/TT/SR) = 3, Tier 2 (DN/SvD/GP) = 2, småsajter = 1, Google News = 0.5
+    const weightedSourceScore = a.sources.reduce(function(sum, s) {
+      return sum + (s.weight || 1);
+    }, 0);
+
+    // Kolla om någon Tier-1-källa finns med
+    const hasTier1 = a.sources.some(function(s) {
+      return TIER_1_SOURCES.has(s.name);
+    });
+
+    return Object.assign({}, a, {
+      topScore: weightedSourceScore * (1 + recencyBonus),
+      hasTier1: hasTier1
+    });
   });
-  scored.sort(function(a, b) { return b.topScore - a.topScore; });
-  return scored.slice(0, 5);
+
+  // FÖR HUVUDNYHETER: kräv att minst en Tier-1-källa rapporterar
+  // (Detta gäller inte sport eller specifika kategorier)
+  let filtered = scored;
+  if (isMainNews) {
+    filtered = scored.filter(function(a) { return a.hasTier1; });
+    // Säkerhetsnät: om filtret tar bort allt, använd ofiltrerade resultat
+    if (filtered.length < 2) filtered = scored;
+  }
+
+  filtered.sort(function(a, b) { return b.topScore - a.topScore; });
+
+  // ── PER-KÄLLA-TAK: max 2 artiklar från samma "huvudkälla" i toppen ──
+  // Förhindrar att DN eller liknande dominerar
+  const sourceCount = {};
+  const capped = [];
+  for (const article of filtered) {
+    const primarySource = article.source;
+    sourceCount[primarySource] = (sourceCount[primarySource] || 0) + 1;
+    if (sourceCount[primarySource] <= 2) {
+      capped.push(article);
+    }
+    if (capped.length >= 5) break;
+  }
+
+  return capped.slice(0, 5);
 }
 
 module.exports = { init, save, boost, get, lastFetched, getTopStories };
