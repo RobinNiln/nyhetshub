@@ -626,6 +626,29 @@ app.get('/integritetspolicy', (req, res) => {
 
 app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 
+// ── /api/health – status för alla RSS-källor ──────────────────
+app.get('/api/health', (req, res) => {
+  const health = getHealthStatus();
+
+  // Sortera så de trasiga källorna syns först
+  const sorted = Object.entries(health.sources)
+    .sort((a, b) => {
+      if (a[1].status === b[1].status) return a[0].localeCompare(b[0]);
+      return a[1].status === 'error' ? -1 : 1;
+    })
+    .map(([name, data]) => ({ name, ...data }));
+
+  res.json({
+    summary: {
+      total: health.total,
+      ok: health.ok,
+      failed: health.failed,
+      okPercent: health.total > 0 ? Math.round((health.ok / health.total) * 100) : 0
+    },
+    sources: sorted
+  });
+});
+
 // ── robots.txt ────────────────────────────────────────────────
 // ads.txt – måste ligga FÖRE www-redirect så Google hittar den
 app.get('/ads.txt', (req, res) => {
