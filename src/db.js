@@ -22,9 +22,6 @@ async function init() {
   `);
   await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS region TEXT');
   await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS ingress TEXT');
-  // Källviktning lagras med varje artikel
-  await pool.query('ALTER TABLE articles ADD COLUMN IF NOT EXISTS source_weight REAL DEFAULT 1');
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS article_clicks (
       id SERIAL PRIMARY KEY,
@@ -39,7 +36,7 @@ async function init() {
 }
 
 async function save(article) {
-  // Max 20 artiklar per källa i databasen
+  // Kontrollera max 10 artiklar per källa i databasen
   const { rows: countRows } = await pool.query(
     `SELECT COUNT(*) FROM articles WHERE source = $1 AND fetched_at > NOW() - INTERVAL '36 hours'`,
     [article.source]
@@ -47,12 +44,11 @@ async function save(article) {
   if (parseInt(countRows[0].count) >= 20) return;
 
   await pool.query(
-    `INSERT INTO articles (title, url, source, category, region, ingress, published_at, source_weight)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+    `INSERT INTO articles (title, url, source, category, region, ingress, published_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)
      ON CONFLICT (url) DO NOTHING`,
     [article.title, article.url, article.source, article.category,
-     article.region || null, article.ingress || null, article.published_at,
-     article.source_weight || 1]
+     article.region || null, article.ingress || null, article.published_at]
   );
 }
 
@@ -62,120 +58,6 @@ async function boost(keyword) {
      WHERE title ILIKE $1 AND fetched_at > NOW() - INTERVAL '3 hours'`,
     ['%' + keyword + '%']
   );
-}
-
-// ── TIER-1 KÄLLOR PER KATEGORI ──────────────────────────────────────────────
-// För att en artikel ska bli toppnyhet inom en kategori måste minst en
-// av dessa "betrodda källor" rapportera om den.
-// Listorna är generösa – inkluderar alla rimligt etablerade källor.
-const TIER_1_BY_CATEGORY = {
-  // Huvudnyheter – stora svenska & internationella nyhetsmedier
-  nyheter: new Set([
-    'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
-    'Aftonbladet', 'Expressen',
-    'GP', 'Göteborgs-Posten', 'TV4', 'TV4 Nyheterna',
-    'BBC News', 'BBC', 'Reuters', 'AP News', 'The Guardian'
-  ]),
-
-  // Sport – stora sportredaktioner och sportsiter
-  sport: new Set([
-    'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
-    'GP Sport', 'Sydsvenskan Sport',
-    'Fotbollskanalen', 'Fotbolldirekt',
-    'Hockeysverige', 'Hockeyexpressen',
-    'SVT'
-  ]),
-
-  // Näringsliv & ekonomi
-  naringsliv: new Set([
-    'DI', 'Dagens industri', 'SvD', 'Svenska Dagbladet',
-    'DN', 'Dagens Nyheter', 'Breakit', 'Affärsvärlden',
-    'SVT', 'SVT Nyheter',
-    'Reuters', 'BBC News'
-  ]),
-
-  // Tech & startups
-  tech: new Set([
-    'Breakit', 'DI', 'Dagens industri',
-    'SVT', 'SVT Nyheter', 'DN', 'Dagens Nyheter',
-    'SvD', 'Svenska Dagbladet',
-    'Reuters', 'BBC News'
-  ]),
-
-  // Valet 2026 & politik
-  valet2026: new Set([
-    'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
-    'Aftonbladet', 'Expressen', 'TV4', 'TV4 Nyheterna',
-    'GP', 'Göteborgs-Posten'
-  ]),
-
-  // Utrikes
-  utrikes: new Set([
-    'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
-    'BBC News', 'BBC', 'Reuters', 'AP News',
-    'The Guardian', 'New York Times', 'Al Jazeera'
-  ]),
-
-  // Samhälle
-  samhalle: new Set([
-    'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio',
-    'DN', 'Dagens Nyheter', 'SvD', 'Svenska Dagbladet',
-    'Aftonbladet', 'Expressen', 'GP', 'Göteborgs-Posten',
-    'TV4', 'TV4 Nyheterna'
-  ]),
-
-  // Kultur
-  kultur: new Set([
-    'SvD Kultur', 'DN Kultur',
-    'SvD', 'Svenska Dagbladet', 'DN', 'Dagens Nyheter',
-    'SVT', 'SVT Nyheter', 'SR', 'Sveriges Radio'
-  ]),
-
-  // English – internationella källor
-  english: new Set([
-    'BBC News', 'BBC', 'Reuters', 'AP News',
-    'The Guardian', 'New York Times', 'Al Jazeera'
-  ])
-};
-
-// Tier-1 för sport-undermenyer (Allsvenskan, SHL, VM 2026)
-const TIER_1_BY_SPORT = {
-  allsvenskan: new Set([
-    'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
-    'GP Sport', 'Fotbollskanalen', 'Fotbolldirekt',
-    'SVT'
-  ]),
-  shl: new Set([
-    'SVT Sport', 'Aftonbladet Sport', 'Expressen Sport',
-    'Hockeysverige', 'Hockeyexpressen',
-    'SVT'
-  ]),
-  vm2026: new Set([
-    'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
-    'Fotbollskanalen', 'Fotbolldirekt',
-    'BBC News', 'BBC', 'Reuters', 'The Guardian',
-    'SVT'
-  ]),
-  landslaget_fotboll: new Set([
-    'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
-    'Fotbollskanalen', 'Fotbolldirekt',
-    'SVT'
-  ]),
-  damallsvenskan: new Set([
-    'SVT Sport', 'DN Sport', 'Aftonbladet Sport', 'Expressen Sport',
-    'Fotbollskanalen', 'Fotbolldirekt',
-    'SVT'
-  ])
-};
-
-// Hjälpfunktion: hitta rätt Tier-1-lista baserat på kategori/sport
-function getTier1Set(category, sport) {
-  if (sport && TIER_1_BY_SPORT[sport]) return TIER_1_BY_SPORT[sport];
-  if (category && TIER_1_BY_CATEGORY[category]) return TIER_1_BY_CATEGORY[category];
-  return TIER_1_BY_CATEGORY.nyheter; // default: huvudnyheter
 }
 
 const SPORT_KEYWORDS = {
@@ -220,6 +102,12 @@ const SPORT_KEYWORDS = {
     'andersson tränar', 'ibrahimovic', 'landslagsuttagen',
     'svenska fotbollsförbundet', 'landslagstruppen'
   ],
+  vm2026: [
+    'vm 2026', 'fotbolls-vm', 'world cup 2026', 'vm-slutspel', 'vm-gruppspel',
+    'vm-kval', 'vm-biljett', 'usa 2026', 'kanada 2026', 'mexiko 2026',
+    'fifa vm', 'vm-trupp', 'vm-uttagen', 'vm-premiar', 'vm-final 2026',
+    'fotbolls vm', 'världsmästerskapet 2026'
+  ],
   shl: [
     'shl', 'swedish hockey league', 'rögle', 'skellefteå aik', 'frölunda',
     'djurgårdens hockey', 'brynäs', 'luleå hockey', 'linköping hc',
@@ -244,6 +132,7 @@ async function get(opts) {
   } else if (sport && SPORT_KEYWORDS[sport]) {
     conditions.push("category = 'sport'");
     conditions.push('region IS NULL');
+    // Exkludera lokala sport-RSS från underkategorier
     const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
     localSportSources.forEach(function(src) {
       params.push(src);
@@ -272,6 +161,7 @@ async function get(opts) {
   } else if (category === 'sport') {
     conditions.push("category = 'sport'");
     conditions.push('region IS NULL');
+    // Lokala sport-RSS visas aldrig på nationellt sport-flöde
     const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
     localSportSources.forEach(function(src) {
       params.push(src);
@@ -290,18 +180,19 @@ async function get(opts) {
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
     conditions.push("category != 'kultur'");
-    const borsExclude = ['börsen','aktier','aktien','aktiekurs','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','stockholmsbörsen'];
+    // Exkludera tydliga börsnyheter från nyhetsflödet
+    const borsExclude = ['stockholmsbörsen','aktiekurs','kvartalsrapport','börsnot','omxs30'];
     borsExclude.forEach(function(w) {
       params.push('%' + w + '%');
       conditions.push('title NOT ILIKE $' + params.length);
     });
+    // Exkludera sport- och kulturkällor från nationellt nyhetsflöde
     const excludedSources = [
       'Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport',
       'Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport',
       'GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport',
       'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
-      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus',
-      'Breakit','Google News Breakit'
+      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus'
     ];
     excludedSources.forEach(function(src) {
       params.push(src);
@@ -314,6 +205,7 @@ async function get(opts) {
       conditions.push('region IS NULL');
       conditions.push("category != 'english'");
     }
+    // Exkludera börsnyheter från generellt näringsliv-flöde
     if (category === 'naringsliv') {
       const borsExclude = ['börsen','aktier','aktien','aktiekurs','kvartalsrapport','rusar','rasar','faller','stiger','lyfter','stockholmsbörsen','börsnot'];
       borsExclude.forEach(function(w) {
@@ -324,7 +216,7 @@ async function get(opts) {
   }
 
   const { rows } = await pool.query(
-    'SELECT title, url, source, category, region, ingress, published_at, score, source_weight ' +
+    'SELECT title, url, source, category, region, ingress, published_at, score ' +
     'FROM articles ' +
     'WHERE ' + conditions.join(' AND ') + ' ' +
     'ORDER BY published_at DESC, score DESC ' +
@@ -345,6 +237,7 @@ async function get(opts) {
 
     if (seen.has(key)) {
       const group = seen.get(key);
+      // Lägg bara till källan om den inte redan finns i gruppen
       const sourceExists = group.sources.some(s => s.name === row.source);
       if (!sourceExists && group.sources.length < 6) {
         group.sources.push({ name: row.source, url: row.url });
@@ -354,7 +247,7 @@ async function get(opts) {
         title: row.title,
         url: row.url,
         source: row.source,
-        sources: [{ name: row.source, url: row.url, weight: row.source_weight || 1 }],
+        sources: [{ name: row.source, url: row.url }],
         category: row.category,
         region: row.region,
         ingress: row.ingress,
@@ -377,32 +270,9 @@ async function lastFetched() {
 }
 
 async function getTopStories(category, sport) {
-  // ── ADAPTIVT TIDSFÖNSTER ──────────────────────────────────────────────────
-  // Försök först med 6h (normalt). Om för få artiklar, utöka till 12h, sedan 24h.
-  // Detta säkerställer att toppnyheter aldrig är tomma p.g.a. lugna nyhetslägen.
-  const windows = [6, 12, 24];
-  let result = [];
-
-  for (const hoursAgo of windows) {
-    result = await _getTopStoriesWindow(category, sport, hoursAgo);
-    if (result.length >= 5) break;  // Vi har tillräckligt – sluta utöka
-  }
-
-  return result;
-}
-
-async function _getTopStoriesWindow(category, sport, hoursAgo) {
-  // Sänkt tröskel: acceptera även artiklar med score 0 (default 1)
-  const scoreThreshold = 0;
-  const conditions = [
-    "fetched_at > NOW() - INTERVAL '" + hoursAgo + " hours'",
-    // SKYDD MOT GAMLA ARTIKLAR: published_at får inte vara äldre än fönstret
-    // Detta hindrar t.ex. en redaktionellt återpublicerad artikel från mars
-    // att klättra till toppen för att den hämtades nyligen
-    "published_at > NOW() - INTERVAL '" + hoursAgo + " hours'",
-    'region IS NULL',
-    'score >= ' + scoreThreshold
-  ];
+  const isSportSub = !!sport;
+  const scoreThreshold = isSportSub ? 0 : 1;
+  const conditions = ["fetched_at > NOW() - INTERVAL '6 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
@@ -415,11 +285,13 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
   };
 
   if (sport && SPORT_KW[sport]) {
+    // Sport-undermeny – filtrera på nyckelord
     conditions.push("category = 'sport'");
     localSportSources.forEach(function(src) {
       params.push(src);
       conditions.push('source != $' + params.length);
     });
+    // Källundantag per sport (t.ex. Hockeysverige ska aldrig synas under Allsvenskan)
     const sportExcludeSources = {
       allsvenskan: ['Hockeysverige','Hockeyexpressen'],
     };
@@ -448,8 +320,7 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
     const excludedSources = [
       ...localSportSources,
       'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
-      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus',
-      'Breakit','Google News Breakit'
+      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus'
     ];
     excludedSources.forEach(function(src) {
       params.push(src);
@@ -457,6 +328,7 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
     });
   }
 
+  // Extra filter för sport-toppnyheter – blockera uppenbart icke-sport
   if (category === 'sport' || sport) {
     const nonSportWords = [
       'sanktioner','bosättare','israel','palestina','gaza','ukraina','ryssland',
@@ -466,6 +338,7 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
       'brand ','olycka','mord','rättegång','häktad',
       'klimat','utsläpp'
     ];
+    // Trav får aldrig vara översta toppnyheten – lägg den sist i rankingen
     const travWords = ['trav','travet','travhäst','v75','v86','v64','jackpot trav','solvalla','åby','jägersro','bergsåker'];
     nonSportWords.forEach(function(w) {
       params.push('%' + w + '%');
@@ -478,7 +351,7 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
   }
 
   const { rows } = await pool.query(
-    'SELECT title, url, source, category, region, ingress, published_at, score, source_weight ' +
+    'SELECT title, url, source, category, region, ingress, published_at, score ' +
     'FROM articles WHERE ' + conditions.join(' AND ') + ' ' +
     'ORDER BY published_at DESC, score DESC LIMIT 400',
     params
@@ -491,92 +364,22 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
     if (seen.has(key)) {
       const group = seen.get(key);
       const sourceExists = group.sources.some(s => s.name === row.source);
-      if (!sourceExists && group.sources.length < 6) {
-        group.sources.push({ name: row.source, url: row.url, weight: row.source_weight || 1 });
-      }
+      if (!sourceExists && group.sources.length < 6) group.sources.push({ name: row.source, url: row.url });
     } else {
-      const group = {
-        title: row.title, url: row.url, source: row.source,
-        sources: [{ name: row.source, url: row.url, weight: row.source_weight || 1 }],
-        category: row.category, region: row.region, ingress: row.ingress,
-        published_at: row.published_at, score: row.score
-      };
+      const group = { title: row.title, url: row.url, source: row.source, sources: [{ name: row.source, url: row.url }], category: row.category, region: row.region, ingress: row.ingress, published_at: row.published_at, score: row.score };
       seen.set(key, group);
       groups.push(group);
     }
   }
 
-  // ── TOPP-ALGORITM MED KÄLLVIKTNING & TIER-1 PER KATEGORI ──────────────────
   const now = Date.now();
-
-  // Hämta rätt Tier-1-lista baserat på kategori eller sport
-  const tier1Set = getTier1Set(category, sport);
-
   const scored = groups.map(function(a) {
     const ageHours = (now - new Date(a.published_at).getTime()) / (1000 * 60 * 60);
     const recencyBonus = Math.max(0, 1 - (ageHours / 6));
-
-    // Summan av källornas vikter (Tier 3 = 3, Tier 2 = 2, småsajter = 1, GN = 0.5)
-    const weightedSourceScore = a.sources.reduce(function(sum, s) {
-      return sum + (s.weight || 1);
-    }, 0);
-
-    // KVÄLLSTIDNINGSBOOST: +50% poäng om Aftonbladet eller Expressen är med
-    // De är Sveriges största nyhetssajter och bryter ofta nyheter först
-    const eveningPapers = ['Aftonbladet', 'Expressen'];
-    const hasEveningPaper = a.sources.some(function(s) {
-      return eveningPapers.includes(s.name);
-    });
-    const eveningBoost = hasEveningPaper ? 1.5 : 1.0;
-
-    // Kolla om någon Tier-1-källa (för denna kategori) finns med
-    const hasTier1 = a.sources.some(function(s) {
-      return tier1Set.has(s.name);
-    });
-
-    return Object.assign({}, a, {
-      topScore: weightedSourceScore * (1 + recencyBonus) * eveningBoost,
-      hasTier1: hasTier1
-    });
+    return Object.assign({}, a, { topScore: a.sources.length * (1 + recencyBonus) });
   });
-
-  // Sortera alla artiklar efter topScore (högsta först)
   scored.sort(function(a, b) { return b.topScore - a.topScore; });
-
-  // Separera artiklar: tier-1 har företräde, övriga är fallback
-  const tier1Articles = scored.filter(function(a) { return a.hasTier1; });
-  const otherArticles = scored.filter(function(a) { return !a.hasTier1; });
-
-  // ── BYGG TOPP-5 MED PER-KÄLLA-TAK ─────────────────────────────────────────
-  // Steg 1: Försök fylla med Tier-1-artiklar (max 2 per källa)
-  // Steg 2: Om vi inte når 5, komplettera med övriga (max 2 per källa)
-  // Detta säkerställer att vi alltid har 5 toppnyheter när artiklar finns
-  const sourceCount = {};
-  const capped = [];
-
-  function tryAdd(article) {
-    const src = article.source;
-    sourceCount[src] = (sourceCount[src] || 0) + 1;
-    if (sourceCount[src] <= 2 && capped.length < 5) {
-      capped.push(article);
-    }
-  }
-
-  // Steg 1: Lägg till Tier-1-artiklar först
-  for (const article of tier1Articles) {
-    if (capped.length >= 5) break;
-    tryAdd(article);
-  }
-
-  // Steg 2: Komplettera med övriga om vi inte når 5
-  if (capped.length < 5) {
-    for (const article of otherArticles) {
-      if (capped.length >= 5) break;
-      tryAdd(article);
-    }
-  }
-
-  return capped.slice(0, 5);
+  return scored.slice(0, 5);
 }
 
 module.exports = { init, save, boost, get, lastFetched, getTopStories };
