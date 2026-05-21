@@ -516,10 +516,18 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
     const ageHours = (now - new Date(a.published_at).getTime()) / (1000 * 60 * 60);
     const recencyBonus = Math.max(0, 1 - (ageHours / 6));
 
-    // Summan av källornas vikter (Tier 1 = 3, Tier 2 = 2, småsajter = 1, GN = 0.5)
+    // Summan av källornas vikter (Tier 3 = 3, Tier 2 = 2, småsajter = 1, GN = 0.5)
     const weightedSourceScore = a.sources.reduce(function(sum, s) {
       return sum + (s.weight || 1);
     }, 0);
+
+    // KVÄLLSTIDNINGSBOOST: +50% poäng om Aftonbladet eller Expressen är med
+    // De är Sveriges största nyhetssajter och bryter ofta nyheter först
+    const eveningPapers = ['Aftonbladet', 'Expressen'];
+    const hasEveningPaper = a.sources.some(function(s) {
+      return eveningPapers.includes(s.name);
+    });
+    const eveningBoost = hasEveningPaper ? 1.5 : 1.0;
 
     // Kolla om någon Tier-1-källa (för denna kategori) finns med
     const hasTier1 = a.sources.some(function(s) {
@@ -527,7 +535,7 @@ async function _getTopStoriesWindow(category, sport, hoursAgo) {
     });
 
     return Object.assign({}, a, {
-      topScore: weightedSourceScore * (1 + recencyBonus),
+      topScore: weightedSourceScore * (1 + recencyBonus) * eveningBoost,
       hasTier1: hasTier1
     });
   });
