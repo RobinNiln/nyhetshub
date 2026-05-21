@@ -392,9 +392,17 @@ async function getTopStories(category, sport) {
 }
 
 async function _getTopStoriesWindow(category, sport, hoursAgo) {
-  const isSportSub = !!sport;
-  const scoreThreshold = isSportSub ? 0 : 1;
-  const conditions = ["fetched_at > NOW() - INTERVAL '" + hoursAgo + " hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
+  // Sänkt tröskel: acceptera även artiklar med score 0 (default 1)
+  const scoreThreshold = 0;
+  const conditions = [
+    "fetched_at > NOW() - INTERVAL '" + hoursAgo + " hours'",
+    // SKYDD MOT GAMLA ARTIKLAR: published_at får inte vara äldre än fönstret
+    // Detta hindrar t.ex. en redaktionellt återpublicerad artikel från mars
+    // att klättra till toppen för att den hämtades nyligen
+    "published_at > NOW() - INTERVAL '" + hoursAgo + " hours'",
+    'region IS NULL',
+    'score >= ' + scoreThreshold
+  ];
   const params = [];
 
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
