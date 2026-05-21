@@ -377,9 +377,24 @@ async function lastFetched() {
 }
 
 async function getTopStories(category, sport) {
+  // ── ADAPTIVT TIDSFÖNSTER ──────────────────────────────────────────────────
+  // Försök först med 6h (normalt). Om för få artiklar, utöka till 12h, sedan 24h.
+  // Detta säkerställer att toppnyheter aldrig är tomma p.g.a. lugna nyhetslägen.
+  const windows = [6, 12, 24];
+  let result = [];
+
+  for (const hoursAgo of windows) {
+    result = await _getTopStoriesWindow(category, sport, hoursAgo);
+    if (result.length >= 5) break;  // Vi har tillräckligt – sluta utöka
+  }
+
+  return result;
+}
+
+async function _getTopStoriesWindow(category, sport, hoursAgo) {
   const isSportSub = !!sport;
   const scoreThreshold = isSportSub ? 0 : 1;
-  const conditions = ["fetched_at > NOW() - INTERVAL '6 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
+  const conditions = ["fetched_at > NOW() - INTERVAL '" + hoursAgo + " hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
   const params = [];
 
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
