@@ -509,25 +509,40 @@ async function getTopStories(category, sport) {
     });
   });
 
-  // Kräv minst en Tier-1-källa för denna kategori
-  let filtered = scored.filter(function(a) { return a.hasTier1; });
+  // Sortera alla artiklar efter topScore (högsta först)
+  scored.sort(function(a, b) { return b.topScore - a.topScore; });
 
-  // Säkerhetsnät: om filtret tar bort allt, använd ofiltrerade resultat
-  if (filtered.length < 2) filtered = scored;
+  // Separera artiklar: tier-1 har företräde, övriga är fallback
+  const tier1Articles = scored.filter(function(a) { return a.hasTier1; });
+  const otherArticles = scored.filter(function(a) { return !a.hasTier1; });
 
-  filtered.sort(function(a, b) { return b.topScore - a.topScore; });
-
-  // ── PER-KÄLLA-TAK: max 2 artiklar från samma huvudkälla i toppen ──────────
-  // Förhindrar att DN, Aftonbladet eller liknande dominerar
+  // ── BYGG TOPP-5 MED PER-KÄLLA-TAK ─────────────────────────────────────────
+  // Steg 1: Försök fylla med Tier-1-artiklar (max 2 per källa)
+  // Steg 2: Om vi inte når 5, komplettera med övriga (max 2 per källa)
+  // Detta säkerställer att vi alltid har 5 toppnyheter när artiklar finns
   const sourceCount = {};
   const capped = [];
-  for (const article of filtered) {
-    const primarySource = article.source;
-    sourceCount[primarySource] = (sourceCount[primarySource] || 0) + 1;
-    if (sourceCount[primarySource] <= 2) {
+
+  function tryAdd(article) {
+    const src = article.source;
+    sourceCount[src] = (sourceCount[src] || 0) + 1;
+    if (sourceCount[src] <= 2 && capped.length < 5) {
       capped.push(article);
     }
+  }
+
+  // Steg 1: Lägg till Tier-1-artiklar först
+  for (const article of tier1Articles) {
     if (capped.length >= 5) break;
+    tryAdd(article);
+  }
+
+  // Steg 2: Komplettera med övriga om vi inte når 5
+  if (capped.length < 5) {
+    for (const article of otherArticles) {
+      if (capped.length >= 5) break;
+      tryAdd(article);
+    }
   }
 
   return capped.slice(0, 5);
