@@ -353,12 +353,11 @@ const SOURCES = {
 
 // ── KÄLLVIKTNING ─────────────────────────────────────────────────────────────
 const SOURCE_WEIGHTS = {
-  // Tier 3 – public service & internationella nyhetsbyråer
+  // Tier 3 – public service & Sveriges största dagsmedier
   'SVT': 3, 'SVT Nyheter': 3, 'SR': 3, 'Sveriges Radio': 3,
   'BBC News': 3, 'BBC': 3,
   'DN': 3, 'Dagens Nyheter': 3, 'SvD': 3, 'Svenska Dagbladet': 3,
-  // Tier 2.5 – stora kvällstidningar (Sveriges största nyhetssajter)
-  'Aftonbladet': 2.5, 'Expressen': 2.5,
+  'Aftonbladet': 3, 'Expressen': 3,
   // Tier 2 – övriga etablerade nationella medier
   'GP': 2, 'Göteborgs-Posten': 2,
   'TV4': 2, 'TV4 Nyheterna': 2,
