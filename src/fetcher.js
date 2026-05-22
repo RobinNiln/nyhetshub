@@ -194,18 +194,6 @@ const SOURCES = {
     { name: 'DN Kultur',        url: 'https://www.dn.se/rss/kultur' },
     { name: 'Nöjesguiden',      url: 'https://www.nojesguiden.se/rss' },
     { name: 'Fokus',            url: 'https://www.fokus.se/feed' },
-    { name: 'Google News Kultur', url: 'https://news.google.com/rss/search?q=kultur+film+musik+teater&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News Nöje',   url: 'https://news.google.com/rss/search?q=nöje+premiär+konsert&hl=sv&gl=SE&ceid=SE:sv' },
-  ],
-
-  // ── GOOGLE NEWS KOMPLEMENT ────────────────────────────────────────────────
-  google_news: [
-    { name: 'Google News Valet',     url: 'https://news.google.com/rss/search?q=riksdagsvalet+2026+valrörelsen&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News Politik',   url: 'https://news.google.com/rss/search?q=riksdag+regering+partiledare&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News Tech',      url: 'https://news.google.com/rss/search?q=AI+tech+startup+Sverige&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News VM 2026',   url: 'https://news.google.com/rss/search?q=fotbolls-VM+2026&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News Allsvenskan', url: 'https://news.google.com/rss/search?q=allsvenskan+fotboll&hl=sv&gl=SE&ceid=SE:sv' },
-    { name: 'Google News SHL',       url: 'https://news.google.com/rss/search?q=SHL+ishockey+Sverige&hl=sv&gl=SE&ceid=SE:sv' },
   ],
 
   // ── REGIONALA KÄLLOR ─────────────────────────────────────────────────────
@@ -377,16 +365,6 @@ function categorize(title, sourceName) {
   const kulturSources = ['SvD Kultur','DN Kultur','Nöjesguiden','Fokus'];
   const englishSources = ['BBC News','Reuters','The Guardian','AP News','Al Jazeera','New York Times'];
 
-  // Renodlade sportkällor – alltid sport
-  const googleNewsSources = ['Google News Valet','Google News Politik','Google News Tech','Google News VM 2026','Google News Allsvenskan','Google News SHL','Google News Kultur','Google News Nöje'];
-  if (googleNewsSources.includes(sourceName)) {
-    if (sourceName.includes('Valet') || sourceName.includes('Politik')) return 'valet2026';
-    if (sourceName.includes('Tech')) return 'tech';
-    if (sourceName.includes('VM 2026')) return 'sport';
-    if (sourceName.includes('Allsvenskan')) return 'sport';
-    if (sourceName.includes('SHL')) return 'sport';
-    if (sourceName.includes('Kultur') || sourceName.includes('Nöje')) return 'kultur';
-  }
   // Kultur-källor – alltid kultur
   if (kulturSources.includes(sourceName)) return 'kultur';
   // Engelska källor – alltid english
@@ -471,30 +449,33 @@ function snippet(item) {
   return sentence ? sentence[0].trim() : clean.slice(0, 150);
 }
 
+// Källor som aldrig får sparas (politiskt färgade, fackliga, partipress)
+const BLOCKED_SOURCES = [
+  'proletären','proletaren','seko','arbetaren','flamman',
+  'nya tider','nyatider','samtiden','frihetsnytt','fria tider',
+  'kommunalarbetaren','dagens arena','dagens etc','etc',
+  'tidningen syre','syre','internationalen'
+];
+
+function isBlocked(sourceName) {
+  if (!sourceName) return false;
+  const s = sourceName.toLowerCase().trim();
+  return BLOCKED_SOURCES.some(b => s === b || s.includes(b));
+}
+
 async function fetchSources(sources) {
   for (const source of sources) {
+    if (isBlocked(source.name)) continue;
     try {
       const feed = await parser.parseURL(source.url);
-      const isGoogleNews = source.name.startsWith('Google News');
-      const maxItems = isGoogleNews ? 5 : 20;
-      for (const item of feed.items.slice(0, maxItems)) {
+      for (const item of feed.items.slice(0, 20)) {
         if (!item.title || !item.link) continue;
         if (shouldSkip(item.title, item.link)) continue;
 
-        // Extrahera riktigt källnamn från Google News
-        let sourceName = source.name;
-        if (isGoogleNews && item.source && item.source.title) {
-          sourceName = item.source.title;
-        } else if (isGoogleNews) {
-          // Försök extrahera från titeln – Google News format: "Rubrik - Källnamn"
-          const match = item.title.match(/\s[-–]\s([^-–]+)$/);
-          if (match) sourceName = match[1].trim();
-        }
-
         await save({
-          title: item.title.replace(/\s[-–]\s[^-–]+$/, '').trim(), // Ta bort källnamn från titeln
+          title: item.title.trim(),
           url: item.link,
-          source: sourceName,
+          source: source.name,
           category: categorize(item.title, source.name),
           region: source.region || null,
           ingress: snippet(item),
@@ -517,7 +498,6 @@ async function fetchAll() {
     ...SOURCES.sport_local,
     ...SOURCES.english,
     ...SOURCES.kultur_national,
-    ...SOURCES.google_news,
     ...SOURCES.regional
   ];
   await fetchSources(all);
