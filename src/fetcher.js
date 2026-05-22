@@ -449,12 +449,14 @@ function snippet(item) {
   return sentence ? sentence[0].trim() : clean.slice(0, 150);
 }
 
-// Källor som aldrig får sparas (politiskt färgade, fackliga, partipress)
+// Källor som aldrig får sparas (politiskt färgade, fackliga, partipress, övrigt skräp)
 const BLOCKED_SOURCES = [
   'proletären','proletaren','seko','arbetaren','flamman',
   'nya tider','nyatider','samtiden','frihetsnytt','fria tider',
   'kommunalarbetaren','dagens arena','dagens etc','etc',
-  'tidningen syre','syre','internationalen'
+  'tidningen syre','syre','internationalen',
+  'realtid','nextconomy','nextconomy.se','nyteknik','ny teknik',
+  'riksdagen','mynewsdesk'
 ];
 
 function isBlocked(sourceName) {
