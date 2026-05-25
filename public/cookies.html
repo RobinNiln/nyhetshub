@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookies – Skime</title>
+<meta name="description" content="Information om vilka cookies Skime använder och hur du hanterar dina cookieinställningar.">
+<link rel="canonical" href="https://skime.se/cookies">
+<link rel="icon" href="/logo1.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root { --bg:#fff; --text:#0a0a0a; --muted:#666; --accent:#2563eb; --border:#e5e7eb; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); line-height:1.65; }
+.wrap { max-width:720px; margin:0 auto; padding:48px 24px 80px; }
+header { border-bottom:1px solid var(--border); padding-bottom:24px; margin-bottom:40px; display:flex; align-items:center; justify-content:space-between; }
+header a.logo { display:flex; align-items:center; gap:12px; text-decoration:none; color:var(--text); }
+header img { height:36px; }
+header span { font-family:'Syne',sans-serif; font-weight:700; font-size:22px; letter-spacing:-0.5px; }
+nav a { color:var(--muted); text-decoration:none; font-size:14px; margin-left:20px; }
+nav a:hover { color:var(--accent); }
+h1 { font-family:'Syne',sans-serif; font-size:38px; font-weight:700; letter-spacing:-1px; margin-bottom:8px; }
+.lead { color:var(--muted); font-size:17px; margin-bottom:32px; }
+.updated { color:var(--muted); font-size:13px; margin-bottom:32px; }
+h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:600; margin:36px 0 12px; }
+p, ul { margin-bottom:14px; font-size:16px; }
+ul { padding-left:22px; }
+a { color:var(--accent); }
+table { width:100%; border-collapse:collapse; margin:16px 0 20px; font-size:14px; }
+th, td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+th { background:#f9fafb; font-weight:600; }
+button.reset { background:var(--accent); color:#fff; border:0; padding:10px 18px; border-radius:8px; cursor:pointer; font-family:'Inter',sans-serif; font-size:14px; font-weight:500; margin-top:8px; }
+button.reset:hover { opacity:0.9; }
+footer { border-top:1px solid var(--border); margin-top:60px; padding-top:24px; color:var(--muted); font-size:13px; display:flex; gap:20px; flex-wrap:wrap; }
+footer a { color:var(--muted); text-decoration:none; }
+footer a:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <a class="logo" href="/"><img src="/logo1.png" alt="Skime"><span>SKIME</span></a>
+  <nav><a href="/">Till startsidan</a></nav>
+</header>
+
+<h1>Cookies</h1>
+<p class="lead">Så använder Skime cookies.</p>
+<p class="updated">Senast uppdaterad: 25 maj 2026</p>
+
+<h2>Vad är en cookie?</h2>
+<p>En cookie är en liten textfil som sparas i din webbläsare när du besöker en webbplats. Cookies används för att webbplatsen ska komma ihåg dina inställningar och för att möjliggöra analys och annonsvisning.</p>
+
+<h2>Vilka cookies använder Skime?</h2>
+
+<table>
+  <thead>
+    <tr><th>Cookie</th><th>Syfte</th><th>Typ</th><th>Lagringstid</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>skime_theme</td><td>Sparar val av mörkt/ljust läge</td><td>Nödvändig</td><td>Tills du rensar webbläsaren</td></tr>
+    <tr><td>skime_lang</td><td>Sparar språkval (SV/EN)</td><td>Nödvändig</td><td>Tills du rensar webbläsaren</td></tr>
+    <tr><td>skime_consent</td><td>Sparar ditt samtyckesval för cookies</td><td>Nödvändig</td><td>12 månader</td></tr>
+    <tr><td>_ga, _ga_*</td><td>Google Analytics – aggregerad besöksstatistik</td><td>Analys</td><td>Upp till 24 månader</td></tr>
+    <tr><td>__gads, __gpi, IDE m.fl.</td><td>Google AdSense – annonsvisning och mätning</td><td>Annons</td><td>Upp till 24 månader</td></tr>
+  </tbody>
+</table>
+
+<h2>Nödvändiga cookies</h2>
+<p>De cookies som krävs för att sajten ska fungera (inställningar för tema, språk och samtycke) sätts utan särskilt samtycke. De innehåller ingen personlig identifierande information.</p>
+
+<h2>Analys- och annonscookies</h2>
+<p>Google Analytics och Google AdSense sätter cookies först efter att du har gett ditt samtycke i cookie-banner som visas vid första besöket. Dessa kan användas för att mäta trafik, förstå hur sajten används samt visa annonser som kan vara relevanta för dig.</p>
+
+<h2>Hur hanterar jag mina cookieinställningar?</h2>
+<p>Du kan när som helst återkalla eller ändra ditt samtycke. Klicka på knappen nedan för att återställa ditt val:</p>
+<button class="reset" onclick="localStorage.removeItem('skime_consent'); alert('Ditt samtyckesval är återställt. Ladda om startsidan så visas banner igen.');">Återställ cookieval</button>
+
+<p>Du kan också blockera eller radera cookies direkt i din webbläsares inställningar. Observera att vissa funktioner i Skime kan sluta fungera om du blockerar alla cookies.</p>
+
+<h2>Mer information</h2>
+<p>För mer information om hur Skime hanterar dina uppgifter, se vår <a href="/integritet">integritetspolicy</a>.</p>
+
+<footer>
+  <a href="/">Startsidan</a>
+  <a href="/om">Om Skime</a>
+  <a href="/integritet">Integritetspolicy</a>
+  <a href="/cookies">Cookies</a>
+  <a href="/villkor">Användarvillkor</a>
+</footer>
+</div>
+</body>
+</html>
