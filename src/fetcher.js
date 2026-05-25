@@ -388,61 +388,9 @@ function categorize(title, sourceName) {
 
   const t = title.toLowerCase();
 
-  // Alla sportkällor – hybrid-filter
+  // Alla sportkällor – ALLTID sport (oavsett rubrik)
   if (sportSources.includes(sourceName) || sportLocalSources.includes(sourceName)) {
-    const sportWords = [
-      'fotboll','hockey','match','serie','allsvenskan','shl','lag ','spelare',
-      'tränar','tränarbytet','säsong','final','derby','mål ','poäng','tabell',
-      'transfer','värvning','kontrakt','sport','cupfinal','kval ','playoff',
-      'landslaget','vm ','em ','champions league','europa league','nhl','nba',
-      'tennis','golf','friidrott','simning','cykling','boxning','mma','formel',
-      'basketboll','handboll','innebandy','ishockey','damallsvenskan','seriematch',
-      'tränaren','spelaren','klubben','laget ','säsongen','turneringen','mästerskapet',
-      'medalj','rekord','skidåkning','skidor','längdåkning','backhoppning','skidskytte',
-      'speedway','motorsport','rallyt','atletik','rodd','kanot','ridsport','brottning',
-      'judo','taekwondo','fäktning','skytte','padel','esport','e-sport','triathlon',
-      'orienteringen','bordtennis','badminton','vattenspolo','beachvolley','rullskidor',
-      'guld','silver','bronze','sm-final','sm-guld','playoff','uppflyttning','nedflyttning',
-      'degradering','seriesegern','skyttekungen','mvp','draften','bytet','debuten'
-    ];
-
-    // Kända svenska sportprofiler och klubbar – triggar sport oavsett rubrik
-    const sportNames = [
-      // Fotboll
-      'zlatan','ibrahimovic','duplantis','pellegrino','hammarby','malmö ff','ifk göteborg',
-      'ifk norrköping','djurgården','häcken','elfsborg','kalmar ff','mjällby','degerfors',
-      'brommapojkarna','sirius','häcken','gais','örebro sk','halmstad','göteborg fc',
-      'rosengård','linköping fc','piteå if','kif örebro',
-      // Hockey
-      'rögle','skellefteå','frölunda','brynäs','luleå','färjestad','hv71','timrå',
-      'leksand','modo','tre kronor','forsberg','lundqvist','hedman',
-      // Landslag
-      'svenska landslaget','herrlandslaget','damlandslaget','blågult',
-      // Kända profiler
-      'armand duplantis','mondo','erik and','sara hector','frida karlsson',
-      'nils van der poel','anna hasselborg','ebba andersson','jonna sundling',
-      'henrik lundqvist','william nylander','victor hedman','rasmus dahlin',
-      'alexander isak','dejan kulusevski','viktor gyökeres','martin ödegaard',
-      'anthony elanga','zeki amdouni',
-      // Internationellt
-      'mbappe','haaland','vinicius','bellingham','salah','ronaldo','messi',
-      'sinner','alcaraz','djokovic','swiatek','mcilroy','scheffler',
-      'verstappen','hamilton','leclerc','norris'
-    ];
-
-    if (sportWords.some(w => t.includes(w))) return 'sport';
-    if (sportNames.some(n => t.includes(n))) return 'sport';
-
-    // Inte sport – kategorisera normalt med _never-respekt
-    for (const [cat, words] of Object.entries(KEYWORDS)) {
-      if (cat.endsWith('_never')) continue;
-      if (words.some(w => t.includes(w))) {
-        const neverKey = cat + '_never';
-        if (KEYWORDS[neverKey] && KEYWORDS[neverKey].some(w => t.includes(w))) continue;
-        return cat;
-      }
-    }
-    return 'nyheter';
+    return 'sport';
   }
 
   for (const [cat, words] of Object.entries(KEYWORDS)) {
