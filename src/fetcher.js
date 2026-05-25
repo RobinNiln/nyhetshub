@@ -133,17 +133,17 @@ const SOURCES = {
   // ── NATIONELLA KÄLLOR ────────────────────────────────────────────────────
   national: [
     { name: 'SVT',           url: 'https://www.svt.se/nyheter/rss.xml' },
-    { name: 'SR',            url: 'https://api.sr.se/api/rss/program/83?format=1' },
+    { name: 'SR Ekot',       url: 'https://api.sr.se/api/rss/program/83?format=145' },
     { name: 'DN',            url: 'https://www.dn.se/rss/' },
-    { name: 'SvD',           url: 'https://www.svd.se/feed/articles.rss' },
+    { name: 'DN Politik',    url: 'https://www.dn.se/rss/politik/' },
+    { name: 'DN Ekonomi',    url: 'https://www.dn.se/rss/ekonomi/' },
+    { name: 'SvD',           url: 'https://www.svd.se/?service=rss' },
+    { name: 'SvD Näringsliv', url: 'https://www.svd.se/?service=rss&type=articles&tag=naringsliv' },
     { name: 'Aftonbladet',   url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/senastenytt/' },
+    { name: 'Aftonbladet Nyheter', url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/nyheter/' },
     { name: 'Expressen',     url: 'https://feeds.expressen.se/nyheter/' },
     { name: 'DI',            url: 'https://www.di.se/rss' },
-    { name: 'Breakit',       url: 'https://www.breakit.se/feed/articles' },
-    { name: 'GP',            url: 'https://www.gp.se/feeds/feed.xml' },
     { name: 'TV4',           url: 'https://www.tv4.se/rss' },
-    { name: 'Omni',          url: 'https://omni.se/rss' },
-    { name: 'TT',            url: 'https://tt.se/rss.xml' },
   ],
 
   // ── SPORT-KÄLLOR (nationella) ────────────────────────────────────────────
@@ -152,11 +152,8 @@ const SOURCES = {
     { name: 'Aftonbladet Sport',  url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/' },
     { name: 'Expressen Sport',    url: 'https://feeds.expressen.se/sport/' },
     { name: 'DN Sport',           url: 'https://www.dn.se/rss/sport' },
-    { name: 'GP Sport',           url: 'https://www.gp.se/feeds/sport.xml' },
-    { name: 'Fotbollskanalen',    url: 'https://www.fotbollskanalen.se/rss' },
     { name: 'Fotbolldirekt',      url: 'https://www.fotbolldirekt.se/rss' },
     { name: 'Hockeysverige',      url: 'https://www.hockeysverige.se/rss' },
-    { name: 'Hockeyexpressen',    url: 'https://www.hockeyexpressen.se/rss' },
   ],
 
   // ── SPORT-KÄLLOR (lokala) ────────────────────────────────────────────────
@@ -180,20 +177,19 @@ const SOURCES = {
 
   // ── ENGELSKA KÄLLOR (internationella) ───────────────────────────────────
   english: [
-    { name: 'BBC News',       url: 'http://feeds.bbci.co.uk/news/rss.xml' },
-    { name: 'Reuters',        url: 'https://feeds.reuters.com/reuters/topNews' },
+    { name: 'BBC News',       url: 'http://feeds.bbci.co.uk/news/world/rss.xml' },
+    { name: 'BBC Europe',     url: 'http://feeds.bbci.co.uk/news/world/europe/rss.xml' },
     { name: 'The Guardian',   url: 'https://www.theguardian.com/world/rss' },
-    { name: 'AP News',        url: 'https://rsshub.app/apnews/topics/apf-topnews' },
     { name: 'Al Jazeera',     url: 'https://www.aljazeera.com/xml/rss/all.xml' },
     { name: 'New York Times', url: 'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml' },
+    { name: 'NYT World',      url: 'https://rss.nytimes.com/services/xml/rss/nyt/World.xml' },
   ],
 
   // ── KULTUR-KÄLLOR (nationella) ───────────────────────────────────────────
   kultur_national: [
-    { name: 'SvD Kultur',       url: 'https://www.svd.se/feed/articles.rss?tag=kultur' },
+    { name: 'SvD Kultur',       url: 'https://www.svd.se/?service=rss&type=articles&tag=kultur' },
     { name: 'DN Kultur',        url: 'https://www.dn.se/rss/kultur' },
-    { name: 'Nöjesguiden',      url: 'https://www.nojesguiden.se/rss' },
-    { name: 'Fokus',            url: 'https://www.fokus.se/feed' },
+    { name: 'Aftonbladet Kultur', url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/kultur/' },
   ],
 
   // ── REGIONALA KÄLLOR ─────────────────────────────────────────────────────
@@ -202,8 +198,6 @@ const SOURCES = {
     // Stockholm – utökat med fler källor
     { name: 'SVT Stockholm',      url: 'https://www.svt.se/nyheter/lokalt/stockholm/rss.xml',   region: 'Stockholm' },
     { name: 'DN Stockholm',       url: 'https://www.dn.se/rss/sthlm',                           region: 'Stockholm' },
-    { name: 'Aftonbladet Stockholm', url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/senastenytt/', region: 'Stockholm' },
-    { name: 'Mitt i Stockholm',   url: 'https://www.mitti.se/rss/nyheter',                      region: 'Stockholm' },
 
     // Skåne
     { name: 'SVT Skåne',          url: 'https://www.svt.se/nyheter/lokalt/skane/rss.xml',       region: 'Skåne' },
