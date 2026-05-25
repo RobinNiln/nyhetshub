@@ -467,7 +467,6 @@ function selectRegionFromDropdown(region) {
   saveRecentRegion(region);
   renderTabs();
   load();
-  loadTopStories();
 }
 
 function renderSportSubs() {
@@ -496,7 +495,6 @@ function selectNaringslivSub(id, el) {
   document.querySelectorAll('#naringsliv-subnav .cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   load();
-  loadTopStories();
 }
 
 function selectSportSub(id, el) {
@@ -504,7 +502,6 @@ function selectSportSub(id, el) {
   document.querySelectorAll('#sport-subnav .cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
   load();
-  loadTopStories();
 }
 
 function selectTab(val, el) {
@@ -517,7 +514,6 @@ function selectTab(val, el) {
   history.pushState({}, '', newUrl);
   renderSportSubs();
   load();
-  loadTopStories();
 }
 
 async function load() {
@@ -533,8 +529,17 @@ async function load() {
     } else {
       url = `/api/news?category=${encodeURIComponent(current)}`;
     }
-    const res = await fetch(url);
-    const articles = await res.json();
+    // Vänta in topp-URL:er parallellt med flödet så vi kan filtrera bort dem
+    const [res] = await Promise.all([fetch(url), loadTopStories()]);
+    let articles = await res.json();
+    // Filtrera bort artiklar som redan visas i Toppnyheter (inkl. alla underkällor)
+    if (window.topStoryUrls && window.topStoryUrls.size) {
+      articles = articles.filter(a => {
+        if (window.topStoryUrls.has(a.url)) return false;
+        if (a.sources && a.sources.some(s => window.topStoryUrls.has(s.url))) return false;
+        return true;
+      });
+    }
     renderGrid(articles);
     renderTrending(articles.slice(0, 7));
     document.getElementById('status-bar').innerHTML =
@@ -649,6 +654,8 @@ if (savedTheme === 'dark') {
 
 async function loadTopStories() {
   const section = document.getElementById('top-stories-section');
+  // Nollställ alltid topp-URL:er innan ny laddning
+  window.topStoryUrls = new Set();
   // Dölj toppnyheter för damallsvenskan (för lite flöde)
   if (mode !== 'national' || (sportSub === 'damallsvenskan')) {
     section.style.display = 'none';
@@ -662,6 +669,11 @@ async function loadTopStories() {
     const res = await fetch(url);
     const stories = await res.json();
     if (!stories.length || stories.length < 2) { section.style.display = 'none'; return; }
+    // Spara alla URL:er som visas i Toppnyheter (huvudartikel + alla källor)
+    stories.forEach(s => {
+      if (s.url) window.topStoryUrls.add(s.url);
+      if (s.sources) s.sources.forEach(src => { if (src.url) window.topStoryUrls.add(src.url); });
+    });
     section.style.display = 'block';
     const CAT = {nyheter:'Nyheter',politik:'Politik',samhalle:'Samhälle',naringsliv:'Näringsliv',sport:'Sport',tech:'Tech',kultur:'Kultur',utrikes:'Utrikes',english:'English'};
     const main = stories[0];
@@ -760,13 +772,11 @@ async function loadMostRead() {
 renderTabs();
 renderSportSubs();
 load();
-loadTopStories();
 loadMostRead();
 loadTopics();
 loadMeter();
 loadVoteWidget();
 setInterval(load, 15 * 60 * 1000);
-setInterval(loadTopStories, 15 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);
 setInterval(loadTopics, 60 * 60 * 1000);
 setInterval(loadMeter, 5 * 60 * 1000);
