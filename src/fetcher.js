@@ -357,7 +357,7 @@ function categorize(title, sourceName) {
   const sportSources = ['SVT Sport','Aftonbladet Sport','Expressen Sport','DN Sport','GP Sport','Sydsvenskan Sport','Fotbollskanalen','Fotbolldirekt','Hockeysverige','Hockeyexpressen'];
   const sportLocalSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
   const kulturSources = ['SvD Kultur','DN Kultur','Nöjesguiden','Fokus'];
-  const englishSources = ['BBC News','Reuters','The Guardian','AP News','Al Jazeera','New York Times'];
+  const englishSources = ['BBC News','BBC Europe','Reuters','The Guardian','AP News','Al Jazeera','New York Times','NYT World'];
 
   // Kultur-källor – alltid kultur
   if (kulturSources.includes(sourceName)) return 'kultur';
