@@ -636,6 +636,13 @@ app.get('/integritetspolicy', (req, res) => {
 
 app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 
+// ── Nya juridiska sidor (separata HTML-filer i /public) ─────────
+const sendStatic = (file) => (req, res) => res.sendFile(path.join(__dirname, '../public/' + file));
+app.get('/om',         sendStatic('om.html'));
+app.get('/integritet', sendStatic('integritet.html'));
+app.get('/cookies',    sendStatic('cookies.html'));
+app.get('/villkor',    sendStatic('villkor.html'));
+
 // ── robots.txt ────────────────────────────────────────────────
 // ads.txt – måste ligga FÖRE www-redirect så Google hittar den
 app.get('/ads.txt', (req, res) => {
