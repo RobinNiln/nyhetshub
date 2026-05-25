@@ -351,6 +351,28 @@ const KEYWORDS = {
     'alliansen','vänsterblocket','högerblocket','decemberöverenskommelsen',
   ],
   utrikes:    ['ukraina','mellanöstern','gaza','israel','putin','nordkorea','klimat','kriget','nato-toppmöte','fn-möte','trump','biden','ryssland','kina','usa '],
+
+  // Tech – AI, startups, teknik, digitalisering
+  tech: [
+    'artificiell intelligens','ai-modell','ai-bolag','ai-startup','ai-verktyg','ai-assistent',
+    'chatgpt','openai','claude','anthropic','gemini','deepmind','grok','mistral','meta ai',
+    'algoritm','algoritmer','maskininlärning','neuralt nätverk','språkmodell','llm ',
+    'startup','startupen','startupbolag','techbolag','tech-bolag','tech-jätten','tech-jättarna',
+    'enhörning','unicorn','vc-bolag','venture capital','riskkapital','funding-runda',
+    'mjukvara','hårdvara','app ','appen ','plattform ','sociala medier','sociala medier-',
+    'instagram','tiktok','snapchat','youtube','twitch','linkedin','threads',
+    'apple','google','microsoft','amazon','tesla','spacex','nvidia','intel','samsung',
+    'spotify','klarna','ericsson','epidemic sound','northvolt','voi','einride','truecaller',
+    'cybersäkerhet','cyberattack','dataintrång','ransomware','phishing','hackare','läckta uppgifter',
+    'kryptovaluta','bitcoin','ethereum','blockchain','nft ','stablecoin',
+    'gpu','chip ','halvledare','semiconductor','kvantdator','5g ','6g ','bredband',
+    'elbil','elbilar','batteriteknik','laddstation','självkörande','autonom bil',
+    'rymdfärd','satellit ','satelliter','rymdresa','starship','falcon ','mars-uppdrag',
+    'robot ','robotar','drönare','drönar','vr-glasögon','ar-glasögon','metaverse',
+    'sociala plattformen','digitalisering','digital tjänst','molntjänst','molnet',
+    'streamingtjänst','streaming-tjänst','strömningstjänsten'
+  ],
+  tech_never: ['gänget','skjutning','knivhugg','misshandel','våldtäkt','döms','häktas','dödad','mördad'],
 };
 
 function categorize(title, sourceName) {
