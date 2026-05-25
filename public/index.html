@@ -518,6 +518,8 @@ function selectTab(val, el) {
 
 async function load() {
   document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
+  // Starta toppnyheter parallellt men låt det inte påverka huvudflödet
+  loadTopStories().catch(e => console.warn('loadTopStories failed:', e));
   try {
     let url;
     if (mode === 'regional') {
@@ -529,10 +531,9 @@ async function load() {
     } else {
       url = `/api/news?category=${encodeURIComponent(current)}`;
     }
-    // Vänta in topp-URL:er parallellt med flödet så vi kan filtrera bort dem
-    const [res] = await Promise.all([fetch(url), loadTopStories()]);
+    const res = await fetch(url);
     let articles = await res.json();
-    // Filtrera bort artiklar som redan visas i Toppnyheter (inkl. alla underkällor)
+    // Filtrera bort artiklar som redan visas i Toppnyheter (om de hunnits laddas)
     if (window.topStoryUrls && window.topStoryUrls.size) {
       articles = articles.filter(a => {
         if (window.topStoryUrls.has(a.url)) return false;
@@ -547,6 +548,7 @@ async function load() {
     const label = mode === 'regional' ? current : (CAT_LABELS[current] || current);
     document.title = `${label} – Skime`;
   } catch(e) {
+    console.warn('load failed:', e);
     document.getElementById('news-grid').innerHTML = '<div class="state">Kunde inte hämta nyheter.</div>';
   }
 }
@@ -702,6 +704,7 @@ async function loadTopStories() {
           </div>`).join('')}
       </div>` : ''}`;
   } catch(e) {
+    console.warn('loadTopStories error:', e);
     section.style.display = 'none';
   }
 }
