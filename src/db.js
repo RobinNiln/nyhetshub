@@ -5,6 +5,104 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// ── Hjälp för smartare dubblettmatchning och topprankning ──────────────
+
+// Stoppord som inte är meningsfulla för att identifiera en story
+const STOPWORDS = new Set([
+  'och','att','det','som','för','har','men','inte','vid','med','till','är','de','en','ett',
+  'efter','vill','blir','varit','hade','blev','kommer','nu','så','på','om','av','från',
+  'kan','ska','vad','där','här','han','hon','den','dem','sig','sin','sitt','vara','också',
+  'efter','före','mot','när','där','här','jag','du','vi','ni','samt','eller','utan','över',
+  'under','genom','mellan','varje','alla','några','flera','ny','nya','nytt','stor','stora',
+  'minst','mest','mer','mindre','andra','egen','egna','året','året','arets','årets'
+]);
+
+// Extrahera nyckelord från titel: ord > 3 tecken, ej stoppord
+function extractKeywords(title) {
+  return (title || '')
+    .toLowerCase()
+    .replace(/[^a-zåäö0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(w => w.length > 3 && !STOPWORDS.has(w));
+}
+
+// Generera matchningsnyckel: sorterade nyckelord (oberoende av ordordning)
+function storyKey(title) {
+  const kws = extractKeywords(title);
+  // Ta upp till 6 distinkta sorterade keywords som "fingeravtryck"
+  return Array.from(new Set(kws)).sort().slice(0, 6).join('|');
+}
+
+// Räkna hur många nyckelord två titlar delar
+function sharedKeywords(a, b) {
+  const sa = new Set(extractKeywords(a));
+  let n = 0;
+  for (const w of extractKeywords(b)) if (sa.has(w)) n++;
+  return n;
+}
+
+// Tunga riksmedier väger mer i topprankning
+const HEAVY_SOURCES = new Set([
+  'SVT','SR','SR Ekot','DN','SvD','Aftonbladet','Expressen','TV4','DI','Aftonbladet Nyheter'
+]);
+
+function sourceWeight(name) {
+  return HEAVY_SOURCES.has(name) ? 2 : 1;
+}
+
+// Bygg story-grupper utifrån keyword-fingeravtryck + likhetsmatchning
+function buildGroups(rows) {
+  const groups = [];
+  const byKey = new Map();
+  for (const row of rows) {
+    const key = storyKey(row.title);
+    if (!key) continue;
+    // 1. Exakt fingeravtryck → samma story
+    let group = byKey.get(key);
+    // 2. Annars: leta efter befintlig grupp där minst 2 keywords överlappar
+    if (!group) {
+      for (const g of groups) {
+        if (sharedKeywords(g.title, row.title) >= 2) { group = g; break; }
+      }
+    }
+    if (group) {
+      if (!group.sources.some(s => s.name === row.source) && group.sources.length < 6) {
+        group.sources.push({ name: row.source, url: row.url });
+      }
+    } else {
+      group = {
+        title: row.title,
+        url: row.url,
+        source: row.source,
+        sources: [{ name: row.source, url: row.url }],
+        category: row.category,
+        region: row.region,
+        ingress: row.ingress,
+        published_at: row.published_at,
+        score: row.score,
+        _keywords: extractKeywords(row.title)
+      };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+  }
+  return groups;
+}
+
+// Räkna uppföljare: andra artiklar (utanför gruppen) som delar minst 2 nyckelord
+function followUpBonus(group, allRows) {
+  const pubTime = new Date(group.published_at).getTime();
+  const groupUrls = new Set(group.sources.map(s => s.url));
+  let bonus = 0;
+  for (const row of allRows) {
+    if (groupUrls.has(row.url)) continue;
+    const dtH = Math.abs(pubTime - new Date(row.published_at).getTime()) / (1000 * 60 * 60);
+    if (dtH > 3) continue;
+    if (sharedKeywords(group.title, row.title) >= 2) bonus += 0.3;
+  }
+  return Math.min(bonus, 2); // max 2 poäng
+}
+
 async function init() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS articles (
@@ -225,41 +323,7 @@ async function get(opts) {
     params
   );
 
-  const groups = [];
-  const seen = new Map();
-
-  for (const row of rows) {
-    const key = row.title
-      .toLowerCase()
-      .replace(/[^a-zåäö\s]/g, '')
-      .split(/\s+/)
-      .slice(0, 5)
-      .join(' ');
-
-    if (seen.has(key)) {
-      const group = seen.get(key);
-      // Lägg bara till källan om den inte redan finns i gruppen
-      const sourceExists = group.sources.some(s => s.name === row.source);
-      if (!sourceExists && group.sources.length < 6) {
-        group.sources.push({ name: row.source, url: row.url });
-      }
-    } else {
-      const group = {
-        title: row.title,
-        url: row.url,
-        source: row.source,
-        sources: [{ name: row.source, url: row.url }],
-        category: row.category,
-        region: row.region,
-        ingress: row.ingress,
-        published_at: row.published_at,
-        score: row.score
-      };
-      seen.set(key, group);
-      groups.push(group);
-    }
-  }
-
+  const groups = buildGroups(rows);
   return groups.slice(0, 80);
 }
 
@@ -364,26 +428,18 @@ async function getTopStories(category, sport) {
     params
   );
 
-  const groups = [];
-  const seen = new Map();
-  for (const row of rows) {
-    const key = row.title.toLowerCase().replace(/[^a-zåäö\s]/g, '').split(/\s+/).slice(0, 5).join(' ');
-    if (seen.has(key)) {
-      const group = seen.get(key);
-      const sourceExists = group.sources.some(s => s.name === row.source);
-      if (!sourceExists && group.sources.length < 6) group.sources.push({ name: row.source, url: row.url });
-    } else {
-      const group = { title: row.title, url: row.url, source: row.source, sources: [{ name: row.source, url: row.url }], category: row.category, region: row.region, ingress: row.ingress, published_at: row.published_at, score: row.score };
-      seen.set(key, group);
-      groups.push(group);
-    }
-  }
+  const groups = buildGroups(rows);
 
   const now = Date.now();
   const scored = groups.map(function(a) {
     const ageHours = (now - new Date(a.published_at).getTime()) / (1000 * 60 * 60);
     const recencyBonus = Math.max(0, 1 - (ageHours / 6));
-    return Object.assign({}, a, { topScore: a.sources.length * (1 + recencyBonus) });
+    // Viktat antal källor: tunga riksmedier räknas dubbelt
+    const weightedSources = a.sources.reduce((sum, s) => sum + sourceWeight(s.name), 0);
+    // Uppföljare: andra artiklar inom 3h som delar nyckelord
+    const followBonus = followUpBonus(a, rows);
+    const topScore = weightedSources * (1 + recencyBonus) + followBonus;
+    return Object.assign({}, a, { topScore: topScore });
   });
   scored.sort(function(a, b) { return b.topScore - a.topScore; });
   return scored.slice(0, 5);
