@@ -219,7 +219,7 @@ async function get(opts) {
     'SELECT title, url, source, category, region, ingress, published_at, score ' +
     'FROM articles ' +
     'WHERE ' + conditions.join(' AND ') + ' ' +
-    'ORDER BY published_at DESC, score DESC ' +
+    'ORDER BY published_at DESC ' +
     'LIMIT 400',
     params
   );
@@ -270,9 +270,7 @@ async function lastFetched() {
 }
 
 async function getTopStories(category, sport) {
-  const isSportSub = !!sport;
-  const scoreThreshold = isSportSub ? 0 : 1;
-  const conditions = ["fetched_at > NOW() - INTERVAL '12 hours'", 'region IS NULL', 'score >= ' + scoreThreshold];
+  const conditions = ["fetched_at > NOW() - INTERVAL '24 hours'", 'region IS NULL'];
   const params = [];
 
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
@@ -353,7 +351,7 @@ async function getTopStories(category, sport) {
   const { rows } = await pool.query(
     'SELECT title, url, source, category, region, ingress, published_at, score ' +
     'FROM articles WHERE ' + conditions.join(' AND ') + ' ' +
-    'ORDER BY published_at DESC, score DESC LIMIT 400',
+    'ORDER BY published_at DESC LIMIT 400',
     params
   );
 
@@ -375,7 +373,7 @@ async function getTopStories(category, sport) {
   const now = Date.now();
   const scored = groups.map(function(a) {
     const ageHours = (now - new Date(a.published_at).getTime()) / (1000 * 60 * 60);
-    const recencyBonus = Math.max(0, 1 - (ageHours / 12));
+    const recencyBonus = Math.max(0, 1 - (ageHours / 24));
     return Object.assign({}, a, { topScore: a.sources.length * (1 + recencyBonus) });
   });
   scored.sort(function(a, b) { return b.topScore - a.topScore; });
