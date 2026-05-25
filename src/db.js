@@ -192,7 +192,7 @@ async function get(opts) {
       'Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport',
       'GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport',
       'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
-      'SvD Kultur','DN Kultur','Nöjesguiden','Fokus',
+      'SvD Kultur','DN Kultur','Aftonbladet Kultur','Nöjesguiden','Fokus',
       'BBC News','BBC Europe','Reuters','The Guardian','AP News','Al Jazeera','New York Times','NYT World'
     ];
     excludedSources.forEach(function(src) {
@@ -276,7 +276,9 @@ async function getTopStories(category, sport) {
     "published_at > NOW() - INTERVAL '6 hours'",
     'region IS NULL',
     "category != 'english'",
-    "source NOT IN ('BBC News','BBC Europe','Reuters','The Guardian','AP News','Al Jazeera','New York Times','NYT World')"
+    "category != 'kultur'",
+    "category != 'sport'",
+    "source NOT IN ('BBC News','BBC Europe','Reuters','The Guardian','AP News','Al Jazeera','New York Times','NYT World','SvD Kultur','DN Kultur','Aftonbladet Kultur','Nöjesguiden','Fokus')"
   ];
   const params = [];
 
