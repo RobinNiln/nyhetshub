@@ -360,7 +360,11 @@
     Klicka alltid på rubriken eller källan för att läsa hela artikeln.
   </p>
   <p style="margin-top:10px">
-    <a href="/om-oss">Om Skime</a> · <a href="/kontakt">Kontakt</a> · <a href="/integritetspolicy">Integritetspolicy</a>
+    <a href="/om">Om Skime</a> ·
+    <a href="/integritet">Integritetspolicy</a> ·
+    <a href="/cookies">Cookies</a> ·
+    <a href="/villkor">Användarvillkor</a> ·
+    <a href="https://www.linkedin.com/company/skime/" target="_blank" rel="noopener">LinkedIn</a>
   </p>
 </footer>
 
@@ -766,6 +770,30 @@ setInterval(loadTopStories, 15 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);
 setInterval(loadTopics, 60 * 60 * 1000);
 setInterval(loadMeter, 5 * 60 * 1000);
+</script>
+<!-- Cookiebanner (GDPR-samtycke) -->
+<div id="skime-cookie" style="display:none;position:fixed;left:16px;right:16px;bottom:16px;max-width:520px;margin:0 auto;background:#fff;color:#111;border:1px solid #e5e7eb;border-radius:12px;padding:18px 20px;box-shadow:0 8px 24px rgba(0,0,0,.12);font-family:'Inter',sans-serif;font-size:14px;line-height:1.55;z-index:9999">
+  <div style="font-weight:600;margin-bottom:6px;font-family:'Syne',sans-serif">Skime använder cookies</div>
+  <div style="color:#555;margin-bottom:12px">Vi använder cookies för att mäta trafik (Google Analytics) och visa annonser (Google AdSense). Nödvändiga cookies för dina inställningar sätts alltid. Läs mer i vår <a href="/cookies" style="color:#2563eb">cookiepolicy</a>.</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button id="skime-cookie-accept" style="background:#2563eb;color:#fff;border:0;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500">Acceptera alla</button>
+    <button id="skime-cookie-decline" style="background:#f3f4f6;color:#111;border:0;padding:9px 16px;border-radius:8px;cursor:pointer;font-size:14px">Endast nödvändiga</button>
+  </div>
+</div>
+<script>
+(function(){
+  var c = localStorage.getItem('skime_consent');
+  var box = document.getElementById('skime-cookie');
+  if (!c) box.style.display = 'block';
+  document.getElementById('skime-cookie-accept').onclick = function(){
+    localStorage.setItem('skime_consent','all');
+    box.style.display='none';
+  };
+  document.getElementById('skime-cookie-decline').onclick = function(){
+    localStorage.setItem('skime_consent','necessary');
+    box.style.display='none';
+  };
+})();
 </script>
 </body>
 </html>
