@@ -134,13 +134,6 @@ async function init() {
 }
 
 async function save(article) {
-  // Kontrollera max 10 artiklar per källa i databasen
-  const { rows: countRows } = await pool.query(
-    `SELECT COUNT(*) FROM articles WHERE source = $1 AND fetched_at > NOW() - INTERVAL '36 hours'`,
-    [article.source]
-  );
-  if (parseInt(countRows[0].count) >= 20) return;
-
   await pool.query(
     `INSERT INTO articles (title, url, source, category, region, ingress, published_at)
      VALUES ($1,$2,$3,$4,$5,$6,$7)
