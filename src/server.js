@@ -2,8 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
-const { init, get, lastFetched, getTopStories } = require('./db');
+const { init, get, lastFetched, getTopStories, getTodaysBrief } = require('./db');
 const { fetchAll } = require('./fetcher');
+const { generateBrief } = require('./brief');
 
 const app = express();
 app.use(cors());
@@ -19,10 +20,13 @@ const ALL_REGIONS = [
   'Örebro','Östergötland'
 ];
 
-const CATEGORIES = ['nyheter','valet2026','samhalle','naringsliv','sport','tech','kultur','utrikes','english'];
+const CATEGORIES = ['nyheter','valet2026','samhalle','naringsliv','sport','tech','kultur','kronikor','utrikes','english'];
 
 // Hämta nyheter var 15:e minut automatiskt
 cron.schedule('*/15 * * * *', fetchAll);
+
+// Generera morgonbrief 06:00 varje dag (svensk tid)
+cron.schedule('0 6 * * *', generateBrief, { timezone: 'Europe/Stockholm' });
 
 // Trigga fetchAll om senaste hämtning är äldre än 15 min
 async function refreshIfStale() {
@@ -636,6 +640,16 @@ app.get('/integritetspolicy', (req, res) => {
 
 app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 
+// Dagens morgonbrief
+app.get('/api/brief', async (req, res) => {
+  try {
+    const brief = await getTodaysBrief();
+    res.json(brief || {});
+  } catch(e) {
+    res.status(500).json({ error: 'Kunde inte hämta brief' });
+  }
+});
+
 // ── Nya juridiska sidor (separata HTML-filer i /public) ─────────
 const sendStatic = (file) => (req, res) => res.sendFile(path.join(__dirname, '../public/' + file));
 app.get('/om',         sendStatic('om.html'));
@@ -863,5 +877,10 @@ app.get('/', async (req, res) => {
 // ── Start ─────────────────────────────────────────────────────
 init().then(async () => {
   await fetchAll();
+  // Generera brief om dagens saknas (t.ex. vid första starten eller efter omstart)
+  const todaysBrief = await getTodaysBrief();
+  if (!todaysBrief) {
+    generateBrief().catch(e => console.error('Initial brief:', e.message));
+  }
   app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'));
 }).catch(console.error);
