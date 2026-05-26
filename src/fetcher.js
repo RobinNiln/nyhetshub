@@ -115,17 +115,36 @@ const SKIP_PATTERNS = [
   /^ny restaurang/i,
 ];
 
+// Rubrikmönster som indikerar krönika/tyckande/recension
+// Matchar "Namn Efternamn:" inkl. diakritiska tecken (é, ü, ó) och initialer (Mats J:)
+const NAME_OPINION = /^[A-ZÅÄÖ][\wåäöéèüöáàíìóòúù.-]+(?: [A-ZÅÄÖ][\wåäöéèüöáàíìóòúù.-]*)+\s*:/;
+
+// URL-paths som indikerar krönika eller recension (= ska klassas som 'kronikor')
+const KRONIKA_PATHS = [
+  '/kronika/', '/krönika/', '/kronikor/', '/krönikor/',
+  '/kolumn/', '/tyckare/', '/analys/',
+  '/recension/', '/recensioner/', '/film-tv/recension', '/tv-recension/'
+];
+
+// URL-paths som ska skippas helt (ledare, debatt, podcast, video, bildspel, quiz)
+const SKIP_PATHS = [
+  '/ledare/', '/ledar/', '/debatt/', '/opinion/', '/kommentar/',
+  '/insandare/', '/insändare/', '/podcast/', '/podcasts/',
+  '/video/', '/bildspel/', '/quiz/', '/reportage/profil/'
+];
+
+// Avgör om en artikel är en krönika/recension (ska få kategori 'kronikor')
+function isKronika(title, url = '') {
+  if (NAME_OPINION.test((title || '').trim())) return true;
+  const u = (url || '').toLowerCase();
+  return KRONIKA_PATHS.some(p => u.includes(p));
+}
+
 function shouldSkip(title, url = '') {
   if (!title || title.trim().length < 15) return true;
   if (SKIP_PATTERNS.some(p => p.test(title))) return true;
-  const urlLower = url.toLowerCase();
-  const skipPaths = [
-    '/ledare/', '/ledar/', '/kronika/', '/krönika/',
-    '/debatt/', '/opinion/', '/kommentar/', '/insandare/',
-    '/insändare/', '/kolumn/', '/podcast/', '/video/',
-    '/bildspel/', '/quiz/'
-  ];
-  return skipPaths.some(p => urlLower.includes(p));
+  const u = url.toLowerCase();
+  return SKIP_PATHS.some(p => u.includes(p));
 }
 
 const SOURCES = {
@@ -442,7 +461,7 @@ async function fetchSources(sources) {
           title: item.title.trim(),
           url: item.link,
           source: source.name,
-          category: categorize(item.title, source.name),
+          category: isKronika(item.title, item.link) ? 'kronikor' : categorize(item.title, source.name),
           region: source.region || null,
           ingress: snippet(item),
           published_at: item.pubDate || new Date()
