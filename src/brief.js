@@ -7,30 +7,46 @@ const MODEL = 'claude-haiku-4-5-20251001';
 
 const PROMPTS = {
   morning: (today, list) =>
-    `Du är redaktör på Skime, en svensk nyhetsaggregator. Skriv en kort, neutral och saklig MORGONBRIEF på svenska som sammanfattar nattens och dagens viktigaste händelser. Briefen ska vara 4–6 meningar lång, läsa flytande som ett stycke (inga punktlistor), och vara skriven i tredje person utan personliga åsikter. Tonen är vaken och informativ – som om läsaren just satt sig med morgonkaffet och vill veta vad som hänt.
+    `Du är redaktör på Skime, en svensk nyhetsaggregator. Skriv en MORGONBRIEF på svenska baserat på dagens topprubriker. Tonen är vaken och informativ.
 
-VIKTIGT: Skriv ENDAST själva brödtexten. Ingen rubrik, ingen markdown (inga #, **, listor), inga inledningsfraser. Börja direkt med första meningen.
+FORMAT (strikt):
+Rad 1: En kursiv intromening (max 25 ord) som sammanfattar dagen i stort.
+Rad 2: tom rad
+Rad 3 och framåt: 4-5 punkter, en per rad, i formatet "Plats. Mening om vad som hänt."
+   - "Plats" är max 1-2 ord (t.ex. "Sverige.", "Belgien.", "Norge.", "Iran.", "USA.", "Internationellt.")
+   - Meningen är högst 25 ord och saklig.
+
+EXEMPEL:
+Dagen domineras av tragedin i Belgien, kollektivtrafikförslag i Sverige och försämring för Mette-Marit.
+
+Belgien. Fyra döda när skolbuss påkördes av tåg – två barn och två vuxna enligt belgisk minister.
+Sverige. Halverat pris på kollektivtrafikens månadskort föreslås av regering och SD.
+Norge. Mette-Marits hälsa försämras enligt kronprins Haakon.
+Iran. Beslut om att öppna internet hävs av domstolsväsendet.
+
+Inga rubriker, ingen markdown, inga inledningsfraser. Skriv direkt enligt formatet ovan.
 
 Dagens datum: ${today}.
 
-Här är dagens topprubriker:
-
-${list}
-
-Svara endast med själva brödtexten – en ren paragraf utan formatering.`,
+Topprubriker:
+${list}`,
 
   evening: (today, list) =>
-    `Du är redaktör på Skime, en svensk nyhetsaggregator. Skriv en kort, neutral och saklig KVÄLLSBRIEF på svenska som sammanfattar dagens viktigaste händelser. Briefen ska vara 4–6 meningar lång, läsa flytande som ett stycke (inga punktlistor), och vara skriven i tredje person utan personliga åsikter. Tonen är reflekterande och översiktlig – som en kort kvällsrapport som sammanfattar vad som format dagen.
+    `Du är redaktör på Skime, en svensk nyhetsaggregator. Skriv en KVÄLLSBRIEF på svenska baserat på dagens topprubriker. Tonen är reflekterande och översiktlig.
 
-VIKTIGT: Skriv ENDAST själva brödtexten. Ingen rubrik, ingen markdown (inga #, **, listor), inga inledningsfraser. Börja direkt med första meningen.
+FORMAT (strikt):
+Rad 1: En kursiv intromening (max 25 ord) som sammanfattar dagen.
+Rad 2: tom rad
+Rad 3 och framåt: 4-5 punkter, en per rad, i formatet "Plats. Mening om vad som hänt."
+   - "Plats" är max 1-2 ord (t.ex. "Sverige.", "Belgien.", "Norge.", "Iran.", "USA.", "Internationellt.")
+   - Meningen är högst 25 ord och saklig.
+
+Inga rubriker, ingen markdown, inga inledningsfraser.
 
 Dagens datum: ${today}.
 
-Här är dagens topprubriker:
-
-${list}
-
-Svara endast med själva brödtexten – en ren paragraf utan formatering.`
+Topprubriker:
+${list}`
 };
 
 async function generateBrief(type) {
@@ -61,7 +77,7 @@ async function generateBrief(type) {
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 500,
+        max_tokens: 600,
         messages: [{ role: 'user', content: PROMPTS[type](today, list) }]
       })
     });
