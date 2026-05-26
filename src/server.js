@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
-const { init, get, lastFetched, getTopStories, getTodaysBrief } = require('./db');
+const { init, get, lastFetched, getTopStories, getTodaysBrief, hasBriefToday } = require('./db');
 const { fetchAll } = require('./fetcher');
 const { generateBrief } = require('./brief');
 
@@ -25,8 +25,11 @@ const CATEGORIES = ['nyheter','valet2026','samhalle','naringsliv','sport','tech'
 // Hämta nyheter var 15:e minut automatiskt
 cron.schedule('*/15 * * * *', fetchAll);
 
-// Generera morgonbrief 06:00 varje dag (svensk tid)
-cron.schedule('0 6 * * *', generateBrief, { timezone: 'Europe/Stockholm' });
+// Morgonbrief 06:00 svensk tid
+cron.schedule('0 6 * * *', () => generateBrief('morning'), { timezone: 'Europe/Stockholm' });
+
+// Kvällsbrief 17:00 svensk tid
+cron.schedule('0 17 * * *', () => generateBrief('evening'), { timezone: 'Europe/Stockholm' });
 
 // Trigga fetchAll om senaste hämtning är äldre än 15 min
 async function refreshIfStale() {
@@ -877,10 +880,11 @@ app.get('/', async (req, res) => {
 // ── Start ─────────────────────────────────────────────────────
 init().then(async () => {
   await fetchAll();
-  // Generera brief om dagens saknas (t.ex. vid första starten eller efter omstart)
-  const todaysBrief = await getTodaysBrief();
-  if (!todaysBrief) {
-    generateBrief().catch(e => console.error('Initial brief:', e.message));
-  }
+  // Generera saknad brief vid uppstart:
+  // Klockan ≥17 → kvällsbrief om saknas, annars morgonbrief om saknas
+  const hourSE = parseInt(new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', hour12: false }));
+  const wantType = hourSE >= 17 ? 'evening' : 'morning';
+  const exists = await hasBriefToday(wantType);
+  if (!exists) generateBrief(wantType).catch(e => console.error('Initial brief:', e.message));
   app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'));
 }).catch(console.error);
