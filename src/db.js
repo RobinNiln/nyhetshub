@@ -129,8 +129,57 @@ async function init() {
   `);
   await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_url ON article_clicks(url)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_time ON article_clicks(clicked_at)');
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS daily_briefs (
+      brief_date DATE PRIMARY KEY,
+      content TEXT NOT NULL,
+      generated_at TIMESTAMPTZ DEFAULT NOW()
+    )
+  `);
   const { rows } = await pool.query('SELECT COUNT(*) FROM articles');
   console.log('DB: ' + rows[0].count + ' artiklar i databasen');
+}
+
+// Hämta topprubriker för dagens brief: gruppera och vikta som getTopStories,
+// men returnera fler (15) och utan score-tröskel — för att ge AI:n bra material.
+async function getTopHeadlinesForBrief() {
+  const { rows } = await pool.query(
+    `SELECT title, source, category, ingress, published_at
+     FROM articles
+     WHERE fetched_at > NOW() - INTERVAL '14 hours'
+       AND published_at > NOW() - INTERVAL '14 hours'
+       AND region IS NULL
+       AND category NOT IN ('english','kultur','kronikor')
+     ORDER BY published_at DESC
+     LIMIT 400`
+  );
+  const groups = buildGroups(rows);
+  const now = Date.now();
+  const scored = groups.map(g => {
+    const ageH = (now - new Date(g.published_at).getTime()) / 3600000;
+    const recency = Math.max(0, 1 - ageH / 14);
+    const weighted = g.sources.reduce((s, x) => s + sourceWeight(x.name), 0);
+    return Object.assign({}, g, { topScore: weighted * (1 + recency) });
+  });
+  scored.sort((a, b) => b.topScore - a.topScore);
+  return scored.slice(0, 15);
+}
+
+async function saveBrief(date, content) {
+  await pool.query(
+    `INSERT INTO daily_briefs (brief_date, content)
+     VALUES ($1, $2)
+     ON CONFLICT (brief_date) DO UPDATE SET content = EXCLUDED.content, generated_at = NOW()`,
+    [date, content]
+  );
+}
+
+async function getTodaysBrief() {
+  const { rows } = await pool.query(
+    `SELECT brief_date, content, generated_at FROM daily_briefs
+     WHERE brief_date = CURRENT_DATE`
+  );
+  return rows[0] || null;
 }
 
 async function save(article) {
@@ -441,4 +490,4 @@ async function getTopStories(category, sport) {
   return scored.slice(0, 5);
 }
 
-module.exports = { init, save, boost, get, lastFetched, getTopStories };
+module.exports = { init, save, boost, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief };
