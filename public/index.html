@@ -378,6 +378,7 @@ const CATS = [
   {id:'utrikes',sv:'Utrikes',en:'World'},
   {id:'samhalle',sv:'Samhälle',en:'Society'},
   {id:'kultur',sv:'Kultur',en:'Culture'},
+  {id:'kronikor',sv:'Krönikor',en:'Opinion'},
   {id:'english',sv:'🌐 International news in English',en:'🌐 International news in English'},
 ];
 
@@ -389,7 +390,7 @@ const SPORT_SUBS = [
   {id:'shl',sv:'🏒 SHL',en:'🏒 SHL'},
 ];
 
-const CAT_LABELS = {nyheter:'Nyheter',valet2026:'Valet 2026',samhalle:'Samhälle',sport:'Sport',naringsliv:'Näringsliv',kultur:'Kultur',tech:'Tech',utrikes:'Utrikes',english:'English'};
+const CAT_LABELS = {nyheter:'Nyheter',valet2026:'Valet 2026',samhalle:'Samhälle',sport:'Sport',naringsliv:'Näringsliv',kultur:'Kultur',kronikor:'Krönikor',tech:'Tech',utrikes:'Utrikes',english:'English'};
 const ALL_REGIONS = [
   'Blekinge','Dalarna','Gotland','Gävleborg','Halland',
   'Jämtland','Jönköping','Kalmar','Kronoberg','Norrbotten',
@@ -563,6 +564,7 @@ function renderGrid(articles) {
       sport: { icon: '⚽', text: 'Inga sportnyheter just nu', sub: 'Matchresultat och transfernyheter uppdateras löpande.' },
       tech: { icon: '💻', text: 'Inga technyheter just nu', sub: 'Nyheter om AI, startups och teknik hämtas var 15:e minut.' },
       kultur: { icon: '🎭', text: 'Inga kulturnyheter just nu', sub: 'Film, musik och konst uppdateras löpande.' },
+      kronikor: { icon: '✍️', text: 'Inga krönikor just nu', sub: 'Krönikor och recensioner från svenska medier uppdateras löpande.' },
       utrikes: { icon: '🌍', text: 'Inga utrikesnyheter just nu', sub: 'Internationella nyheter hämtas var 15:e minut.' },
       english: { icon: '🌐', text: 'No international news right now', sub: 'News from BBC, Reuters and more updates every 15 minutes.' },
       bors: { icon: '📊', text: 'Inga börsnyheter just nu', sub: 'Börsnyheter hämtas löpande under handelsdagen.' },
