@@ -794,7 +794,7 @@ async function loadBrief() {
     const res = await fetch('/api/brief');
     const data = await res.json();
     if (!data || !data.content) { section.style.display = 'none'; return; }
-    document.getElementById('brief-content').textContent = data.content;
+
     // Etikett baserat på klockslag (svensk lokal tid)
     const hour = new Date().getHours();
     let icon, label;
@@ -803,14 +803,49 @@ async function loadBrief() {
     else { icon = '☕'; label = 'Skimes morgonbrief'; }
     document.getElementById('brief-icon').textContent = icon;
     document.getElementById('brief-label').textContent = label;
+
     if (data.brief_date) {
       const d = new Date(data.brief_date);
       document.getElementById('brief-date').textContent = '· ' + d.toLocaleDateString('sv-SE', { weekday:'long', day:'numeric', month:'long' });
+    }
+
+    // Parsa briefen: rad 1 = intro, sedan tom rad, sedan "Plats. Mening"-punkter
+    const target = document.getElementById('brief-content');
+    const lines = data.content.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    // En "punkt" är en rad som börjar med Ord. eller Ord Ord. (1-2 ord följt av punkt)
+    const itemRegex = /^([A-ZÅÄÖ][\wåäöéèüöáàíìóòúù-]+(?:\s[\wåäöéèüöáàíìóòúù-]+)?)\.\s+(.+)$/;
+    const items = [];
+    let intro = '';
+    for (const line of lines) {
+      const m = line.match(itemRegex);
+      if (m) {
+        items.push({ topic: m[1], text: m[2] });
+      } else if (!intro) {
+        intro = line;
+      }
+    }
+
+    if (items.length >= 2) {
+      // Strukturerad rendering
+      const introHtml = intro ? `<p style="margin:0 0 14px;font-style:italic;color:var(--muted);">${escapeHtml(intro)}</p>` : '';
+      const itemsHtml = items.map(it =>
+        `<div style="padding-left:12px;border-left:2px solid var(--accent,#2563eb);">
+          <span style="font-weight:600;">${escapeHtml(it.topic)}.</span> ${escapeHtml(it.text)}
+        </div>`
+      ).join('');
+      target.innerHTML = `${introHtml}<div style="display:flex;flex-direction:column;gap:10px;">${itemsHtml}</div>`;
+    } else {
+      // Fallback: visa råtexten som prosa
+      target.textContent = data.content;
     }
     section.style.display = 'block';
   } catch(e) {
     section.style.display = 'none';
   }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 renderTabs();
