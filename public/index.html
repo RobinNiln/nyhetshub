@@ -286,6 +286,15 @@
         <span class="live-dot"></span>
       </div>
       <div id="top-stories-grid"></div>
+      <div id="brief-section" style="display:none;margin:20px 0 0;padding:18px 22px;background:linear-gradient(180deg,#f8fafc,#fff);border:1px solid var(--border);border-radius:14px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:18px;">☕</span>
+          <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);">Skimes morgonbrief</span>
+          <span id="brief-date" style="font-size:11px;color:var(--muted);"></span>
+        </div>
+        <div id="brief-content" style="font-size:15px;line-height:1.65;color:var(--text);"></div>
+        <div style="margin-top:10px;font-size:11px;color:var(--muted);">Sammanställt automatiskt av Skime utifrån dagens topprubriker.</div>
+      </div>
       <div class="section-divider">
         <div class="divider-line"></div>
         <span class="divider-label">Senaste nytt</span>
@@ -519,8 +528,9 @@ function selectTab(val, el) {
 
 async function load() {
   document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
-  // Starta toppnyheter parallellt men låt det inte påverka huvudflödet
+  // Starta toppnyheter och brief parallellt
   loadTopStories().catch(e => console.warn('loadTopStories failed:', e));
+  loadBrief().catch(e => console.warn('loadBrief failed:', e));
   try {
     let url;
     if (mode === 'regional') {
@@ -774,13 +784,37 @@ async function loadMostRead() {
   } catch(e) {}
 }
 
+async function loadBrief() {
+  // Visa briefen endast på nationella Nyheter-fliken (inte regionalt/sport/etc)
+  const section = document.getElementById('brief-section');
+  if (mode !== 'national' || current !== 'nyheter' || sportSub || borsSub) {
+    section.style.display = 'none';
+    return;
+  }
+  try {
+    const res = await fetch('/api/brief');
+    const data = await res.json();
+    if (!data || !data.content) { section.style.display = 'none'; return; }
+    document.getElementById('brief-content').textContent = data.content;
+    if (data.brief_date) {
+      const d = new Date(data.brief_date);
+      document.getElementById('brief-date').textContent = '· ' + d.toLocaleDateString('sv-SE', { weekday:'long', day:'numeric', month:'long' });
+    }
+    section.style.display = 'block';
+  } catch(e) {
+    section.style.display = 'none';
+  }
+}
+
 renderTabs();
 renderSportSubs();
 load();
+loadBrief();
 loadMostRead();
 loadTopics();
 loadMeter();
 setInterval(load, 15 * 60 * 1000);
+setInterval(loadBrief, 30 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);
 setInterval(loadTopics, 60 * 60 * 1000);
 setInterval(loadMeter, 5 * 60 * 1000);
