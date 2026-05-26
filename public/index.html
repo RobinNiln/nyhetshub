@@ -795,10 +795,14 @@ async function loadBrief() {
     const data = await res.json();
     if (!data || !data.content) { section.style.display = 'none'; return; }
     document.getElementById('brief-content').textContent = data.content;
-    // Sätt ikon och etikett baserat på typ
-    const isEvening = data.brief_type === 'evening';
-    document.getElementById('brief-icon').textContent = isEvening ? '🌙' : '☕';
-    document.getElementById('brief-label').textContent = isEvening ? 'Skimes kvällsbrief' : 'Skimes morgonbrief';
+    // Etikett baserat på klockslag (svensk lokal tid)
+    const hour = new Date().getHours();
+    let icon, label;
+    if (hour >= 17) { icon = '🌙'; label = 'Skimes kvällsbrief'; }
+    else if (hour >= 11) { icon = '📰'; label = 'Dagens brief'; }
+    else { icon = '☕'; label = 'Skimes morgonbrief'; }
+    document.getElementById('brief-icon').textContent = icon;
+    document.getElementById('brief-label').textContent = label;
     if (data.brief_date) {
       const d = new Date(data.brief_date);
       document.getElementById('brief-date').textContent = '· ' + d.toLocaleDateString('sv-SE', { weekday:'long', day:'numeric', month:'long' });
