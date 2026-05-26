@@ -131,11 +131,15 @@ async function init() {
   await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_time ON article_clicks(clicked_at)');
   await pool.query(`
     CREATE TABLE IF NOT EXISTS daily_briefs (
-      brief_date DATE PRIMARY KEY,
+      brief_date DATE NOT NULL,
+      brief_type TEXT NOT NULL DEFAULT 'morning',
       content TEXT NOT NULL,
-      generated_at TIMESTAMPTZ DEFAULT NOW()
+      generated_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (brief_date, brief_type)
     )
   `);
+  // Migrera gammal tabell utan brief_type (ignorerar om kolumnen finns)
+  await pool.query("ALTER TABLE daily_briefs ADD COLUMN IF NOT EXISTS brief_type TEXT NOT NULL DEFAULT 'morning'");
   const { rows } = await pool.query('SELECT COUNT(*) FROM articles');
   console.log('DB: ' + rows[0].count + ' artiklar i databasen');
 }
@@ -165,21 +169,33 @@ async function getTopHeadlinesForBrief() {
   return scored.slice(0, 15);
 }
 
-async function saveBrief(date, content) {
+async function saveBrief(date, type, content) {
   await pool.query(
-    `INSERT INTO daily_briefs (brief_date, content)
-     VALUES ($1, $2)
-     ON CONFLICT (brief_date) DO UPDATE SET content = EXCLUDED.content, generated_at = NOW()`,
-    [date, content]
+    `INSERT INTO daily_briefs (brief_date, brief_type, content)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (brief_date, brief_type) DO UPDATE SET content = EXCLUDED.content, generated_at = NOW()`,
+    [date, type, content]
   );
 }
 
+// Hämta senaste brief för idag (kvällsbrief om finns, annars morgonbrief)
 async function getTodaysBrief() {
   const { rows } = await pool.query(
-    `SELECT brief_date, content, generated_at FROM daily_briefs
-     WHERE brief_date = CURRENT_DATE`
+    `SELECT brief_date, brief_type, content, generated_at FROM daily_briefs
+     WHERE brief_date = CURRENT_DATE
+     ORDER BY generated_at DESC
+     LIMIT 1`
   );
   return rows[0] || null;
+}
+
+// Kolla om en specifik typ finns för idag
+async function hasBriefToday(type) {
+  const { rows } = await pool.query(
+    `SELECT 1 FROM daily_briefs WHERE brief_date = CURRENT_DATE AND brief_type = $1`,
+    [type]
+  );
+  return rows.length > 0;
 }
 
 async function save(article) {
@@ -490,4 +506,4 @@ async function getTopStories(category, sport) {
   return scored.slice(0, 5);
 }
 
-module.exports = { init, save, boost, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief };
+module.exports = { init, save, boost, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, hasBriefToday };
