@@ -278,6 +278,7 @@ async function get(opts) {
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
     conditions.push("category != 'kultur'");
+    conditions.push("category != 'kronikor'");
     // Exkludera tydliga börsnyheter från nyhetsflödet
     const borsExclude = ['stockholmsbörsen','aktiekurs','kvartalsrapport','börsnot','omxs30'];
     borsExclude.forEach(function(w) {
@@ -342,6 +343,7 @@ async function getTopStories(category, sport) {
     "category != 'english'",
     "category != 'kultur'",
     "category != 'sport'",
+    "category != 'kronikor'",
     "source NOT IN ('BBC News','BBC Europe','Reuters','The Guardian','AP News','Al Jazeera','New York Times','NYT World','SvD Kultur','DN Kultur','Aftonbladet Kultur','Nöjesguiden','Fokus')"
   ];
   const params = [];
@@ -388,6 +390,7 @@ async function getTopStories(category, sport) {
     conditions.push("category != 'sport'");
     conditions.push("category != 'english'");
     conditions.push("category != 'kultur'");
+    conditions.push("category != 'kronikor'");
     const excludedSources = [
       ...localSportSources,
       'Fotbolldirekt','Fotbollskanalen','Hockeysverige','Hockeyexpressen',
