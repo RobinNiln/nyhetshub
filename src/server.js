@@ -653,18 +653,6 @@ app.get('/api/brief', async (req, res) => {
   }
 });
 
-// Manuell trigger för brief-generering (för debug)
-app.get('/api/brief/generate', async (req, res) => {
-  try {
-    const type = req.query.type === 'evening' ? 'evening' : 'morning';
-    const result = await generateBrief(type);
-    const brief = await getTodaysBrief();
-    res.json({ result, type, brief: brief || null });
-  } catch(e) {
-    res.json({ ok: false, error: e.message, stack: e.stack });
-  }
-});
-
 // ── Nya juridiska sidor (separata HTML-filer i /public) ─────────
 const sendStatic = (file) => (req, res) => res.sendFile(path.join(__dirname, '../public/' + file));
 app.get('/om',         sendStatic('om.html'));
