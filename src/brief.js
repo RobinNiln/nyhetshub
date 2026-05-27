@@ -49,13 +49,14 @@ Topprubriker:
 ${list}`
 };
 
+// Returnerar { ok, reason?, content? } så debug-endpoint kan visa felet
 async function generateBrief(type) {
   if (!type) type = 'morning';
-  if (!API_KEY) { console.log('[brief] ANTHROPIC_API_KEY saknas'); return; }
-  if (!PROMPTS[type]) { console.error('[brief] Okänd typ:', type); return; }
+  if (!API_KEY) return { ok: false, reason: 'ANTHROPIC_API_KEY saknas' };
+  if (!PROMPTS[type]) return { ok: false, reason: 'Okänd typ: ' + type };
 
   const headlines = await getTopHeadlinesForBrief();
-  if (!headlines.length) { console.log('[brief] Inga rubriker'); return; }
+  if (!headlines.length) return { ok: false, reason: 'Inga rubriker att sammanfatta' };
 
   const list = headlines.map((h, i) => {
     const sources = h.sources.map(s => s.name).join(', ');
@@ -84,23 +85,26 @@ async function generateBrief(type) {
     if (!res.ok) {
       const err = await res.text();
       console.error('[brief] API-fel:', res.status, err.slice(0, 200));
-      return;
+      return { ok: false, reason: 'API-fel ' + res.status + ': ' + err.slice(0, 300) };
     }
     const data = await res.json();
     let content = data.content && data.content[0] && data.content[0].text;
-    if (!content) { console.error('[brief] Tomt svar'); return; }
+    if (!content) return { ok: false, reason: 'Tomt svar från API', raw: JSON.stringify(data).slice(0, 300) };
+
     content = content
       .replace(/^#{1,6}\s.*$/gm, '')
       .replace(/\*\*/g, '')
       .replace(/^\s*\n+/, '')
       .trim();
-    if (content.length < 100) { console.error('[brief] För kort'); return; }
+    if (content.length < 100) return { ok: false, reason: 'För kort efter rensning (' + content.length + ' tecken)', content };
 
     const dateStr = new Date().toISOString().slice(0, 10);
     await saveBrief(dateStr, type, content);
     console.log('[brief]', type, 'sparad', dateStr, '–', content.length, 'tecken');
+    return { ok: true, content };
   } catch (e) {
     console.error('[brief] Fel:', e.message);
+    return { ok: false, reason: 'Exception: ' + e.message };
   }
 }
 
