@@ -94,6 +94,7 @@ async function generateBrief(type) {
     content = content
       .replace(/^#{1,6}\s.*$/gm, '')
       .replace(/\*\*/g, '')
+      .replace(/(?<!\w)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\w)/g, '$1')
       .replace(/^\s*\n+/, '')
       .trim();
     if (content.length < 100) return { ok: false, reason: 'För kort efter rensning (' + content.length + ' tecken)', content };
