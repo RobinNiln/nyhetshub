@@ -398,10 +398,6 @@ async function getTopStories(category, sport) {
     "fetched_at > NOW() - INTERVAL '6 hours'",
     "published_at > NOW() - INTERVAL '6 hours'",
     'region IS NULL',
-    "category != 'english'",
-    "category != 'kultur'",
-    "category != 'sport'",
-    "category != 'kronikor'",
     "source NOT IN ('BBC News','BBC Europe','Reuters','The Guardian','AP News','Al Jazeera','New York Times','NYT World','SvD Kultur','DN Kultur','Aftonbladet Kultur','Nöjesguiden','Fokus')"
   ];
   const params = [];
