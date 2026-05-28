@@ -700,25 +700,35 @@ Sitemap: ${SITE_URL}/sitemap.xml
 });
 
 // ── llms.txt (AI-sökmotorer) ──────────────────────────────────
-app.get('/llms.txt', (req, res) => {
+app.get('/llms.txt', async (req, res) => {
   res.type('text/plain');
+  // Hämta dagens brief om den finns
+  let briefBlock = '';
+  try {
+    const brief = await getTodaysBrief();
+    if (brief && brief.content) {
+      const label = brief.brief_type === 'evening' ? 'Kvällsbrief' : 'Morgonbrief';
+      briefBlock = `\n## Dagens nyhetssammanfattning (${label})\n${brief.content}\n`;
+    }
+  } catch(e) {}
+
   res.send(`# Skime – Svensk nyhetsaggregator
 > Skime samlar, rankar och presenterar nyheter från Sveriges ledande medier i realtid. Alla nyheter på ett ställe, utan krångel.
 
 ## Vad är Skime?
-Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 100 svenska och internationella medier och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter, tar inga redaktionella ställningstaganden och publicerar aldrig ledartexter, krönikor eller opinionsmaterial.
-
+Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 90 svenska och internationella medier och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter och tar inga redaktionella ställningstaganden. Varje dag publiceras dock en automatiskt genererad nyhetssammanfattning (morgon- och kvällsbrief) som ger en neutral överblick av nyhetsläget.
+${briefBlock}
 ## Unikhet
-Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar samma nyhet. En nyhet som 6 medier skriver om rankas högre än en nyhet från en enda källa. Formeln är: topScore = källantal × (1 + recency_bonus) där recency_bonus sjunker från 1.0 till 0 över 6 timmar.
+Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar samma nyhet. En nyhet som flera medier skriver om rankas högre än en nyhet från en enda källa. Tunga riksmedier (SVT, SR, DN, SvD, Aftonbladet, Expressen, TV4, DI) väger dubbelt. Uppföljande artiklar inom 3 timmar ger ytterligare rankningsbonus.
 
 ## Täckning
-- Nationella svenska nyheter: SVT, SR, DN, SvD, Aftonbladet, Expressen, DI, Breakit, GP, TV4, Omni, TT
-- Sport nationellt: SVT Sport, Aftonbladet Sport, Expressen Sport, Fotbollskanalen, Fotbolldirekt, Hockeysverige, Hockeyexpressen
+- Nationella svenska nyheter: SVT, SR (Ekot), DN, SvD, Aftonbladet, Expressen, DI, TV4
+- Sport nationellt: SVT Sport, Aftonbladet Sport, Expressen Sport, DN Sport, Fotbolldirekt, Hockeysverige
 - Sport lokalt: 14 lokala sportkällor
 - Regionalt: Minst 2-3 lokala källor per region, täcker alla 21 svenska län
-- Internationellt (engelska): BBC News, Reuters, The Guardian, AP News, Al Jazeera, New York Times
-- Kultur: SvD Kultur, DN Kultur, Nöjesguiden, Fokus
-- Google News-komplement för Valet 2026, Tech, VM 2026, Allsvenskan och SHL
+- Internationellt (engelska): BBC News, BBC Europe, The Guardian, Al Jazeera, New York Times
+- Kultur: SvD Kultur, DN Kultur, Aftonbladet Kultur
+- Krönikor och recensioner: samlas i egen kategori, separerade från nyhetsflödet
 
 ## Kategorier
 - nyheter: Riksnyheter från nationella källor, rankade efter källantal och aktualitet
@@ -729,7 +739,8 @@ Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar sam
 - utrikes: Internationella nyheter på svenska
 - samhalle: Sjukvård, skola, brott, infrastruktur, bostäder
 - kultur: Film, musik, konst, teater, litteratur
-- english: Internationella nyheter på engelska från BBC, Reuters, Guardian, AP, Al Jazeera, NYT
+- kronikor: Krönikor, kolumner och recensioner från svenska medier
+- english: Internationella nyheter på engelska
 
 ## Sport-undermenyer
 - Allsvenskan (herr fotboll Sverige)
@@ -747,24 +758,24 @@ Blekinge, Dalarna, Gotland, Gävleborg, Halland, Jämtland, Jönköping, Kalmar,
 - ${SITE_URL}/topic/valet-2026 – Riksdagsvalet 2026, valrörelsen, opinionsundersökningar
 
 ## Rankningsmodell
-Nyheter rankas med formeln: källantal × recency_bonus. Ju fler oberoende medier som rapporterar samma händelse, desto viktigare bedöms nyheten vara. Toppnyheter väljs från senaste 6 timmar.
+Nyheter rankas med formeln: viktat källantal × (1 + recency_bonus) + uppföljarbonus. Ju fler oberoende medier som rapporterar samma händelse, desto viktigare bedöms nyheten. Toppnyheter väljs från senaste 6 timmar.
 
 ## Filtrering
-Skime filtrerar aktivt bort: ledartexter, krönikor, debattartiklar, opinionsmaterial, reklam, prenumerationserbjudanden, fastighetsaffärer och nyföretagsnyheter.
+Skime separerar krönikor, kolumner och recensioner till en egen kategori, och filtrerar bort ledartexter, debattartiklar, opinionsmaterial, reklam, prenumerationserbjudanden, podcasts och videoklipp från nyhetsflödet. Politiskt färgad partipress och fackliga tidningar inkluderas inte.
 
 ## Uppdateringsfrekvens
-Nyheter hämtas automatiskt var 15:e minut, dygnet runt. Databasen rymmer artiklar från senaste 36 timmar.
+Nyheter hämtas automatiskt var 15:e minut, dygnet runt. Nyhetssammanfattningar (briefer) genereras 06:00 och 17:00 svensk tid.
 
 ## Teknisk information
-- Byggd med: Node.js, Express, PostgreSQL, Railway
 - API: GET ${SITE_URL}/api/news?category=nyheter
 - API: GET ${SITE_URL}/api/news?region=Stockholm
 - API: GET ${SITE_URL}/api/top-stories
+- API: GET ${SITE_URL}/api/brief (dagens nyhetssammanfattning)
 - Sitemap: ${SITE_URL}/sitemap.xml
 
 ## Ägarskap och kontakt
 Skime är en oberoende svensk nyhetstjänst. Domän: skime.se. Registrerad i Sverige 2026.
-Kontakt: ${SITE_URL}/kontakt
+Om Skime: ${SITE_URL}/om
 LinkedIn: https://www.linkedin.com/company/skime/`);
 });
 
@@ -816,8 +827,13 @@ app.get('/', async (req, res) => {
         headline: a.title,
         url: a.url,
         datePublished: a.published_at,
+        dateModified: a.published_at,
+        mainEntityOfPage: { '@type': 'WebPage', '@id': a.url },
         publisher: { '@type': 'Organization', name: a.source },
-        description: a.ingress || ''
+        description: a.ingress || a.title,
+        ...(a.sources && a.sources.length > 1 ? {
+          isBasedOn: a.sources.map(s => s.url)
+        } : {})
       }
     }));
 
@@ -827,6 +843,27 @@ app.get('/', async (req, res) => {
       name: region ? `Nyheter från ${region}` : `Svenska nyheter – ${category}`,
       itemListElement: schemaItems
     };
+
+    // Hämta dagens brief för SSR (AI-crawlers ser din unika sammanfattning)
+    let briefSchema = '';
+    let briefSsr = '';
+    try {
+      const brief = await getTodaysBrief();
+      if (brief && brief.content) {
+        const label = brief.brief_type === 'evening' ? 'Skimes kvällsbrief' : 'Skimes morgonbrief';
+        const briefObj = {
+          '@context': 'https://schema.org',
+          '@type': 'NewsArticle',
+          headline: label + ' – ' + new Date(brief.brief_date).toLocaleDateString('sv-SE'),
+          articleBody: brief.content,
+          datePublished: brief.generated_at || brief.brief_date,
+          author: { '@type': 'Organization', name: 'Skime' },
+          publisher: { '@type': 'Organization', name: 'Skime', url: SITE_URL }
+        };
+        briefSchema = `<script type="application/ld+json">${JSON.stringify(briefObj)}</script>`;
+        briefSsr = `<section aria-label="Dagens nyhetssammanfattning"><h2>${label}</h2><p>${brief.content.replace(/</g,'&lt;')}</p></section>`;
+      }
+    } catch(e) {}
 
     // Server-renderade nyhetsrubriker för crawlers (dolt för användare)
     const ssrLinks = articles.slice(0, 30).map(a =>
@@ -866,10 +903,10 @@ app.get('/', async (req, res) => {
       .replace('<meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och fler – nationellt och regionalt.">',
         `<meta name="description" content="${description}">`)
       .replace('</head>',
-        `<script type="application/ld+json">${JSON.stringify(schema)}</script>\n</head>`)
+        `<script type="application/ld+json">${JSON.stringify(schema)}</script>\n${briefSchema}\n</head>`)
       .replace('<div id="news-grid"><div class="state"><div class="spinner"></div></div></div>',
         `<div id="news-grid"><div class="state"><div class="spinner"></div></div></div>
-        <noscript><ul style="display:none">${ssrLinks}</ul></noscript>`);
+        <noscript><ul style="display:none">${ssrLinks}</ul>${briefSsr}</noscript>`);
 
     res.send(enriched);
   } catch(e) {
