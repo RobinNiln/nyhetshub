@@ -169,9 +169,12 @@ const SOURCES = {
   sport_national: [
     { name: 'SVT Sport',          url: 'https://www.svt.se/sport/rss.xml' },
     { name: 'Aftonbladet Sport',  url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/' },
+    { name: 'Aftonbladet Fotboll',url: 'https://rss.aftonbladet.se/rss2/small/pages/sections/sportbladet/fotboll/' },
     { name: 'Expressen Sport',    url: 'https://feeds.expressen.se/sport/' },
+    { name: 'Expressen Fotboll',  url: 'https://feeds.expressen.se/sport/fotboll/' },
     { name: 'DN Sport',           url: 'https://www.dn.se/rss/sport' },
     { name: 'Fotbolldirekt',      url: 'https://www.fotbolldirekt.se/rss' },
+    { name: 'SvenskaFans',        url: 'https://www.svenskafans.com/svenskafans/rss' },
     { name: 'Hockeysverige',      url: 'https://www.hockeysverige.se/rss' },
   ],
 
