@@ -218,15 +218,39 @@ async function boost(keyword) {
 
 const SPORT_KEYWORDS = {
   allsvenskan: [
+    // Ligan
     'allsvenskan', 'fotbollsallsvenskan', 'allsvenskt', 'allsvenska',
-    'djurgården', 'hammarby', 'malmö ff', 'ifk göteborg', 'ifk norrköping',
-    'brommapojkarna', 'sirius fc', 'häcken', 'elfsborg', 'kalmar ff',
-    'västerås sk', 'halmstad bk', 'mjällby', 'göteborg fc',
-    'örebro sk', 'gais', 'degerfors', 'aik fotboll',
-    'fotbollssäsongen', 'seriepremiär', 'fotbollsmatch',
-    'allsvenska matchen', 'allsvenska tabellen'
+    'allsvenska serien', 'allsvenska tabellen', 'allsvenska matchen',
+    'fotbollssäsongen', 'seriepremiär', 'fotbollsmatch', 'serieledare',
+    'allsvensk omgång', 'allsvensk seger', 'allsvensk match',
+    // Lagen (alla 16 + alternativa stavningar)
+    'malmö ff', 'mff ', 'malmö fotboll',
+    'aik fotboll', 'aik gnaget', ' aik ',
+    'djurgården', 'dif fotboll', 'djurgårdens if',
+    'hammarby', 'bajen', 'hammarby if',
+    'ifk göteborg', 'blåvitt', 'ifk gbg',
+    'ifk norrköping', 'peking ',
+    'bk häcken', 'häcken',
+    'if elfsborg', 'elfsborg', 'borås fotboll',
+    'kalmar ff', 'kalmar fotboll',
+    'mjällby', 'mjällby aif', 'svartvita',
+    'gais', ' gais ',
+    'degerfors', 'degerfors if',
+    'brommapojkarna', 'if brommapojkarna', ' bp ',
+    'västerås sk', 'västerås fotboll',
+    'halmstad bk', 'halmstad fotboll', 'hbk ',
+    'göteborg fc', 'gfc ',
+    'örebro sk', 'örebro fotboll',
+    'ik sirius', 'sirius fc', 'sirius fotboll',
+    'örgryte', 'öis ',
+    // Spelar- och tränarsnack
+    'allsvensk värvning', 'allsvensk tränare', 'allsvensk spelare',
+    'silly season', 'transferfönstret', 'kontraktsförlängning',
+    // Format och events
+    'svenska cupen', 'svenska mästare', 'sm-guld fotboll',
+    'kvalspel allsvenskan', 'nedflyttning', 'uppflyttning'
   ],
-  allsvenskan_exclude: ['hockeyallsvenskan', 'ishockey'],
+  allsvenskan_exclude: ['hockeyallsvenskan', 'ishockey', 'damallsvenskan'],
   allsvenskan_exclude_sources: ['Hockeysverige', 'Hockeyexpressen'],
   damallsvenskan: [
     'damallsvenskan', 'damfotboll', 'damernas allsvenska',
@@ -405,7 +429,7 @@ async function getTopStories(category, sport) {
   const localSportSources = ['Barometern Sport','Borås Tidning Sport','Corren Sport','NT Sport','Norran Sport','Norrbottens-Kuriren Sport','HD Sport','NSD Sport','UNT Sport','Kvällsposten Sport','GT Sport','Jönköpings-Posten Sport','Smålandsposten Sport','Nerikes Allehanda Sport'];
 
   const SPORT_KW = {
-    allsvenskan: ['allsvenskan','malmö ff','djurgården','hammarby','ifk göteborg','ifk norrköping','häcken','elfsborg','kalmar ff','mjällby','gais','degerfors','brommapojkarna','västerås sk','örebro sk','halmstad bk','göteborg fc'],
+    allsvenskan: ['allsvenskan','allsvenska','malmö ff','mff ','aik fotboll','djurgården','hammarby','bajen','ifk göteborg','blåvitt','ifk norrköping','peking','bk häcken','häcken','elfsborg','kalmar ff','mjällby','gais','degerfors','brommapojkarna','västerås sk','halmstad bk','göteborg fc','sirius fc','ik sirius','örebro sk','örgryte','allsvensk värvning','silly season'],
     vm2026: ['vm 2026','fotbolls-vm','world cup 2026','vm-kval','vm-trupp','fifa vm','vm-lottning','vm-grupp','vm-match','fotbolls vm','världsmästerskapet 2026'],
     landslaget_fotboll: ['herrlandslaget','svenska landslaget','blågult','vm-kval','em-kval','landslagstruppen','landslagsuttagen'],
     shl: ['shl','rögle','skellefteå aik','frölunda','djurgårdens hockey','brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71','timrå','oskarshamn','leksand','modo hockey','sm-final hockey','tre kronor','hockeyfinalen'],
