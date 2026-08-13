@@ -913,6 +913,11 @@ app.get('/', async (req, res) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────
+// Webbservern startar FÖRST, oberoende av databasen. Om Postgres är nere
+// svarar sajten ändå (utan artiklar) i stället för att aldrig starta alls.
+app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'));
+
+// Databas, hämtning och brief körs efter — fel här får inte fälla processen.
 init().then(async () => {
   await fetchAll();
   // Generera saknad brief vid uppstart:
@@ -921,5 +926,7 @@ init().then(async () => {
   const wantType = hourSE >= 17 ? 'evening' : 'morning';
   const exists = await hasBriefToday(wantType);
   if (!exists) generateBrief(wantType).catch(e => console.error('Initial brief:', e.message));
-  app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'));
-}).catch(console.error);
+}).catch(e => console.error('Uppstart (db/fetch):', e.message));
+
+// Sista skyddsnätet: en oväntad databaskrasch ska logga, inte döda servern.
+process.on('unhandledRejection', e => console.error('Ohanterat fel:', e && e.message));

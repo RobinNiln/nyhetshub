@@ -1,10 +1,47 @@
 const Parser = require('rss-parser');
 const { save, boost } = require('./db');
 
-const parser = new Parser({
-  timeout: 10000,
-  headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Skime/1.0; +https://skime.se)' }
-});
+const parser = new Parser({ timeout: 15000 });
+
+// Riktiga webbläsarheaders. Många sajter (bl.a. SVT) svarar 403 på
+// User-Agents som ser ut som robotar, men släpper igenom vanliga läsare.
+const HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  'Accept': 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.9, */*;q=0.8',
+  'Accept-Language': 'sv-SE,sv;q=0.9,en;q=0.8'
+};
+
+// Städar XML som annars får rss-parser att krascha.
+function stadaXml(text) {
+  // 1. Ta bort BOM och allt skräp före första taggen (cookie-banners, HTML-rester).
+  const start = text.search(/<(\?xml|rss|feed)\b/i);
+  if (start > 0) text = text.slice(start);
+  else if (start === -1) return text; // ingen XML alls – låt parsern fela
+
+  // 2. Escapa lösa &-tecken som inte redan är en entitet.
+  //    "Ris & ros" är ogiltig XML; "Ris &amp; ros" är giltig.
+  text = text.replace(/&(?!(?:[a-zA-Z][a-zA-Z0-9]{1,30}|#\d{1,7}|#x[0-9a-fA-F]{1,6});)/g, '&amp;');
+
+  // 3. Ta bort kontrolltecken som är förbjudna i XML.
+  text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+
+  return text;
+}
+
+// Hämtar och parsar ett flöde. Ersätter parser.parseURL för att vi ska
+// kunna sätta egna headers och städa XML:en innan den parsas.
+async function hamtaFlode(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const res = await fetch(url, { headers: HEADERS, signal: ctrl.signal, redirect: 'follow' });
+    if (!res.ok) throw new Error('Status ' + res.status);
+    const text = await res.text();
+    return await parser.parseString(stadaXml(text));
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const SKIP_PATTERNS = [
   // ── DAGSAMMANFATTNINGAR & META ───────────────────────────────────────────
@@ -455,7 +492,7 @@ async function fetchSources(sources) {
   for (const source of sources) {
     if (isBlocked(source.name)) continue;
     try {
-      const feed = await parser.parseURL(source.url);
+      const feed = await hamtaFlode(source.url);
       for (const item of feed.items.slice(0, 20)) {
         if (!item.title || !item.link) continue;
         if (shouldSkip(item.title, item.link)) continue;
