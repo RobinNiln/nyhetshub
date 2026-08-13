@@ -200,11 +200,6 @@ const FIXED_TOPICS = {
     keywords: ['shl','rögle','skellefteå aik','frölunda','djurgårdens hockey','brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71','timrå','oskarshamn','leksand','modo hockey','sm-final','tre kronor'],
     desc: 'Senaste nytt från SHL – matcher, SM-slutspel och hockeynyheter.'
   },
-  'vm-2026': {
-    title: 'VM 2026',
-    keywords: ['vm 2026','fotbolls-vm','world cup 2026','vm-kval','vm-trupp','fifa vm','vm-lottning','vm-grupp','vm-match','fotbolls vm','världsmästerskapet 2026'],
-    desc: 'Allt om fotbolls-VM 2026 i USA, Kanada och Mexiko.'
-  },
   'valet-2026': {
     title: 'Valet 2026',
     keywords: ['valet 2026','riksdagsvalet','kommunalvalet','regionvalet','partiledardebatt','valrörelsen','valresultat','opinionsundersökning','väljarstöd','valmanifest','valanalys','valets'],
@@ -212,9 +207,19 @@ const FIXED_TOPICS = {
   }
 };
 
+// Permanenta omdirigeringar för borttagna sidor.
+// Behåller länkvärde i Google och undviker 404 för besökare med gamla länkar.
+const GONE_TOPICS = {
+  'vm-2026': '/?category=sport',
+};
+
 // Topic-sida – /topic/:slug
 app.get('/topic/:slug', async (req, res) => {
   const slug = req.params.slug;
+
+  if (GONE_TOPICS[slug]) {
+    return res.redirect(301, GONE_TOPICS[slug]);
+  }
 
   // Kolla fasta topics först
   const fixed = FIXED_TOPICS[slug];
@@ -281,11 +286,6 @@ app.get('/topic/:slug', async (req, res) => {
         { q: 'Vad är SHL?', a: 'SHL (Swedish Hockey League) är den högsta divisionen i svensk ishockey. Serien avgör vilket lag som blir svenska mästare i hockey.' },
         { q: 'Vilka lag spelar i SHL?', a: 'SHL innehåller lag som Rögle BK, Skellefteå AIK, Frölunda, Djurgårdens Hockey, Brynäs, Luleå Hockey, Färjestad och fler.' },
         { q: 'Var kan jag följa SHL-nyheter?', a: 'Skime samlar SHL-nyheter från Hockeysverige, SVT Sport, Expressen Sport och lokaltidningar i realtid.' },
-      ],
-      'vm-2026': [
-        { q: 'Var spelas fotbolls-VM 2026?', a: 'Fotbolls-VM 2026 spelas i USA, Kanada och Mexiko. Det är det första VM med 48 deltagande nationer.' },
-        { q: 'När spelas fotbolls-VM 2026?', a: 'Fotbolls-VM 2026 spelas sommaren 2026, med final den 19 juli 2026 på MetLife Stadium i New Jersey.' },
-        { q: 'Är Sverige med i VM 2026?', a: 'Sverige spelar VM-kval för att ta sig till VM 2026. Följ de senaste nyheterna om det svenska landslaget på Skime.' },
       ],
       'valet-2026': [
         { q: 'När är riksdagsvalet 2026?', a: 'Riksdagsvalet 2026 hålls den andra söndagen i september 2026, det vill säga den 13 september 2026.' },
@@ -732,7 +732,7 @@ Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar sam
 
 ## Kategorier
 - nyheter: Riksnyheter från nationella källor, rankade efter källantal och aktualitet
-- sport: Allsvenskan, SHL, VM 2026, Herrlandslaget – med egna underflöden per liga
+- sport: Allsvenskan, SHL, Herrlandslaget – med egna underflöden per liga
 - valet2026: Riksdagsvalet 2026, valrörelsen, partierna, partiledarna
 - naringsliv: Ekonomi, börsen, företag, konjunktur (med separat Börs-underkategori)
 - tech: AI, startups, cybersäkerhet, tekniknyheter
@@ -745,7 +745,6 @@ Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar sam
 ## Sport-undermenyer
 - Allsvenskan (herr fotboll Sverige)
 - Herrlandslaget (svenska fotbollslandslaget)
-- VM 2026 (fotbolls-VM i USA, Kanada, Mexiko)
 - SHL (Swedish Hockey League)
 
 ## Regioner – alla 21 svenska län
@@ -754,7 +753,6 @@ Blekinge, Dalarna, Gotland, Gävleborg, Halland, Jämtland, Jönköping, Kalmar,
 ## Topic-sidor med FAQ
 - ${SITE_URL}/topic/allsvenskan – Allsvenskan fotboll, matcher, tabeller
 - ${SITE_URL}/topic/shl – SHL ishockey, SM-slutspel
-- ${SITE_URL}/topic/vm-2026 – Fotbolls-VM 2026 i USA/Kanada/Mexiko
 - ${SITE_URL}/topic/valet-2026 – Riksdagsvalet 2026, valrörelsen, opinionsundersökningar
 
 ## Rankningsmodell
@@ -872,7 +870,7 @@ app.get('/', async (req, res) => {
 
     const catDescriptions = {
       nyheter: 'Senaste riksnyheterna från SVT, DN, Aftonbladet, Expressen och fler – rankade efter hur många källor som rapporterar samma händelse.',
-      sport: 'Senaste sportnyheter från Allsvenskan, SHL, VM 2026 och svenska landslaget – samlat från SVT Sport, Aftonbladet Sport och fler.',
+      sport: 'Senaste sportnyheter från Allsvenskan, SHL och svenska landslaget – samlat från SVT Sport, Aftonbladet Sport och fler.',
       valet2026: 'Senaste nytt inför riksdagsvalet 2026 – valrörelsen, partierna, opinionsundersökningar och partiledardebatter.',
       naringsliv: 'Senaste ekonominyheter – börsen, kvartalsrapporter, företag och konjunktur från DI, SvD och fler.',
       tech: 'Senaste technyheter om AI, startups och cybersäkerhet från svenska och internationella medier.',
