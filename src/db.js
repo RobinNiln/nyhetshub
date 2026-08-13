@@ -266,27 +266,10 @@ const SPORT_KEYWORDS = {
     'damfotbollen', 'damernas serie',
     'wp women', 'damernas vm'
   ],
-  vm2026: [
-    'vm 2026', 'fotbolls-vm', 'fotbolls vm', 'world cup 2026',
-    'vm-slutspel', 'vm-gruppspel', 'vm-kval', 'vm-biljett',
-    'usa 2026', 'kanada 2026', 'mexiko 2026', 'nordamerika vm',
-    'fifa vm', 'fifa world cup', 'vm-trupp', 'vm-uttagen',
-    'vm-premiar', 'vm-final 2026', 'världsmästerskapet 2026',
-    'vm-lottning', 'vm-grupp', 'vm-match', 'vm-spel',
-    'vm i fotboll', 'fotbolls-vm 2026', 'vm-biljetter',
-    'vm-spelschema', 'vm-arenor', 'vm-städer',
-    'trump vm', 'vm usa kanada'
-  ],
   landslaget_fotboll: [
     'herrlandslaget', 'svenska landslaget', 'blågult', 'vm-kval', 'em-kval',
     'andersson tränar', 'ibrahimovic', 'landslagsuttagen',
     'svenska fotbollsförbundet', 'landslagstruppen'
-  ],
-  vm2026: [
-    'vm 2026', 'fotbolls-vm', 'world cup 2026', 'vm-slutspel', 'vm-gruppspel',
-    'vm-kval', 'vm-biljett', 'usa 2026', 'kanada 2026', 'mexiko 2026',
-    'fifa vm', 'vm-trupp', 'vm-uttagen', 'vm-premiar', 'vm-final 2026',
-    'fotbolls vm', 'världsmästerskapet 2026'
   ],
   shl: [
     'shl', 'swedish hockey league', 'rögle', 'skellefteå aik', 'frölunda',
@@ -430,7 +413,6 @@ async function getTopStories(category, sport) {
 
   const SPORT_KW = {
     allsvenskan: ['allsvenskan','allsvenska','malmö ff','mff ','aik fotboll','djurgården','hammarby','bajen','ifk göteborg','blåvitt','ifk norrköping','peking','bk häcken','häcken','elfsborg','kalmar ff','mjällby','gais','degerfors','brommapojkarna','västerås sk','halmstad bk','göteborg fc','sirius fc','ik sirius','örebro sk','örgryte','allsvensk värvning','silly season'],
-    vm2026: ['vm 2026','fotbolls-vm','world cup 2026','vm-kval','vm-trupp','fifa vm','vm-lottning','vm-grupp','vm-match','fotbolls vm','världsmästerskapet 2026'],
     landslaget_fotboll: ['herrlandslaget','svenska landslaget','blågult','vm-kval','em-kval','landslagstruppen','landslagsuttagen'],
     shl: ['shl','rögle','skellefteå aik','frölunda','djurgårdens hockey','brynäs','luleå hockey','linköping hc','örebro hockey','färjestad','hv71','timrå','oskarshamn','leksand','modo hockey','sm-final hockey','tre kronor','hockeyfinalen'],
   };
