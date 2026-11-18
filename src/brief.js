@@ -16,15 +16,21 @@ Rad 3 och framåt: 4-5 punkter, en per rad, i formatet "Plats. Mening om vad som
    - "Plats" är max 1-2 ord (t.ex. "Sverige.", "Belgien.", "Norge.", "Iran.", "USA.", "Internationellt.")
    - Meningen är högst 25 ord och saklig.
 
+LÄNKAR (viktigt):
+I varje punkt ska 2–4 nyckelord länkas till den rubrik meningen bygger på. Skriv dem som [nyckelord](N), där N är rubrikens nummer i listan nedan.
+   - Länka ord som naturligt står i meningen, inte hela meningen och inte platsordet.
+   - Använd BARA nummer som finns i listan. Hitta aldrig på nummer.
+   - Exempel: Sverige. [Halverat pris på månadskort](2) föreslås av regering och SD.
+
 EXEMPEL:
 Dagen domineras av tragedin i Belgien, kollektivtrafikförslag i Sverige och försämring för Mette-Marit.
 
-Belgien. Fyra döda när skolbuss påkördes av tåg – två barn och två vuxna enligt belgisk minister.
-Sverige. Halverat pris på kollektivtrafikens månadskort föreslås av regering och SD.
-Norge. Mette-Marits hälsa försämras enligt kronprins Haakon.
-Iran. Beslut om att öppna internet hävs av domstolsväsendet.
+Belgien. Fyra döda när [skolbuss påkördes av tåg](1) – två barn och två vuxna enligt belgisk minister.
+Sverige. [Halverat pris på månadskort](2) föreslås av regering och SD.
+Norge. [Mette-Marits hälsa försämras](3) enligt kronprins Haakon.
+Iran. Beslut om att [öppna internet hävs](4) av domstolsväsendet.
 
-Inga rubriker, ingen markdown, inga inledningsfraser. Skriv direkt enligt formatet ovan.
+Inga rubriker, ingen annan markdown än länkarna, inga inledningsfraser. Skriv direkt enligt formatet ovan.
 
 Dagens datum: ${today}.
 
@@ -41,7 +47,13 @@ Rad 3 och framåt: 4-5 punkter, en per rad, i formatet "Plats. Mening om vad som
    - "Plats" är max 1-2 ord (t.ex. "Sverige.", "Belgien.", "Norge.", "Iran.", "USA.", "Internationellt.")
    - Meningen är högst 25 ord och saklig.
 
-Inga rubriker, ingen markdown, inga inledningsfraser.
+LÄNKAR (viktigt):
+I varje punkt ska 2–4 nyckelord länkas till den rubrik meningen bygger på. Skriv dem som [nyckelord](N), där N är rubrikens nummer i listan nedan.
+   - Länka ord som naturligt står i meningen, inte hela meningen och inte platsordet.
+   - Använd BARA nummer som finns i listan. Hitta aldrig på nummer.
+   - Exempel: Sverige. [Halverat pris på månadskort](2) föreslås av regering och SD.
+
+Inga rubriker, ingen annan markdown än länkarna, inga inledningsfraser.
 
 Dagens datum: ${today}.
 
@@ -97,6 +109,13 @@ async function generateBrief(type) {
       .replace(/(?<!\w)\*(?!\s)([^*\n]+?)(?<!\s)\*(?!\w)/g, '$1')
       .replace(/^\s*\n+/, '')
       .trim();
+    // Byt [ord](N) mot [ord](riktig-url). Okända nummer blir vanlig text,
+    // så AI:n aldrig kan hitta på en länk.
+    content = content.replace(/\[([^\]\n]+)\]\((\d{1,2})\)/g, (m, text, n) => {
+      const h = headlines[parseInt(n, 10) - 1];
+      return h && /^https?:\/\//i.test(h.url || "") ? `[${text}](${h.url})` : text;
+    });
+
     if (content.length < 100) return { ok: false, reason: 'För kort efter rensning (' + content.length + ' tecken)', content };
 
     const dateStr = new Date().toISOString().slice(0, 10);

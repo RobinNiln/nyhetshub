@@ -151,7 +151,7 @@ async function init() {
 // men returnera fler (15) och utan score-tröskel — för att ge AI:n bra material.
 async function getTopHeadlinesForBrief() {
   const { rows } = await pool.query(
-    `SELECT title, source, category, ingress, published_at
+    `SELECT title, url, source, category, ingress, published_at
      FROM articles
      WHERE fetched_at > NOW() - INTERVAL '14 hours'
        AND published_at > NOW() - INTERVAL '14 hours'

@@ -755,12 +755,12 @@ app.get('/', async (req, res) => {
             '@context': 'https://schema.org',
             '@type': 'NewsArticle',
             headline: label + ' – ' + new Date(brief.brief_date).toLocaleDateString('sv-SE'),
-            articleBody: brief.content,
+            articleBody: briefPlain(brief.content),
             datePublished: brief.generated_at || brief.brief_date,
             author: { '@type': 'Organization', name: 'Skime' },
             publisher: { '@type': 'Organization', name: 'Skime', url: SITE_URL }
           })}</script>`;
-          briefSsr = `<section aria-label="Dagens nyhetssammanfattning"><h2>${label}</h2><p>${esc(brief.content)}</p></section>`;
+          briefSsr = `<section aria-label="Dagens nyhetssammanfattning"><h2>${label}</h2><p>${esc(briefPlain(brief.content))}</p></section>`;
         }
       } catch(e) {}
     }
@@ -795,6 +795,12 @@ app.get('/', async (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'));
   }
 });
+
+// Briefen sparas med länkar i formatet [ord](url). För Googles strukturerade
+// data och utan-JavaScript-versionen vill vi ha ren text.
+function briefPlain(s) {
+  return String(s || '').replace(/\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g, '$1');
+}
 
 // JSON inuti <script>-taggar: "</script>" i en rubrik får inte avsluta taggen i förtid
 function jsonForScript(obj) {
