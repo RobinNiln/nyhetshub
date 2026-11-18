@@ -222,6 +222,9 @@
     .brief-link { color:var(--text); text-decoration:underline; text-decoration-color:var(--source-border); text-underline-offset:3px; text-decoration-thickness:1.5px; }
     .brief-link:hover { color:var(--red); text-decoration-color:var(--red); }
 
+    /* Göm annonsytor som Google inte fyllt, så de inte lämnar tomma hål */
+    ins.adsbygoogle[data-ad-status="unfilled"] { display:none !important; }
+
     footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
     footer a { color:var(--muted); text-decoration:none; }
     footer a:hover { color:var(--red); }
@@ -272,16 +275,9 @@
   <div class="nav-inner" style="padding-left:24px; gap:2px;"></div>
 </div>
 
-<!-- Leaderboard annons -->
-<div style="max-width:1200px;margin:12px auto;padding:0 20px;text-align:center;">
-  <ins class="adsbygoogle"
-    style="display:block"
-    data-ad-client="ca-pub-5482392840942272"
-    data-ad-slot="auto"
-    data-ad-format="horizontal"
-    data-full-width-responsive="true"></ins>
-  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-</div>
+<!-- Leaderboard-annons borttagen: den hade inget riktigt annons-ID (data-ad-slot="auto")
+     och lämnade bara en stor tom yta. AdSense Auto ads placerar annonser automatiskt ändå.
+     Vill du ha en fast annons här: skapa en annonsenhet i AdSense och lägg in dess sifferID. -->
 
 <!-- Mobil: Nyhetsläget just nu – överst -->
 <div class="mobile-trending" style="display:none;" id="mobile-meter-box">
