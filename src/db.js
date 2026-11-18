@@ -130,6 +130,10 @@ async function init() {
       clicked_at TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  // Index gör att databasen hittar "senaste dygnets artiklar" direkt,
+  // i stället för att läsa igenom hela tabellen vid varje sidvisning.
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_articles_fetched ON articles(fetched_at)');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_articles_published ON articles(published_at)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_url ON article_clicks(url)');
   await pool.query('CREATE INDEX IF NOT EXISTS idx_clicks_time ON article_clicks(clicked_at)');
   await pool.query(`
@@ -208,14 +212,6 @@ async function save(article) {
      ON CONFLICT (url) DO NOTHING`,
     [article.title, article.url, article.source, article.category,
      article.region || null, article.ingress || null, article.published_at]
-  );
-}
-
-async function boost(keyword) {
-  await pool.query(
-    `UPDATE articles SET score = LEAST(score + 1, 10)
-     WHERE title ILIKE $1 AND fetched_at > NOW() - INTERVAL '3 hours'`,
-    ['%' + keyword + '%']
   );
 }
 
@@ -519,4 +515,4 @@ async function cleanup() {
   console.log('[städning] raderade ' + a.rowCount + ' artiklar och ' + c.rowCount + ' klick');
 }
 
-module.exports = { pool, init, save, boost, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, hasBriefToday, cleanup };
+module.exports = { pool, init, save, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, hasBriefToday, cleanup };

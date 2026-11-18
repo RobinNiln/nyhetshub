@@ -1,5 +1,5 @@
 const Parser = require('rss-parser');
-const { save, boost, pool } = require('./db');
+const { save, pool } = require('./db');
 
 const parser = new Parser({ timeout: 15000 });
 
@@ -11,6 +11,12 @@ const HEADERS = {
   'Accept-Language': 'sv-SE,sv;q=0.9,en;q=0.8'
 };
 
+// Entiteter som XML alltid förstår, plus HTML:s namngivna (&nbsp;, &auml; …)
+// som vi lånar listan för från sax – parsern som rss-parser använder.
+const XML_ENTITETER = new Set(['amp', 'lt', 'gt', 'quot', 'apos']);
+let HTML_ENTITETER = {};
+try { HTML_ENTITETER = require('sax').ENTITIES || {}; } catch (e) {}
+
 // Städar XML som annars får rss-parser att krascha.
 function stadaXml(text) {
   // 1. Ta bort BOM och allt skräp före första taggen (cookie-banners, HTML-rester).
@@ -18,9 +24,28 @@ function stadaXml(text) {
   if (start > 0) text = text.slice(start);
   else if (start === -1) return text; // ingen XML alls – låt parsern fela
 
-  // 2. Escapa lösa &-tecken som inte redan är en entitet.
+  // 2. Gå igenom alla &-tecken. Riktiga entiteter behålls, allt annat escapas.
   //    "Ris & ros" är ogiltig XML; "Ris &amp; ros" är giltig.
-  text = text.replace(/&(?!(?:[a-zA-Z][a-zA-Z0-9]{1,30}|#\d{1,7}|#x[0-9a-fA-F]{1,6});)/g, '&amp;');
+  //    Påhittade entiteter som "&aZ;" kraschar parsern, så de escapas också.
+  text = text.replace(/&(#x[0-9a-fA-F]{1,6}|#\d{1,7}|[a-zA-Z][a-zA-Z0-9]{1,30})?(;)?/g, (m, namn, semi) => {
+    if (!namn || !semi) return '&amp;' + (namn || '') + (semi || '');
+    if (namn[0] === '#') {
+      const kod = namn[1] === 'x' ? parseInt(namn.slice(2), 16) : parseInt(namn.slice(1), 10);
+      // Bara tecken som är tillåtna i XML (inga styrtecken som &#1;)
+      const giltig = kod === 9 || kod === 10 || kod === 13 ||
+        (kod >= 0x20 && kod <= 0xD7FF) || (kod >= 0xE000 && kod <= 0xFFFD) ||
+        (kod >= 0x10000 && kod <= 0x10FFFF);
+      return giltig ? m : '&amp;' + namn + ';';
+    }
+    if (XML_ENTITETER.has(namn)) return m;
+    // HTML-entiteter som &nbsp; och &auml; görs om till sifferkod, som all XML förstår
+    const tecken = HTML_ENTITETER[namn];
+    if (tecken != null) {
+      const kp = typeof tecken === 'number' ? tecken : String(tecken).codePointAt(0);
+      return '&#' + kp + ';';
+    }
+    return '&amp;' + namn + ';';
+  });
 
   // 3. Ta bort kontrolltecken som är förbjudna i XML.
   text = text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
@@ -526,8 +551,6 @@ async function fetchSources(sources) {
           ingress: snippet(item),
           published_at: item.pubDate || new Date()
         });
-        const kw = item.title.split(' ').find(w => w.length > 5);
-        if (kw) await boost(kw);
       }
     } catch (e) {
       console.log('  \u26a0 ' + source.name + ': ' + e.message);
