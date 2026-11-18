@@ -1,5 +1,5 @@
 const Parser = require('rss-parser');
-const { save, boost } = require('./db');
+const { save, boost, pool } = require('./db');
 
 const parser = new Parser({ timeout: 15000 });
 
@@ -367,8 +367,10 @@ const SOURCES = {
 
 const KEYWORDS = {
   sport:      ['fotboll','hockey','tennis','golf','allsvenskan','superettan','nhl','nba','vm ','em ','match','spelare','tränar','shl ','damallsvenskan','ishockey','basketboll','friidrott','simning','cykling','boxning','mma','formel'],
+  // Rubriker med de här orden är inte sport, även om t.ex. "VM" eller "spelare" nämns
+  sport_never: ['skådespelare','kvartal','vd:','vd ','börs','aktie','rörelseresultat','vinst','omsättning','vakansgrad','lägenhet'],
 
-  naringsliv: ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','vinst','omsättning','förvärv','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs','vd ','vdn ','ränta','riksbank','inflation','bnp','ekonomi','analytiker','prognos','rusar','faller','rasar','stiger','lyfter','rekord','börs','lönsamhet','aktieägare','kvartalet','helåret','rörelseresultat','ebitda','börsvärde','notering','avnotering','utdelning','warranter','fonder'],
+  naringsliv: ['börsen','aktier','aktien','aktiekurs','rapport','kvartalsrapport','vinst','omsättning','förvärv','investering','börsnot','konjunktur','tillväxt','export','import','arbetsmarknad','sysselsättning','konkurs','vd ','vdn ','ränta','riksbank','inflation','bnp','ekonomi','analytiker','prognos','rusar','faller','rasar','stiger','lyfter','rekord','börs','lönsamhet','aktieägare','kvartalet','helåret','rörelseresultat','ebitda','börsvärde','notering','avnotering','utdelning','warranter','fonder','börsöppning','börsras','börsdag','börsfall','börsuppgång'],
   naringsliv_never: ['hamas','gaza','palestina','israel','ukraina','ryssland','sexuellt våld','terrorattack','krigsbrott','massaker','folkmord','humanitär','flyktingar','sanktioner'],
 
   // Kultur – bara tydliga kulturnyheter, aldrig politik/utrikes
@@ -454,14 +456,31 @@ function categorize(title, sourceName) {
 
   for (const [cat, words] of Object.entries(KEYWORDS)) {
     if (cat.endsWith('_never')) continue;
-    if (words.some(w => t.includes(w))) {
+    if (words.some(w => matchar(t, w))) {
       // Kolla om titeln innehåller ett "aldrig"-ord för denna kategori
       const neverKey = cat + '_never';
-      if (KEYWORDS[neverKey] && KEYWORDS[neverKey].some(w => t.includes(w))) continue;
+      if (KEYWORDS[neverKey] && KEYWORDS[neverKey].some(w => matchar(t, w))) continue;
       return cat;
     }
   }
   return 'nyheter';
+}
+
+// Matchar ett nyckelord mot en rubrik (gemener).
+// Korta ord (max 4 tecken, t.ex. "vm", "em", "mma", "nhl") måste stå som EGNA ord –
+// annars matchar "em" i "Fem saker…" och "mma" i "tomma lägenheter".
+// Längre ord matchas som förut, även inuti sammansättningar ("damfotboll").
+const kortaOrdCache = new Map();
+function matchar(t, w) {
+  const k = w.trim();
+  if (k.length > 4) return t.includes(w);
+  let re = kortaOrdCache.get(k);
+  if (!re) {
+    const escaped = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    re = new RegExp('(^|[^a-zåäöéü0-9])' + escaped + '($|[^a-zåäöéü0-9])');
+    kortaOrdCache.set(k, re);
+  }
+  return re.test(t);
 }
 
 function snippet(item) {
@@ -539,4 +558,22 @@ async function fetchAll() {
   }
 }
 
-module.exports = { fetchAll, SOURCES };
+// Sorterar om artiklarna från de senaste två dygnen med nuvarande regler.
+// Körs vid uppstart, så att en ändrad kategorisering slår igenom direkt
+// i stället för att felsorterade artiklar ligger kvar tills de blir för gamla.
+async function recategorizeRecent() {
+  const { rows } = await pool.query(
+    "SELECT id, title, url, source, category FROM articles WHERE fetched_at > NOW() - INTERVAL '48 hours'"
+  );
+  let changed = 0;
+  for (const r of rows) {
+    const cat = isKronika(r.title, r.url) ? 'kronikor' : categorize(r.title, r.source);
+    if (cat !== r.category) {
+      await pool.query('UPDATE articles SET category = $1 WHERE id = $2', [cat, r.id]);
+      changed++;
+    }
+  }
+  console.log('[omsortering] ' + changed + ' av ' + rows.length + ' artiklar bytte kategori');
+}
+
+module.exports = { fetchAll, SOURCES, categorize, recategorizeRecent };

@@ -3,7 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
 const { pool, init, get, lastFetched, getTopStories, getTodaysBrief, hasBriefToday, cleanup } = require('./db');
-const { fetchAll, SOURCES } = require('./fetcher');
+const { fetchAll, SOURCES, recategorizeRecent } = require('./fetcher');
 const { generateBrief } = require('./brief');
 
 const app = express();
@@ -808,6 +808,7 @@ app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'))
 
 // Databas, hämtning och brief körs efter — fel här får inte fälla processen.
 init().then(async () => {
+  await recategorizeRecent().catch(e => console.error('Omsortering:', e.message));
   await fetchAll();
   // Generera saknad brief vid uppstart:
   // Klockan ≥17 → kvällsbrief om saknas, annars morgonbrief om saknas
