@@ -495,6 +495,7 @@ async function fetchSources(sources) {
       const feed = await hamtaFlode(source.url);
       for (const item of feed.items.slice(0, 20)) {
         if (!item.title || !item.link) continue;
+        if (!/^https?:\/\//i.test(item.link)) continue; // bara riktiga webblänkar
         if (shouldSkip(item.title, item.link)) continue;
 
         await save({
@@ -515,17 +516,27 @@ async function fetchSources(sources) {
   }
 }
 
+// Spärr så att två hämtningar aldrig körs samtidigt
+// (t.ex. cron-jobbet och en besökare som triggar refresh på samma gång).
+let fetching = false;
+
 async function fetchAll() {
-  console.log('[' + new Date().toLocaleTimeString('sv-SE') + '] Hämtar nyheter...');
-  const all = [
-    ...SOURCES.national,
-    ...SOURCES.sport_national,
-    ...SOURCES.sport_local,
-    ...SOURCES.english,
-    ...SOURCES.kultur_national,
-    ...SOURCES.regional
-  ];
-  await fetchSources(all);
+  if (fetching) return;
+  fetching = true;
+  try {
+    console.log('[' + new Date().toLocaleTimeString('sv-SE') + '] Hämtar nyheter...');
+    const all = [
+      ...SOURCES.national,
+      ...SOURCES.sport_national,
+      ...SOURCES.sport_local,
+      ...SOURCES.english,
+      ...SOURCES.kultur_national,
+      ...SOURCES.regional
+    ];
+    await fetchSources(all);
+  } finally {
+    fetching = false;
+  }
 }
 
 module.exports = { fetchAll, SOURCES };
