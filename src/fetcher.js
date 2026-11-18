@@ -62,11 +62,32 @@ async function hamtaFlode(url) {
     const res = await fetch(url, { headers: HEADERS, signal: ctrl.signal, redirect: 'follow' });
     if (!res.ok) throw new Error('Status ' + res.status);
     const text = await res.text();
-    return await parser.parseString(stadaXml(text));
+    const xml = stadaXml(text);
+    try {
+      return await parser.parseString(xml);
+    } catch (e) {
+      e.utdrag = utdragVidFel(xml, e.message);
+      throw e;
+    }
   } finally {
     clearTimeout(timer);
   }
 }
+
+// Plockar ut texten runt felet (parsern anger rad och kolumn), så att loggen
+// visar exakt vad i flödet som är trasigt. Utan rad/kolumn: början av svaret.
+function utdragVidFel(xml, msg) {
+  const rad = /Line: (\d+)/.exec(msg || '');
+  const kol = /Column: (\d+)/.exec(msg || '');
+  if (!rad || !kol) return xml.slice(0, 160).replace(/\s+/g, ' ');
+  const rader = xml.split('\n');
+  const r = rader[parseInt(rad[1], 10)] || '';
+  const k = parseInt(kol[1], 10);
+  return r.slice(Math.max(0, k - 80), k + 40).replace(/\s+/g, ' ');
+}
+
+// Varje trasigt flödes utdrag loggas bara en gång per omstart, inte var 15:e minut
+const loggadeUtdrag = new Set();
 
 const SKIP_PATTERNS = [
   // ── DAGSAMMANFATTNINGAR & META ───────────────────────────────────────────
@@ -249,7 +270,6 @@ const SOURCES = {
     { name: 'Norran Sport',              url: 'https://www.norran.se/rss/sport',            region: null },
     { name: 'Norrbottens-Kuriren Sport', url: 'https://www.kuriren.nu/rss/sport',           region: null },
     { name: 'HD Sport',                  url: 'https://www.hd.se/rss/sport',                region: null },
-    { name: 'Sydsvenskan Sport',         url: 'https://www.sydsvenskan.se/sport/rss.xml',   region: null },
     { name: 'NSD Sport',                 url: 'https://www.nsd.se/rss/sport',               region: null },
     { name: 'UNT Sport',                 url: 'https://www.unt.se/rss/sport',               region: null },
     { name: 'Kvällsposten Sport',        url: 'https://www.kvallsposten.se/rss/sport',      region: null },
@@ -277,11 +297,15 @@ const SOURCES = {
   ],
 
   // ── REGIONALA KÄLLOR ─────────────────────────────────────────────────────
+  // Borttagna nov 2026 (döda flöden): Sydsvenskan Sport (404), SVT Gotland (404,
+  // Gotland bevakas av SVT Öst), Västerbottens-Kuriren (403, spärrar oss),
+  // TTELA och Hallands Nyheter (skickar en webbsida i stället för RSS).
   regional: [
 
     // Stockholm – utökat med fler källor
     { name: 'SVT Stockholm',      url: 'https://www.svt.se/nyheter/lokalt/stockholm/rss.xml',   region: 'Stockholm' },
     { name: 'DN Stockholm',       url: 'https://www.dn.se/rss/sthlm',                           region: 'Stockholm' },
+    { name: 'SVT Södertälje',     url: 'https://www.svt.se/nyheter/lokalt/sodertalje/rss.xml',  region: 'Stockholm' },
 
     // Skåne
     { name: 'SVT Skåne',          url: 'https://www.svt.se/nyheter/lokalt/skane/rss.xml',       region: 'Skåne' },
@@ -293,16 +317,14 @@ const SOURCES = {
 
     // Västra Götaland
     { name: 'SVT Göteborg',       url: 'https://www.svt.se/nyheter/lokalt/vast/rss.xml',        region: 'Västra Götaland' },
-    { name: 'GP',                 url: 'https://www.gp.se/feeds/feed.xml',                          region: 'Västra Götaland' },
+    { name: 'GP',                 url: 'https://www.gp.se/?rss',                                 region: 'Västra Götaland' },
     { name: 'Bohuslänningen',     url: 'https://www.bohuslaningen.se/rss/nyheter',               region: 'Västra Götaland' },
-    { name: 'TTELA',              url: 'https://www.ttela.se/rss/nyheter',                       region: 'Västra Götaland' },
     { name: 'Borås Tidning',      url: 'https://www.bt.se/rss.xml',                              region: 'Västra Götaland' },
     { name: 'Alingsås Tidning',   url: 'https://www.alingsastidning.se/rss/nyheter',             region: 'Västra Götaland' },
 
     // Halland
     { name: 'SVT Halland',        url: 'https://www.svt.se/nyheter/lokalt/halland/rss.xml',     region: 'Halland' },
     { name: 'Hallandsposten',     url: 'https://www.hallandsposten.se/rss/nyheter',              region: 'Halland' },
-    { name: 'Hallands Nyheter',   url: 'https://www.hn.se/rss/nyheter',                          region: 'Halland' },
 
     // Östergötland
     { name: 'SVT Östergötland',   url: 'https://www.svt.se/nyheter/lokalt/ost/rss.xml',         region: 'Östergötland' },
@@ -356,7 +378,6 @@ const SOURCES = {
     // Västerbotten
     { name: 'SVT Västerbotten',   url: 'https://www.svt.se/nyheter/lokalt/vasterbotten/rss.xml', region: 'Västerbotten' },
     { name: 'Norran',             url: 'https://www.norran.se/rss/nyheter',                      region: 'Västerbotten' },
-    { name: 'Västerbottens-Kuriren', url: 'https://www.vk.se/rss/nyheter',                      region: 'Västerbotten' },
 
     // Norrbotten
     { name: 'SVT Norrbotten',     url: 'https://www.svt.se/nyheter/lokalt/norrbotten/rss.xml',  region: 'Norrbotten' },
@@ -380,7 +401,6 @@ const SOURCES = {
     { name: 'Blekinge Läns Tidning', url: 'https://www.blt.se/rss/nyheter',                     region: 'Blekinge' },
 
     // Gotland
-    { name: 'SVT Gotland',        url: 'https://www.svt.se/nyheter/lokalt/gotland/rss.xml',     region: 'Gotland' },
     { name: 'Gotlands Allehanda', url: 'https://www.helagotland.se/rss/nyheter',                region: 'Gotland' },
 
     // Jönköping
@@ -553,7 +573,11 @@ async function fetchSources(sources) {
         });
       }
     } catch (e) {
-      console.log('  \u26a0 ' + source.name + ': ' + e.message);
+      console.log('  \u26a0 ' + source.name + ': ' + String(e.message).split('\n')[0]);
+      if (e.utdrag && !loggadeUtdrag.has(source.name)) {
+        loggadeUtdrag.add(source.name);
+        console.log('    utdrag ' + source.name + ': ' + JSON.stringify(e.utdrag));
+      }
     }
   }
 }
