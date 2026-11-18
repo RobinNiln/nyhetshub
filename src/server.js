@@ -9,7 +9,11 @@ const { generateBrief } = require('./brief');
 const app = express();
 app.use(cors());
 
-const SITE_URL = process.env.SITE_URL || 'https://www.skime.se';
+// Sajtens adress. Bara www.skime.se fungerar (skime.se utan www ger fel hos domänleverantören),
+// så om variabeln SITE_URL på Railway saknar www läggs det till här automatiskt.
+const SITE_URL = (process.env.SITE_URL || 'https://www.skime.se')
+  .replace(/\/+$/, '')
+  .replace(/^https?:\/\/skime\.se$/i, 'https://www.skime.se');
 
 // Antal unika RSS-flöden – räknas från källistan så siffran alltid stämmer
 const SOURCE_COUNT = new Set(Object.values(SOURCES).flat().map(s => s.url)).size;
