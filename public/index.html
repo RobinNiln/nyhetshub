@@ -27,14 +27,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Samtycke (Google Consent Mode v2) – MÅSTE ligga före Analytics och AdSense.
+       Allt är "nekat" tills besökaren klickat "Acceptera alla" i cookiebannern.
+       Då sätter Google inga spårnings- eller annonscookies. -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    var skimeConsent = null;
+    try { skimeConsent = localStorage.getItem('skime_consent'); } catch(e) {}
+    var skimeOk = skimeConsent === 'all' ? 'granted' : 'denied';
+    gtag('consent', 'default', {
+      ad_storage: skimeOk,
+      ad_user_data: skimeOk,
+      ad_personalization: skimeOk,
+      analytics_storage: skimeOk
+    });
+    // Utan samtycke: be AdSense om icke-personanpassade annonser
+    (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = skimeConsent === 'all' ? 0 : 1;
+  </script>
   <!-- Google AdSense -->
   <meta name="google-adsense-account" content="ca-pub-5482392840942272">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5482392840942272" crossorigin="anonymous"></script>
   <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-KSKGKZS2NX"></script>
   <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
     gtag('js', new Date());
     gtag('config', 'G-KSKGKZS2NX');
   </script>
@@ -273,7 +289,7 @@
     </div>
     <span id="meter-label-mob" style="font-size:12px;font-weight:500;color:#22c55e;min-width:60px;text-align:right;">Normal</span>
   </div>
-  <span style="font-size:11px;color:var(--muted);" id="meter-arts-mob">— artiklar/h · 97 källor</span>
+  <span style="font-size:11px;color:var(--muted);" id="meter-arts-mob">— artiklar/h</span>
 </div>
 
 <div class="layout">
@@ -321,7 +337,7 @@
         </div>
         <div style="display:flex;justify-content:space-between;">
           <span style="font-size:11px;color:var(--muted);" id="meter-arts">— artiklar/h</span>
-          <span style="font-size:11px;color:var(--muted);">97 källor</span>
+          <span style="font-size:11px;color:var(--muted);" id="meter-sources"></span>
         </div>
       </div>
     </div>
@@ -353,12 +369,12 @@
 </div>
 
 <footer>
-  <p>© 2025 Skime – nyheter aggregerade från svenska medier</p>
+  <p>© 2026 Skime – nyheter aggregerade från svenska medier</p>
   <p style="margin-top:6px">
     <a href="/?category=nyheter">Nyheter</a> ·
     <a href="/?category=sport">Sport</a> ·
     <a href="/?category=naringsliv">Näringsliv</a> ·
-    <a href="/?category=politik">Politik</a> ·
+    <a href="/?category=valet2026">Valet 2026</a> ·
     <a href="/?category=tech">Tech</a> ·
     <a href="/?category=kultur">Kultur</a> ·
     <a href="/?category=utrikes">Utrikes</a>
@@ -419,6 +435,8 @@ function setMode(m, el) {
   el.classList.add('active');
   current = m === 'national' ? 'nyheter' : (getRecentRegions()[0] || ALL_REGIONS[0]);
   sportSub = null;
+  borsSub = null;
+  history.pushState({}, '', m === 'national' ? '/?category=nyheter' : `/?region=${encodeURIComponent(current)}`);
   renderTabs();
   renderSportSubs();
   load();
@@ -457,7 +475,8 @@ function renderTabs() {
 
 function getRecentRegions() {
   try {
-    return JSON.parse(localStorage.getItem('skime_recent_regions') || '[]').slice(0, 3);
+    return JSON.parse(localStorage.getItem('skime_recent_regions') || '[]')
+      .filter(r => ALL_REGIONS.includes(r)).slice(0, 3);
   } catch(e) { return []; }
 }
 
@@ -473,6 +492,7 @@ function selectRegionFromDropdown(region) {
   if (!region) return;
   current = region;
   saveRecentRegion(region);
+  history.pushState({}, '', `/?region=${encodeURIComponent(region)}`);
   renderTabs();
   load();
 }
@@ -599,16 +619,16 @@ function renderGrid(articles) {
     const extraCount = sources.length - visibleSources.length;
     const sourcesHtml = `<div class="sources-row">
       ${visibleSources.map(s =>
-        `<a class="source-link" href="${s.url}" target="_blank" rel="noopener noreferrer">${s.name}</a>`
+        `<a class="source-link" href="${safeUrl(s.url)}" target="_blank" rel="noopener noreferrer" onclick="trackClick(this.getAttribute('href'))">${escapeHtml(s.name)}</a>`
       ).join('')}
       ${extraCount > 0 ? `<span class="source-count">+${extraCount} till</span>` : ''}
     </div>`;
     return adHtml + `<article class="card" itemscope itemtype="https://schema.org/NewsArticle">
-      <div class="card-top"><span class="badge">${label}</span></div>
-      <a class="card-title" href="${a.url}" target="_blank" rel="noopener noreferrer" itemprop="headline url" onclick="trackClick('${a.url}')">${a.title}</a>
-      ${a.ingress ? `<div class="card-ingress" itemprop="description">${a.ingress}</div>` : ''}
+      <div class="card-top"><span class="badge">${escapeHtml(label)}</span></div>
+      <a class="card-title" href="${safeUrl(a.url)}" target="_blank" rel="noopener noreferrer" itemprop="headline url" onclick="trackClick(this.getAttribute('href'))">${escapeHtml(a.title)}</a>
+      ${a.ingress ? `<div class="card-ingress" itemprop="description">${escapeHtml(a.ingress)}</div>` : ''}
       ${sourcesHtml}
-      <div class="card-time"><time itemprop="datePublished" datetime="${a.published_at}">${time}</time></div>
+      <div class="card-time"><time itemprop="datePublished" datetime="${escapeHtml(a.published_at)}">${time}</time></div>
     </article>`;
   }).join('');
   // Initiera eventuella nya annonser i flödet
@@ -619,7 +639,7 @@ function renderTrending(articles) {
   const html = articles.map((a, i) =>
     `<div class="trend-item" role="listitem">
       <span class="trend-num">${i+1}</span>
-      <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
+      <a href="${safeUrl(a.url)}" target="_blank" rel="noopener noreferrer" onclick="trackClick(this.getAttribute('href'))">${escapeHtml(a.title)}</a>
     </div>`
   ).join('');
   document.getElementById('trending').innerHTML = html;
@@ -693,23 +713,23 @@ async function loadTopStories() {
     const sourcesHtml = (a) => {
       const vis = a.sources.slice(0,3);
       const extra = a.sources.length - vis.length;
-      return vis.map(s => `<a class="source-link" href="${s.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${s.name}</a>`).join('')
+      return vis.map(s => `<a class="source-link" href="${safeUrl(s.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();trackClick(this.getAttribute('href'))">${escapeHtml(s.name)}</a>`).join('')
         + (extra > 0 ? `<span class="source-count">+${extra} till</span>` : '');
     };
     const time = (a) => a.published_at ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
 
     document.getElementById('top-stories-grid').innerHTML = `
-      <div class="top-story-main" onclick="window.open('${main.url}','_blank')">
-        <div class="ts-meta">${CAT[main.category]||main.category} · ${main.sources.length} ${main.sources.length===1?'källa':'källor'}</div>
-        <div class="ts-title">${main.title}</div>
-        ${main.ingress ? `<div class="ts-ingress">${main.ingress}</div>` : ''}
+      <div class="top-story-main" data-url="${safeUrl(main.url)}" onclick="openStory(this)">
+        <div class="ts-meta">${escapeHtml(CAT[main.category]||main.category)} · ${main.sources.length} ${main.sources.length===1?'källa':'källor'}</div>
+        <div class="ts-title">${escapeHtml(main.title)}</div>
+        ${main.ingress ? `<div class="ts-ingress">${escapeHtml(main.ingress)}</div>` : ''}
         <div class="sources-row">${sourcesHtml(main)}</div>
       </div>
       ${small.length ? `<div class="top-stories-small">
         ${small.map(a => `
-          <div class="top-story-small" onclick="window.open('${a.url}','_blank')">
-            <div class="ts-meta">${CAT[a.category]||a.category} · ${a.sources.length} ${a.sources.length===1?'källa':'källor'} · ${time(a)}</div>
-            <div class="ts-title">${a.title}</div>
+          <div class="top-story-small" data-url="${safeUrl(a.url)}" onclick="openStory(this)">
+            <div class="ts-meta">${escapeHtml(CAT[a.category]||a.category)} · ${a.sources.length} ${a.sources.length===1?'källa':'källor'} · ${time(a)}</div>
+            <div class="ts-title">${escapeHtml(a.title)}</div>
             <div class="sources-row">${sourcesHtml(a)}</div>
           </div>`).join('')}
       </div>` : ''}`;
@@ -726,7 +746,7 @@ async function loadTopics() {
     const container = document.getElementById('trending-topics');
     if (!container) return;
     container.innerHTML = topics.map(t =>
-      `<a class="topic-pill" href="/topic/${t.slug}">#${t.word}</a>`
+      `<a class="topic-pill" href="/topic/${encodeURIComponent(t.slug)}">#${escapeHtml(t.word)}</a>`
     ).join('') || '<span style="font-size:0.78rem;color:var(--muted)">Laddar...</span>';
   } catch(e) {}
 }
@@ -744,11 +764,14 @@ async function loadMeter() {
   try {
     const res = await fetch('/api/meter');
     const data = await res.json();
-    updateMeter(data.intensity, data.articles_last_hour);
+    updateMeter(data.intensity, data.articles_last_hour, data.sources);
   } catch(e) {}
 }
 
-function updateMeter(intensity, arts) {
+function updateMeter(intensity, arts, sources) {
+  const srcText = sources ? ' · ' + sources + ' källor' : '';
+  const srcEl = document.getElementById('meter-sources');
+  if (srcEl && sources) srcEl.textContent = sources + ' källor';
   ['', '-mob'].forEach(suffix => {
     const bar = document.getElementById('meter-bar' + suffix);
     const label = document.getElementById('meter-label' + suffix);
@@ -764,7 +787,7 @@ function updateMeter(intensity, arts) {
     } else {
       bar.style.background = '#ef4444'; label.style.color = '#ef4444'; label.textContent = 'Högtryck!';
     }
-    if (arts !== undefined && artsEl) artsEl.textContent = arts + ' artiklar/h · 97 källor';
+    if (arts !== undefined && artsEl) artsEl.textContent = arts + ' artiklar/h' + (suffix ? srcText : '');
   });
 }
 
@@ -775,7 +798,7 @@ async function loadMostRead() {
     const html = articles.map((a, i) =>
       `<div class="trend-item" role="listitem">
         <span class="trend-num">${i+1}</span>
-        <a href="${a.url}" target="_blank" rel="noopener noreferrer">${a.title}</a>
+        <a href="${safeUrl(a.url)}" target="_blank" rel="noopener noreferrer" onclick="trackClick(this.getAttribute('href'))">${escapeHtml(a.title)}</a>
       </div>`
     ).join('');
     document.getElementById('most-read').innerHTML = html || '<div style="color:var(--muted);font-size:0.8rem">Ingen data ännu</div>';
@@ -842,14 +865,56 @@ async function loadBrief() {
   }
 }
 
+// Gör text säker att lägga in i sidan. Rubriker kommer från andra sajter –
+// en rubrik med < eller " skulle annars kunna förstöra layouten eller köra kod.
 function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// Släpp bara igenom vanliga webblänkar (http/https)
+function safeUrl(u) {
+  return /^https?:\/\//i.test(u || '') ? escapeHtml(u) : '#';
+}
+
+// Öppna en toppnyhet (hela kortet är klickbart) och räkna klicket
+function openStory(el) {
+  const url = el.dataset.url;
+  if (!url || url === '#') return;
+  trackClick(url);
+  window.open(url, '_blank', 'noopener');
+}
+
+// Läs av adressen så att länkar som /?category=sport eller /?region=Skåne
+// öppnar rätt flik direkt (tidigare hamnade alla på Nyheter).
+function applyUrl() {
+  const p = new URLSearchParams(location.search);
+  const r = p.get('region');
+  const c = p.get('category');
+  sportSub = null;
+  borsSub = null;
+  if (r && ALL_REGIONS.includes(r)) {
+    mode = 'regional';
+    current = r;
+  } else {
+    mode = 'national';
+    current = (c && CATS.some(x => x.id === c)) ? c : 'nyheter';
+    document.getElementById('btn-national').classList.add('active');
+    document.getElementById('btn-regional').classList.remove('active');
+  }
+}
+
+// Bakåt-/framåtknappen i webbläsaren
+window.addEventListener('popstate', () => {
+  applyUrl();
+  renderTabs();
+  renderSportSubs();
+  load();
+});
+
+applyUrl();
 renderTabs();
 renderSportSubs();
 load();
-loadBrief();
 loadMostRead();
 loadTopics();
 loadMeter();
@@ -875,10 +940,17 @@ setInterval(loadMeter, 5 * 60 * 1000);
   if (!c) box.style.display = 'block';
   document.getElementById('skime-cookie-accept').onclick = function(){
     localStorage.setItem('skime_consent','all');
+    // Berätta för Google att besökaren nu har sagt ja
+    gtag('consent', 'update', {
+      ad_storage: 'granted', ad_user_data: 'granted',
+      ad_personalization: 'granted', analytics_storage: 'granted'
+    });
+    (window.adsbygoogle = window.adsbygoogle || []).requestNonPersonalizedAds = 0;
     box.style.display='none';
   };
   document.getElementById('skime-cookie-decline').onclick = function(){
     localStorage.setItem('skime_consent','necessary');
+    // Allt förblir nekat (standardläget ovan)
     box.style.display='none';
   };
 })();
