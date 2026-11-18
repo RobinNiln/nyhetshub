@@ -219,6 +219,9 @@
 
     @media(max-width:600px){ .top-stories-small { grid-template-columns:1fr; } }
 
+    .brief-link { color:var(--text); text-decoration:underline; text-decoration-color:var(--source-border); text-underline-offset:3px; text-decoration-thickness:1.5px; }
+    .brief-link:hover { color:var(--red); text-decoration-color:var(--red); }
+
     footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
     footer a { color:var(--muted); text-decoration:none; }
     footer a:hover { color:var(--red); }
@@ -848,16 +851,16 @@ async function loadBrief() {
 
     if (items.length >= 2) {
       // Strukturerad rendering
-      const introHtml = intro ? `<p style="margin:0 0 14px;font-style:italic;color:var(--muted);">${escapeHtml(intro)}</p>` : '';
+      const introHtml = intro ? `<p style="margin:0 0 14px;font-style:italic;color:var(--muted);">${briefInline(intro)}</p>` : '';
       const itemsHtml = items.map(it =>
         `<div style="padding-left:12px;border-left:2px solid var(--accent,#2563eb);">
-          <span style="font-weight:600;">${escapeHtml(it.topic)}.</span> ${escapeHtml(it.text)}
+          <span style="font-weight:600;">${escapeHtml(it.topic)}.</span> ${briefInline(it.text)}
         </div>`
       ).join('');
       target.innerHTML = `${introHtml}<div style="display:flex;flex-direction:column;gap:10px;">${itemsHtml}</div>`;
     } else {
-      // Fallback: visa råtexten som prosa
-      target.textContent = data.content;
+      // Fallback: visa texten som prosa (med länkar)
+      target.innerHTML = lines.map(l => `<p style="margin:0 0 8px;">${briefInline(l)}</p>`).join('');
     }
     section.style.display = 'block';
   } catch(e) {
@@ -869,6 +872,18 @@ async function loadBrief() {
 // en rubrik med < eller " skulle annars kunna förstöra layouten eller köra kod.
 function escapeHtml(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// Gör om briefens [ord](url) till klickbara länkar. Allt annat escapas.
+function briefInline(text) {
+  const re = /\[([^\]\n]+)\]\((https?:\/\/[^)\s]+)\)/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(text)) !== null) {
+    out += escapeHtml(text.slice(last, m.index));
+    out += `<a class="brief-link" href="${safeUrl(m[2])}" target="_blank" rel="noopener noreferrer" onclick="trackClick(this.getAttribute('href'))">${escapeHtml(m[1])}</a>`;
+    last = re.lastIndex;
+  }
+  return out + escapeHtml(text.slice(last));
 }
 
 // Släpp bara igenom vanliga webblänkar (http/https)
