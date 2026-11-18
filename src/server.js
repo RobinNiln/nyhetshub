@@ -2,15 +2,48 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const cron = require('node-cron');
-const { init, get, lastFetched, getTopStories, getTodaysBrief, hasBriefToday } = require('./db');
-const { fetchAll } = require('./fetcher');
+const { pool, init, get, lastFetched, getTopStories, getTodaysBrief, hasBriefToday, cleanup } = require('./db');
+const { fetchAll, SOURCES } = require('./fetcher');
 const { generateBrief } = require('./brief');
 
 const app = express();
 app.use(cors());
-app.use(express.static('public'));
 
-const SITE_URL = process.env.SITE_URL || 'https://skime.se';
+const SITE_URL = process.env.SITE_URL || 'https://www.skime.se';
+
+// Antal unika RSS-flöden – räknas från källistan så siffran alltid stämmer
+const SOURCE_COUNT = new Set(Object.values(SOURCES).flat().map(s => s.url)).size;
+
+// Gör text säker att stoppa in i HTML. Rubriker kommer från andra sajter,
+// och utan detta kan en rubrik med < eller " förstöra sidan (eller köra skript).
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+// Släpp bara igenom vanliga webblänkar (http/https), aldrig t.ex. javascript:-länkar
+function safeUrl(u) {
+  return /^https?:\/\//i.test(u || '') ? esc(u) : '#';
+}
+
+// ads.txt – måste ligga FÖRE www-redirect så Google hittar den
+app.get('/ads.txt', (req, res) => {
+  res.type('text/plain');
+  res.send('google.com, pub-5482392840942272, DIRECT, f08c47fec0942fa0');
+});
+
+// Redirect skime.se → www.skime.se (måste ligga före allt annat)
+app.use((req, res, next) => {
+  if (req.hostname === 'skime.se') {
+    return res.redirect(301, `https://www.skime.se${req.originalUrl}`);
+  }
+  next();
+});
+
+// Statiska filer (bilder, favicon m.m.). index: false betyder att
+// startsidan INTE skickas härifrån – den byggs av '/'-routen längre ner,
+// så att varje kategori får egen titel, beskrivning och innehåll för Google.
+app.use(express.static('public', { index: false }));
 
 const ALL_REGIONS = [
   'Blekinge','Dalarna','Gotland','Gävleborg','Halland',
@@ -31,6 +64,9 @@ cron.schedule('0 6 * * *', () => generateBrief('morning'), { timezone: 'Europe/S
 // Kvällsbrief 17:00 svensk tid
 cron.schedule('0 17 * * *', () => generateBrief('evening'), { timezone: 'Europe/Stockholm' });
 
+// Städa bort gamla artiklar och klick 04:00 varje natt
+cron.schedule('0 4 * * *', () => cleanup().catch(e => console.error('Städning:', e.message)), { timezone: 'Europe/Stockholm' });
+
 // Trigga fetchAll om senaste hämtning är äldre än 15 min
 async function refreshIfStale() {
   try {
@@ -46,12 +82,7 @@ async function refreshIfStale() {
 app.post('/api/click', express.json(), async (req, res) => {
   try {
     const { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'Missing url' });
-    const { Pool } = require('pg');
-    const pool = new (require('pg').Pool)({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
+    if (!url || typeof url !== 'string' || url.length > 2000) return res.status(400).json({ error: 'Missing url' });
     await pool.query(`
       INSERT INTO article_clicks (url, clicked_at)
       VALUES ($1, NOW())
@@ -65,11 +96,6 @@ app.post('/api/click', express.json(), async (req, res) => {
 // Mest läst – senaste 24 timmar
 app.get('/api/most-read', async (req, res) => {
   try {
-    const { Pool } = require('pg');
-    const pool = new (require('pg').Pool)({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
     const { rows } = await pool.query(`
       SELECT a.title, a.url, COUNT(c.url) as clicks
       FROM articles a
@@ -165,11 +191,6 @@ async function getTopics() {
     return topicsCache;
   }
   try {
-    const { Pool } = require('pg');
-    const pool = new (require('pg').Pool)({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
     const { rows } = await pool.query(`
       SELECT title FROM articles
       WHERE fetched_at > NOW() - INTERVAL '3 hours'
@@ -221,6 +242,11 @@ app.get('/topic/:slug', async (req, res) => {
     return res.redirect(301, GONE_TOPICS[slug]);
   }
 
+  // Bara små bokstäver, siffror och bindestreck – allt annat är skräp eller attackförsök
+  if (!/^[a-z0-9-]{1,60}$/.test(slug)) {
+    return res.status(404).send('Sidan finns inte.');
+  }
+
   // Kolla fasta topics först
   const fixed = FIXED_TOPICS[slug];
   const topics = await getTopics();
@@ -230,12 +256,6 @@ app.get('/topic/:slug', async (req, res) => {
   const pageDesc = fixed ? fixed.desc : `Senaste nyheterna om ${pageTitle} från svenska medier.`;
 
   try {
-    const { Pool } = require('pg');
-    const pool = new (require('pg').Pool)({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
-
     let rows;
     if (fixed) {
       const kwConditions = fixed.keywords.map((kw, i) => `title ILIKE $${i + 1}`);
@@ -266,10 +286,10 @@ app.get('/topic/:slug', async (req, res) => {
         ? new Date(a.published_at).toLocaleString('sv-SE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
         : '';
       return `<article style="background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:8px;">
-        <a href="${a.url}" target="_blank" rel="noopener noreferrer" style="color:#111;text-decoration:none;font-size:0.9rem;font-weight:600;line-height:1.5;">${a.title}</a>
-        ${a.ingress ? `<p style="font-size:0.8rem;color:#555;margin:0;line-height:1.45;">${a.ingress}</p>` : ''}
+        <a href="${safeUrl(a.url)}" target="_blank" rel="noopener noreferrer" style="color:#111;text-decoration:none;font-size:0.9rem;font-weight:600;line-height:1.5;">${esc(a.title)}</a>
+        ${a.ingress ? `<p style="font-size:0.8rem;color:#555;margin:0;line-height:1.45;">${esc(a.ingress)}</p>` : ''}
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-size:0.68rem;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">${a.source}</span>
+          <span style="font-size:0.68rem;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:0.5px;">${esc(a.source)}</span>
           <span style="font-size:0.68rem;color:#999;">${time}</span>
         </div>
       </article>`;
@@ -391,11 +411,6 @@ app.get('/api/top-stories', async (req, res) => {
 
 app.get('/api/meter', async (req, res) => {
   try {
-    const { Pool } = require('pg');
-    const pool = new (require('pg').Pool)({
-      connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
-    });
     const { rows } = await pool.query(`
       SELECT
         COUNT(*) FILTER (WHERE fetched_at > NOW() - INTERVAL '1 hour') AS last_hour,
@@ -407,9 +422,9 @@ app.get('/api/meter', async (req, res) => {
     const lastHour = parseInt(rows[0].last_hour) || 0;
     const dailyAvg = parseFloat(rows[0].daily_avg) || 1;
     const intensity = Math.min(100, Math.round((lastHour / dailyAvg) * 50));
-    res.json({ articles_last_hour: lastHour, intensity });
+    res.json({ articles_last_hour: lastHour, intensity, sources: SOURCE_COUNT });
   } catch(e) {
-    res.json({ articles_last_hour: 80, intensity: 50 });
+    res.json({ articles_last_hour: 80, intensity: 50, sources: SOURCE_COUNT });
   }
 });
 
@@ -426,122 +441,8 @@ app.get('/api/news', async (req, res) => {
   }
 });
 
-app.get('/om-oss', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html lang="sv">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Om Skime – Alla svenska nyheter på ett ställe</title>
-  <meta name="description" content="Skime är en oberoende svensk nyhetstjänst som samlar nyheter från 100+ svenska medier i realtid. Läs om hur vi väljer källor, hur algoritmen fungerar och varför Skime byggdes.">
-  <link rel="canonical" href="https://www.skime.se/om-oss">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"AboutPage","name":"Om Skime","description":"Skime är en oberoende svensk nyhetstjänst som samlar nyheter från 100+ svenska medier i realtid.","url":"https://www.skime.se/om-oss","publisher":{"@type":"Organization","name":"Skime","url":"https://www.skime.se","logo":{"@type":"ImageObject","url":"https://www.skime.se/Skimelogo.png"}}}</script>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;max-width:720px;margin:0 auto;padding:40px 24px 80px;color:#111;line-height:1.8;background:#fff;}
-    h1{font-size:2rem;font-weight:800;margin-bottom:12px;letter-spacing:-1px;line-height:1.2;}
-    h2{font-size:1.1rem;font-weight:700;margin:40px 0 8px;color:#111;}
-    h3{font-size:1rem;font-weight:600;margin:24px 0 6px;color:#333;}
-    p{margin-bottom:16px;color:#333;font-size:1rem;}
-    .lead{font-size:1.15rem;color:#444;margin-bottom:32px;line-height:1.7;}
-    .highlight{background:#f0f5ff;border-left:3px solid #2563eb;padding:16px 20px;border-radius:4px;margin:32px 0;}
-    .highlight p{margin:0;color:#1e3a8a;font-weight:500;}
-    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0;}
-    .stat{background:#f9f9f9;border:1px solid #e5e5e5;border-radius:8px;padding:16px;text-align:center;}
-    .stat-num{font-size:1.8rem;font-weight:700;color:#2563eb;display:block;}
-    .stat-label{font-size:0.78rem;color:#888;margin-top:4px;display:block;}
-    .source-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin:16px 0;}
-    .source-tag{background:#f4f4f4;border-radius:6px;padding:6px 10px;font-size:0.82rem;color:#444;text-align:center;}
-    a{color:#2563eb;}
-    .back{display:inline-block;margin-bottom:32px;color:#888;text-decoration:none;font-size:0.9rem;}
-    .back:hover{color:#111;}
-    .divider{height:1px;background:#e5e5e5;margin:40px 0;}
-    footer{margin-top:60px;padding-top:24px;border-top:1px solid #e5e5e5;font-size:0.8rem;color:#aaa;}
-    @media(max-width:600px){.stat-grid{grid-template-columns:1fr 1fr;}.stat-num{font-size:1.4rem;}}
-  </style>
-</head>
-<body>
-  <a class="back" href="/">← Tillbaka till Skime</a>
-  <h1>Om Skime</h1>
-  <p class="lead">Skime är en oberoende svensk nyhetstjänst som samlar nyheter från över 100 svenska och internationella medier på ett ställe – uppdaterat var 15:e minut, helt gratis.</p>
-
-  <div class="highlight">
-    <p>Vi sweper nyhetsinternet åt dig. Du behöver inte göra det.</p>
-  </div>
-
-  <div class="stat-grid">
-    <div class="stat"><span class="stat-num">100+</span><span class="stat-label">Aktiva källor</span></div>
-    <div class="stat"><span class="stat-num">15 min</span><span class="stat-label">Uppdateringsintervall</span></div>
-    <div class="stat"><span class="stat-num">21</span><span class="stat-label">Svenska regioner</span></div>
-  </div>
-
-  <h2>Varför Skime byggdes</h2>
-  <p>Idén till Skime kom ur en enkel frustration: att hålla koll på svenska nyheter kräver att man hoppar mellan SVT, DN, Aftonbladet, Expressen och ett dussintal lokaltidningar varje morgon. Det är tidskrävande och ineffektivt.</p>
-  <p>Skime byggdes för att lösa det. En sajt, alla nyheter, utan krångel. Ingen inloggning, inga prerolls, inga pop-ups.</p>
-
-  <h2>Hur Skime fungerar</h2>
-  <p>Skime hämtar automatiskt nyheter från RSS-flöden hos Sveriges ledande medier var 15:e minut, dygnet runt. Varje artikel analyseras, kategoriseras och rankas baserat på hur många oberoende källor som rapporterar om samma händelse.</p>
-
-  <h3>Rankningsalgoritmen</h3>
-  <p>En nyhet som rapporteras av sex oberoende medier anses viktigare än en nyhet som bara en källa skriver om. Algoritmen kombinerar källantal med aktualitet – färska nyheter med bred täckning rankas högst som toppnyheter.</p>
-  <p>Formeln är enkel: <strong>topScore = källantal × (1 + recency_bonus)</strong> där recency_bonus sjunker från 1.0 till 0 under 6 timmar. Det innebär att en nyhet aldrig kan ligga kvar som toppnyhet hur länge som helst – nya viktiga nyheter tar automatiskt över.</p>
-
-  <h3>Kategorisering</h3>
-  <p>Varje artikel kategoriseras automatiskt baserat på nyckelord i rubriken. Kategorierna är: Nyheter, Sport, Valet 2026, Näringsliv, Tech, Utrikes, Samhälle, Kultur och International news in English. Artiklar som inte passar in i en specifik kategori hamnar under Nyheter.</p>
-
-  <h3>Filtrering</h3>
-  <p>Skime filtrerar aktivt bort ledartexter, krönikor, debattartiklar, opinionsmaterial, reklam och prenumerationserbjudanden. Det är ett medvetet val för att hålla innehållet objektivt och nyhetsbaserat.</p>
-
-  <h2>Källor</h2>
-  <p>Skime hämtar nyheter från följande kategorier av källor:</p>
-
-  <h3>Nationella medier</h3>
-  <div class="source-grid">
-    <div class="source-tag">SVT</div><div class="source-tag">SR</div><div class="source-tag">DN</div>
-    <div class="source-tag">SvD</div><div class="source-tag">Aftonbladet</div><div class="source-tag">Expressen</div>
-    <div class="source-tag">DI</div><div class="source-tag">Breakit</div><div class="source-tag">GP</div>
-    <div class="source-tag">Sydsvenskan</div><div class="source-tag">TV4</div><div class="source-tag">Omni</div><div class="source-tag">TT</div>
-  </div>
-
-  <h3>Sport</h3>
-  <div class="source-grid">
-    <div class="source-tag">SVT Sport</div><div class="source-tag">Aftonbladet Sport</div>
-    <div class="source-tag">Expressen Sport</div><div class="source-tag">Fotbollskanalen</div>
-    <div class="source-tag">Fotbolldirekt</div><div class="source-tag">Hockeysverige</div>
-    <div class="source-tag">Hockeyexpressen</div>
-  </div>
-
-  <h3>Regionala medier</h3>
-  <p>Skime täcker alla 21 svenska län med minst 2–3 lokala källor per region, inklusive SVT:s lokala nyhetssändningar och regionala tidningar.</p>
-
-  <h3>Internationella källor</h3>
-  <div class="source-grid">
-    <div class="source-tag">BBC News</div><div class="source-tag">Reuters</div>
-    <div class="source-tag">The Guardian</div><div class="source-tag">AP News</div>
-    <div class="source-tag">Al Jazeera</div><div class="source-tag">New York Times</div>
-  </div>
-
-  <div class="divider"></div>
-
-  <h2>Vad Skime inte är</h2>
-  <p>Skime är inte en redaktion. Vi skriver inga egna nyheter, tar inga politiska ställningstaganden och har inga egna agendor. Vi är ett fönster mot det svenska medielandskapet – inte en röst i det.</p>
-  <p>Skime publicerar aldrig ledartexter, krönikor eller opinionsmaterial. Vi visar nyheter – inte åsikter.</p>
-
-  <h2>Upphovsrätt och källhänvisning</h2>
-  <p>Allt innehåll på Skime tillhör respektive källa. Skime visar enbart rubriker, korta ingresser och länkar till originalartiklarna. Klickar du på en nyhet skickas du direkt till källans webbplats. Skime gör inga anspråk på äganderätt till källornas innehåll.</p>
-
-  <h2>Finansiering</h2>
-  <p>Skime är gratis att använda. Sajten finansieras av annonser via Google AdSense. Vi samlar inte in personuppgifter och säljer inte användardata. Se vår <a href="/integritetspolicy">integritetspolicy</a> för mer information.</p>
-
-  <h2>Kontakt</h2>
-  <p>Har du frågor, feedback eller vill rapportera ett problem? Besök vår <a href="/kontakt">kontaktsida</a>.</p>
-
-  <footer>
-    <p>© 2026 Skime · <a href="/integritetspolicy">Integritetspolicy</a> · <a href="/kontakt">Kontakt</a></p>
-  </footer>
-</body>
-</html>`);
-});
+// Gamla om-sidan ersatt av /om. 301 = permanent flytt, så Google för över länkvärdet.
+app.get('/om-oss', (req, res) => res.redirect(301, '/om'));
 
 app.get('/kontakt', (req, res) => {
   res.send(`<!DOCTYPE html>
@@ -592,54 +493,16 @@ app.get('/kontakt', (req, res) => {
   <div class="divider"></div>
 
   <h2>Om Skime</h2>
-  <p>Skime är en oberoende svensk nyhetstjänst. Läs mer på vår <a href="/om-oss">om-oss-sida</a>.</p>
+  <p>Skime är en oberoende svensk nyhetstjänst. Läs mer på vår <a href="/om">om-oss-sida</a>.</p>
 
   <footer>
-    <p>© 2026 Skime · <a href="/om-oss">Om oss</a> · <a href="/integritetspolicy">Integritetspolicy</a></p>
+    <p>© 2026 Skime · <a href="/om">Om oss</a> · <a href="/integritet">Integritetspolicy</a></p>
   </footer>
 </body>
 </html>`);
 });
-app.get('/integritetspolicy', (req, res) => {
-  res.send(`<!DOCTYPE html>
-<html lang="sv">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Integritetspolicy – Skime</title>
-  <meta name="description" content="Skimes integritetspolicy – hur vi hanterar data och cookies.">
-  <link rel="canonical" href="https://skime.se/integritetspolicy">
-  <style>
-    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; max-width:700px; margin:60px auto; padding:0 24px; color:#111; line-height:1.7; }
-    h1 { font-size:2rem; font-weight:800; margin-bottom:8px; }
-    h2 { font-size:1.2rem; font-weight:700; margin:32px 0 8px; }
-    a { color:#2563eb; }
-    .back { display:inline-block; margin-bottom:32px; color:#888; text-decoration:none; font-size:0.9rem; }
-    .back:hover { color:#111; }
-  </style>
-</head>
-<body>
-  <a class="back" href="/">← Tillbaka till Skime</a>
-  <h1>Integritetspolicy</h1>
-  <p>Senast uppdaterad: april 2025</p>
-
-  <h2>Personuppgifter</h2>
-  <p>Skime samlar inte in personuppgifter om besökare. Vi kräver ingen registrering och lagrar inga användaruppgifter.</p>
-
-  <h2>Cookies</h2>
-  <p>Skime använder en cookie för att spara ditt val av ljust eller mörkt tema. Ingen spårningscookie används av oss. Om Google AdSense aktiveras på sajten kan Google placera annonscookies – se Googles integritetspolicy för mer information.</p>
-
-  <h2>Statistik</h2>
-  <p>Vi kan komma att använda anonymiserad besöksstatistik för att förbättra tjänsten. Inga personuppgifter lagras i samband med detta.</p>
-
-  <h2>Tredjepartslänkar</h2>
-  <p>Skime länkar till externa webbplatser. Vi ansvarar inte för innehållet eller integritetspolicyn hos dessa sajter.</p>
-
-  <h2>Kontakt</h2>
-  <p>Har du frågor om vår integritetspolicy är du välkommen att återkomma.</p>
-</body>
-</html>`);
-});
+// Gamla integritetspolicyn ersatt av /integritet (den nya, korrekta versionen)
+app.get('/integritetspolicy', (req, res) => res.redirect(301, '/integritet'));
 
 app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 
@@ -661,19 +524,6 @@ app.get('/cookies',    sendStatic('cookies.html'));
 app.get('/villkor',    sendStatic('villkor.html'));
 
 // ── robots.txt ────────────────────────────────────────────────
-// ads.txt – måste ligga FÖRE www-redirect så Google hittar den
-app.get('/ads.txt', (req, res) => {
-  res.type('text/plain');
-  res.send('google.com, pub-5482392840942272, DIRECT, f08c47fec0942fa0');
-});
-
-// Redirect skime.se → www.skime.se
-app.use((req, res, next) => {
-  if (req.hostname === 'skime.se') {
-    return res.redirect(301, `https://www.skime.se${req.originalUrl}`);
-  }
-  next();
-});
 
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
@@ -716,7 +566,7 @@ app.get('/llms.txt', async (req, res) => {
 > Skime samlar, rankar och presenterar nyheter från Sveriges ledande medier i realtid. Alla nyheter på ett ställe, utan krångel.
 
 ## Vad är Skime?
-Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 90 svenska och internationella medier och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter och tar inga redaktionella ställningstaganden. Varje dag publiceras dock en automatiskt genererad nyhetssammanfattning (morgon- och kvällsbrief) som ger en neutral överblick av nyhetsläget.
+Skime är en oberoende svensk nyhetstjänst grundad 2026. Sajten aggregerar nyheter från över 100 svenska och internationella medier (${SOURCE_COUNT} nyhetsflöden) och presenterar dem sorterade efter aktualitet och antal rapporterande källor. Skime publicerar inga egna nyheter och tar inga redaktionella ställningstaganden. Varje dag publiceras dock en automatiskt genererad nyhetssammanfattning (morgon- och kvällsbrief) som ger en neutral överblick av nyhetsläget.
 ${briefBlock}
 ## Unikhet
 Skimes rankningsalgoritm mäter hur många oberoende källor som rapporterar samma nyhet. En nyhet som flera medier skriver om rankas högre än en nyhet från en enda källa. Tunga riksmedier (SVT, SR, DN, SvD, Aftonbladet, Expressen, TV4, DI) väger dubbelt. Uppföljande artiklar inom 3 timmar ger ytterligare rankningsbonus.
@@ -786,9 +636,14 @@ app.get('/sitemap.xml', async (req, res) => {
 
     const staticUrls = [
       { loc: `${SITE_URL}`, priority: '1.0' },
-      { loc: `${SITE_URL}/om-oss`, priority: '0.8' },
+      { loc: `${SITE_URL}/om`, priority: '0.8' },
       { loc: `${SITE_URL}/kontakt`, priority: '0.7' },
-      { loc: `${SITE_URL}/integritetspolicy`, priority: '0.5' },
+      { loc: `${SITE_URL}/integritet`, priority: '0.5' },
+      { loc: `${SITE_URL}/cookies`, priority: '0.3' },
+      { loc: `${SITE_URL}/villkor`, priority: '0.3' },
+      { loc: `${SITE_URL}/topic/allsvenskan`, priority: '0.7' },
+      { loc: `${SITE_URL}/topic/shl`, priority: '0.7' },
+      { loc: `${SITE_URL}/topic/valet-2026`, priority: '0.7' },
       ...CATEGORIES.map(c => ({ loc: `${SITE_URL}/?category=${c}`, priority: '0.8' })),
       ...ALL_REGIONS.map(r => ({ loc: `${SITE_URL}/?region=${encodeURIComponent(r)}`, priority: '0.7' })),
       ...topicUrls,
@@ -809,108 +664,142 @@ ${staticUrls.map(u => `  <url>
 });
 
 // ── SSR: Huvud-HTML med server-renderat innehåll för crawlers ─
+// Varje kategori (/?category=sport) och region (/?region=Skåne) får egen
+// titel, beskrivning, canonical-länk och rubriklista. Det är det Google ser.
+
+const CAT_NAMES = {
+  nyheter: 'Nyheter', valet2026: 'Valet 2026', samhalle: 'Samhälle', naringsliv: 'Näringsliv',
+  sport: 'Sport', tech: 'Tech', kultur: 'Kultur', kronikor: 'Krönikor', utrikes: 'Utrikes',
+  english: 'International news in English'
+};
+
+const CAT_DESCRIPTIONS = {
+  nyheter: 'Senaste riksnyheterna från SVT, DN, Aftonbladet, Expressen och fler – rankade efter hur många källor som rapporterar samma händelse.',
+  sport: 'Senaste sportnyheter från Allsvenskan, SHL och svenska landslaget – samlat från SVT Sport, Aftonbladet Sport och fler.',
+  valet2026: 'Senaste nytt om riksdagsvalet 2026 – partierna, regeringsfrågan, opinionen och valresultatet.',
+  naringsliv: 'Senaste ekonominyheter – börsen, kvartalsrapporter, företag och konjunktur från DI, SvD och fler.',
+  tech: 'Senaste technyheter om AI, startups och cybersäkerhet från svenska och internationella medier.',
+  utrikes: 'Senaste internationella nyheter på svenska – världspolitik, konflikter och globala händelser.',
+  samhalle: 'Senaste samhällsnyheter – sjukvård, skola, brott, bostäder och infrastruktur från svenska medier.',
+  kultur: 'Senaste kulturnyheter – film, musik, konst, teater och litteratur från DN Kultur, SvD Kultur och fler.',
+  kronikor: 'Krönikor, kolumner och recensioner från svenska medier – samlat på ett ställe.',
+  english: 'Latest international news in English – aggregated from BBC, The Guardian, Al Jazeera and New York Times.',
+};
+
+// index.html läses in en gång och sparas i minnet (snabbare än att läsa filen varje gång)
+let indexHtmlCache = null;
+async function readIndexHtml() {
+  if (!indexHtmlCache) {
+    indexHtmlCache = await require('fs').promises.readFile(path.join(__dirname, '../public/index.html'), 'utf8');
+  }
+  return indexHtmlCache;
+}
+
 app.get('/', async (req, res) => {
   try {
-    await refreshIfStale();
-    const articles = await get({ category: req.query.category, region: req.query.region });
-    const category = req.query.category || 'alla';
-    const region = req.query.region || '';
+    // Hämta nya nyheter i bakgrunden om det behövs – men låt INTE besökaren vänta på det
+    refreshIfStale();
 
-    // Bygg schema.org ItemList för AI-crawlers
-    const schemaItems = articles.slice(0, 20).map((a, i) => ({
-      '@type': 'ListItem',
-      position: i + 1,
-      item: {
-        '@type': 'NewsArticle',
-        headline: a.title,
-        url: a.url,
-        datePublished: a.published_at,
-        dateModified: a.published_at,
-        mainEntityOfPage: { '@type': 'WebPage', '@id': a.url },
-        publisher: { '@type': 'Organization', name: a.source },
-        description: a.ingress || a.title,
-        ...(a.sources && a.sources.length > 1 ? {
-          isBasedOn: a.sources.map(s => s.url)
-        } : {})
-      }
-    }));
+    // Godkänn bara kända värden. Allt annat ignoreras (skyddar mot skräp i URL:en).
+    const category = CATEGORIES.includes(req.query.category) ? req.query.category : '';
+    const region = ALL_REGIONS.includes(req.query.region) ? req.query.region : '';
 
+    const articles = await get({ category: category || 'nyheter', region: region || undefined });
+
+    let title, description, canonical;
+    if (region) {
+      title = `${region} nyheter – Skime`;
+      description = `Senaste nyheterna från ${region}. Samlat från lokala medier i realtid.`;
+      canonical = `${SITE_URL}/?region=${encodeURIComponent(region)}`;
+    } else if (category) {
+      title = `${CAT_NAMES[category]} – senaste nytt | Skime`;
+      description = CAT_DESCRIPTIONS[category];
+      canonical = `${SITE_URL}/?category=${category}`;
+    } else {
+      title = null; // behåll titeln som står i index.html
+      description = null;
+      canonical = `${SITE_URL}/`;
+    }
+
+    // schema.org ItemList för Google och AI-crawlers
     const schema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      name: region ? `Nyheter från ${region}` : `Svenska nyheter – ${category}`,
-      itemListElement: schemaItems
+      name: region ? `Nyheter från ${region}` : `Svenska nyheter – ${CAT_NAMES[category] || 'Nyheter'}`,
+      itemListElement: articles.slice(0, 20).map((a, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        item: {
+          '@type': 'NewsArticle',
+          headline: a.title,
+          url: a.url,
+          datePublished: a.published_at,
+          dateModified: a.published_at,
+          mainEntityOfPage: { '@type': 'WebPage', '@id': a.url },
+          publisher: { '@type': 'Organization', name: a.source },
+          description: a.ingress || a.title,
+          ...(a.sources && a.sources.length > 1 ? { isBasedOn: a.sources.map(s => s.url) } : {})
+        }
+      }))
     };
 
-    // Hämta dagens brief för SSR (AI-crawlers ser din unika sammanfattning)
+    // Dagens brief (bara på startsidan / Nyheter)
     let briefSchema = '';
     let briefSsr = '';
-    try {
-      const brief = await getTodaysBrief();
-      if (brief && brief.content) {
-        const label = brief.brief_type === 'evening' ? 'Skimes kvällsbrief' : 'Skimes morgonbrief';
-        const briefObj = {
-          '@context': 'https://schema.org',
-          '@type': 'NewsArticle',
-          headline: label + ' – ' + new Date(brief.brief_date).toLocaleDateString('sv-SE'),
-          articleBody: brief.content,
-          datePublished: brief.generated_at || brief.brief_date,
-          author: { '@type': 'Organization', name: 'Skime' },
-          publisher: { '@type': 'Organization', name: 'Skime', url: SITE_URL }
-        };
-        briefSchema = `<script type="application/ld+json">${JSON.stringify(briefObj)}</script>`;
-        briefSsr = `<section aria-label="Dagens nyhetssammanfattning"><h2>${label}</h2><p>${brief.content.replace(/</g,'&lt;')}</p></section>`;
-      }
-    } catch(e) {}
+    if (!region && (!category || category === 'nyheter')) {
+      try {
+        const brief = await getTodaysBrief();
+        if (brief && brief.content) {
+          const label = brief.brief_type === 'evening' ? 'Skimes kvällsbrief' : 'Skimes morgonbrief';
+          briefSchema = `<script type="application/ld+json">${jsonForScript({
+            '@context': 'https://schema.org',
+            '@type': 'NewsArticle',
+            headline: label + ' – ' + new Date(brief.brief_date).toLocaleDateString('sv-SE'),
+            articleBody: brief.content,
+            datePublished: brief.generated_at || brief.brief_date,
+            author: { '@type': 'Organization', name: 'Skime' },
+            publisher: { '@type': 'Organization', name: 'Skime', url: SITE_URL }
+          })}</script>`;
+          briefSsr = `<section aria-label="Dagens nyhetssammanfattning"><h2>${label}</h2><p>${esc(brief.content)}</p></section>`;
+        }
+      } catch(e) {}
+    }
 
-    // Server-renderade nyhetsrubriker för crawlers (dolt för användare)
+    // Rubriklista för besökare/crawlers utan JavaScript
     const ssrLinks = articles.slice(0, 30).map(a =>
-      `<li><a href="${a.url}">${a.title}</a> <span>(${a.source})</span></li>`
+      `<li><a href="${safeUrl(a.url)}">${esc(a.title)}</a> <span>(${esc(a.source)})</span></li>`
     ).join('\n');
 
-    const catDescriptions = {
-      nyheter: 'Senaste riksnyheterna från SVT, DN, Aftonbladet, Expressen och fler – rankade efter hur många källor som rapporterar samma händelse.',
-      sport: 'Senaste sportnyheter från Allsvenskan, SHL och svenska landslaget – samlat från SVT Sport, Aftonbladet Sport och fler.',
-      valet2026: 'Senaste nytt inför riksdagsvalet 2026 – valrörelsen, partierna, opinionsundersökningar och partiledardebatter.',
-      naringsliv: 'Senaste ekonominyheter – börsen, kvartalsrapporter, företag och konjunktur från DI, SvD och fler.',
-      tech: 'Senaste technyheter om AI, startups och cybersäkerhet från svenska och internationella medier.',
-      utrikes: 'Senaste internationella nyheter på svenska – världspolitik, konflikter och globala händelser.',
-      samhalle: 'Senaste samhällsnyheter – sjukvård, skola, brott, bostäder och infrastruktur från svenska medier.',
-      kultur: 'Senaste kulturnyheter – film, musik, konst, teater och litteratur från DN Kultur, SvD Kultur och fler.',
-      english: 'Latest international news in English – aggregated from BBC, Reuters, The Guardian, AP News, Al Jazeera and New York Times.',
-    };
+    let html = await readIndexHtml();
+    if (title) {
+      html = html
+        .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
+        .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${esc(title)}">`);
+    }
+    if (description) {
+      html = html
+        .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(description)}">`)
+        .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${esc(description)}">`);
+    }
+    html = html
+      .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${esc(canonical)}">`)
+      .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${esc(canonical)}">`)
+      .replace('</head>', `<script type="application/ld+json">${jsonForScript(schema)}</script>\n${briefSchema}\n</head>`)
+      .replace('<div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>',
+        `<div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
+    <noscript>${briefSsr}<ul>${ssrLinks}</ul></noscript>`);
 
-    const title = region
-      ? `${region} nyheter – Skime`
-      : category
-        ? `${category.charAt(0).toUpperCase() + category.slice(1)} – Skime`
-        : `Skime – Svenska nyheter samlat`;
-
-    const description = region
-      ? `Senaste nyheterna från ${region}. Aggregerat från lokala medier i realtid.`
-      : catDescriptions[category] || 'Skime samlar 100+ svenska medier på ett ställe – uppdaterat var 15:e minut, helt gratis.';
-
-    const html = await require('fs').promises.readFile(
-      path.join(__dirname, '../public/index.html'), 'utf8'
-    );
-
-    // Injicera dynamisk meta + schema + SSR-innehåll
-    const enriched = html
-      .replace('<title>Skime – Svenska nyheter samlat</title>',
-        `<title>${title}</title>`)
-      .replace('<meta name="description" content="Snabb överblick över Sveriges nyheter från SVT, DN, Aftonbladet och fler – nationellt och regionalt.">',
-        `<meta name="description" content="${description}">`)
-      .replace('</head>',
-        `<script type="application/ld+json">${JSON.stringify(schema)}</script>\n${briefSchema}\n</head>`)
-      .replace('<div id="news-grid"><div class="state"><div class="spinner"></div></div></div>',
-        `<div id="news-grid"><div class="state"><div class="spinner"></div></div></div>
-        <noscript><ul style="display:none">${ssrLinks}</ul>${briefSsr}</noscript>`);
-
-    res.send(enriched);
+    res.send(html);
   } catch(e) {
+    console.error('Startsida:', e.message);
     res.sendFile(path.join(__dirname, '../public/index.html'));
   }
 });
+
+// JSON inuti <script>-taggar: "</script>" i en rubrik får inte avsluta taggen i förtid
+function jsonForScript(obj) {
+  return JSON.stringify(obj).replace(/</g, '\\u003c');
+}
 
 // ── Start ─────────────────────────────────────────────────────
 // Webbservern startar FÖRST, oberoende av databasen. Om Postgres är nere
