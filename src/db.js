@@ -5,6 +5,9 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Utan den här raden kan ett tappat databas-anslut krascha hela servern.
+pool.on('error', e => console.error('Postgres-fel:', e.message));
+
 // ── Hjälp för smartare dubblettmatchning och topprankning ──────────────
 
 // Stoppord som inte är meningsfulla för att identifiera en story
@@ -508,4 +511,12 @@ async function getTopStories(category, sport) {
   return scored.slice(0, 5);
 }
 
-module.exports = { init, save, boost, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, hasBriefToday };
+// Rensa gamla rader så att databasen inte växer för evigt.
+// Sajten visar aldrig artiklar äldre än 36 timmar, så 30 dagar är god marginal.
+async function cleanup() {
+  const a = await pool.query("DELETE FROM articles WHERE fetched_at < NOW() - INTERVAL '30 days'");
+  const c = await pool.query("DELETE FROM article_clicks WHERE clicked_at < NOW() - INTERVAL '30 days'");
+  console.log('[städning] raderade ' + a.rowCount + ' artiklar och ' + c.rowCount + ' klick');
+}
+
+module.exports = { pool, init, save, boost, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, hasBriefToday, cleanup };
