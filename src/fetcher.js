@@ -62,6 +62,9 @@ async function hamtaFlode(url) {
     const res = await fetch(url, { headers: HEADERS, signal: ctrl.signal, redirect: 'follow' });
     if (!res.ok) throw new Error('Status ' + res.status);
     const text = await res.text();
+    if (!/<(\?xml|rss|feed)\b/i.test(text)) {
+      throw new Error('Inte RSS – adressen skickar en vanlig webbsida (flödet är troligen nedlagt)');
+    }
     const xml = stadaXml(text);
     try {
       return await parser.parseString(xml);
@@ -257,7 +260,6 @@ const SOURCES = {
     { name: 'Expressen Fotboll',  url: 'https://feeds.expressen.se/sport/fotboll/' },
     { name: 'DN Sport',           url: 'https://www.dn.se/rss/sport' },
     { name: 'Fotbolldirekt',      url: 'https://www.fotbolldirekt.se/rss' },
-    { name: 'SvenskaFans',        url: 'https://www.svenskafans.com/svenskafans/rss' },
     { name: 'Hockeysverige',      url: 'https://www.hockeysverige.se/rss' },
   ],
 
@@ -299,7 +301,8 @@ const SOURCES = {
   // ── REGIONALA KÄLLOR ─────────────────────────────────────────────────────
   // Borttagna nov 2026 (döda flöden): Sydsvenskan Sport (404), SVT Gotland (404,
   // Gotland bevakas av SVT Öst), Västerbottens-Kuriren (403, spärrar oss),
-  // TTELA och Hallands Nyheter (skickar en webbsida i stället för RSS).
+  // TTELA, Hallands Nyheter, Bohuslänningen, Alingsås Tidning, Hallandsposten
+  // och SvenskaFans (skickar en webbsida i stället för RSS).
   regional: [
 
     // Stockholm – utökat med fler källor
@@ -318,13 +321,10 @@ const SOURCES = {
     // Västra Götaland
     { name: 'SVT Göteborg',       url: 'https://www.svt.se/nyheter/lokalt/vast/rss.xml',        region: 'Västra Götaland' },
     { name: 'GP',                 url: 'https://www.gp.se/?rss',                                 region: 'Västra Götaland' },
-    { name: 'Bohuslänningen',     url: 'https://www.bohuslaningen.se/rss/nyheter',               region: 'Västra Götaland' },
     { name: 'Borås Tidning',      url: 'https://www.bt.se/rss.xml',                              region: 'Västra Götaland' },
-    { name: 'Alingsås Tidning',   url: 'https://www.alingsastidning.se/rss/nyheter',             region: 'Västra Götaland' },
 
     // Halland
     { name: 'SVT Halland',        url: 'https://www.svt.se/nyheter/lokalt/halland/rss.xml',     region: 'Halland' },
-    { name: 'Hallandsposten',     url: 'https://www.hallandsposten.se/rss/nyheter',              region: 'Halland' },
 
     // Östergötland
     { name: 'SVT Östergötland',   url: 'https://www.svt.se/nyheter/lokalt/ost/rss.xml',         region: 'Östergötland' },
