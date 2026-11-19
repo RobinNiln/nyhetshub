@@ -51,7 +51,10 @@ async function hamtaData() {
   const q = (sql, p) => pool.query(sql, p).then(r => r.rows);
 
   const [status, rorelse, tillvaxt, utskick, senaste, sajt] = await Promise.all([
-    q(`SELECT status, COUNT(*)::int AS n FROM subscribers GROUP BY status`),
+    q(`SELECT status, COUNT(*)::int AS n,
+              COUNT(*) FILTER (WHERE want_morning)::int AS morgon,
+              COUNT(*) FILTER (WHERE want_evening)::int AS kvall
+       FROM subscribers GROUP BY status`),
     q(`SELECT
          COUNT(*) FILTER (WHERE confirmed_at > NOW() - INTERVAL '7 days')::int  AS nya7,
          COUNT(*) FILTER (WHERE confirmed_at > NOW() - INTERVAL '30 days')::int AS nya30,
@@ -72,8 +75,8 @@ async function hamtaData() {
              AND (s.unsubscribed_at IS NULL OR s.unsubscribed_at >= ((d.dag + 1)::timestamp AT TIME ZONE 'Europe/Stockholm'))
          )::int AS aktiva
        FROM dagar d ORDER BY d.dag`),
-    q(`SELECT to_char(brief_date, 'YYYY-MM-DD') AS d, recipients, started_at, finished_at
-       FROM newsletter_sends ORDER BY brief_date DESC LIMIT 30`),
+    q(`SELECT to_char(brief_date, 'YYYY-MM-DD') AS d, brief_type, recipients, started_at, finished_at
+       FROM newsletter_sends ORDER BY brief_date DESC, brief_type DESC LIMIT 40`),
     q(`SELECT email, status, created_at, confirmed_at FROM subscribers ORDER BY created_at DESC LIMIT 10`),
     q(`SELECT
          (SELECT COUNT(*) FROM articles WHERE fetched_at > NOW() - INTERVAL '24 hours')::int AS artiklar24,
@@ -82,8 +85,11 @@ async function hamtaData() {
   ]);
 
   const per = Object.fromEntries(status.map(r => [r.status, r.n]));
+  const aktivRad = status.find(r => r.status === 'active') || { morgon: 0, kvall: 0 };
   return {
     aktiva: per.active || 0,
+    aktivaMorgon: aktivRad.morgon,
+    aktivaKvall: aktivRad.kvall,
     vantande: per.pending || 0,
     avslutade: per.unsubscribed || 0,
     ...rorelse[0],
@@ -209,6 +215,7 @@ async function nyhetsbrevFlik() {
   const d = await hamtaData();
   const utskickRader = d.utskick.map(u => `<tr>
       <td>${esc(datumKort(u.d))}</td>
+      <td>${u.brief_type === 'evening' ? 'Kväll' : 'Morgon'}</td>
       <td class="r">${nf(u.recipients)}</td>
       <td class="r muted">${u.finished_at ? new Date(u.finished_at).toLocaleTimeString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }) : 'pågår/misslyckat'}</td>
     </tr>`).join('');
@@ -238,14 +245,15 @@ async function nyhetsbrevFlik() {
 
 <h2>Utskick</h2>
 <div class="card">
-  ${utskickRader ? `<table><thead><tr><th>Datum</th><th class="r">Mottagare</th><th class="r">Klart kl.</th></tr></thead><tbody>${utskickRader}</tbody></table>`
-    : '<p class="empty">Inga utskick än. Första går kl. 06:30.</p>'}
+  ${utskickRader ? `<table><thead><tr><th>Datum</th><th>Brief</th><th class="r">Mottagare</th><th class="r">Klart kl.</th></tr></thead><tbody>${utskickRader}</tbody></table>`
+    : '<p class="empty">Inga utskick än. Morgonbriefen går kl. 06:30 och kvällsbriefen kl. 17:30.</p>'}
 </div>
 
 <h2>Senaste anmälningarna</h2>
 <div class="card">
   ${senasteRader ? `<table><thead><tr><th>Adress</th><th>Status</th><th class="r">Anmäld</th></tr></thead><tbody>${senasteRader}</tbody></table>`
     : '<p class="empty">Inga anmälningar än.</p>'}
+  <p class="not">Av de aktiva vill ${nf(d.aktivaMorgon)} ha morgonbriefen och ${nf(d.aktivaKvall)} kvällsbriefen.</p>
   <p class="not">Totalt: ${nf(d.aktiva)} aktiva · ${nf(d.vantande)} ej bekräftade · ${nf(d.avslutade)} avslutade. Senaste 7 dagarna: ${nf(d.nya7)} nya, ${nf(d.avsl7)} avslutade.</p>
 </div>`;
 }

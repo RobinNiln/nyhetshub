@@ -14,7 +14,7 @@ const { vyScript } = require('./trafik');
 // Ruta för nyhetsbrevet, visas under briefen och i arkivet
 const NL_RUTA = `<div class="card" style="margin-top:16px;">
   <div class="kicker">Gratis nyhetsbrev</div>
-  <p style="font-size:16px;margin-bottom:6px;"><strong>Få morgonbriefen i inkorgen kl. 06:30.</strong> Dagens viktigaste nyheter på en minut.</p>
+  <p style="font-size:16px;margin-bottom:6px;"><strong>Få briefen direkt i mejlen</strong> – morgon, kväll eller båda. Dagens viktigaste nyheter på en minut.</p>
   ${anmalningsruta()}
 </div>`;
 

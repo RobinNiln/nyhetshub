@@ -79,10 +79,14 @@ cron.schedule('0 6 * * *', () => generateBrief('morning'), { timezone: 'Europe/S
 // Kvällsbrief 17:00 svensk tid
 cron.schedule('0 17 * * *', () => generateBrief('evening'), { timezone: 'Europe/Stockholm' });
 
-// Nyhetsbrevet: morgonbriefen mejlas 06:30. 07:30 är en reserv om briefen blev sen
-// (utskicksloggen i databasen gör att ingen får mejlet två gånger).
-cron.schedule('30 6 * * *', () => nyhetsbrev.skickaMorgonbrief(SITE_URL).catch(e => console.error('Nyhetsbrev:', e.message)), { timezone: 'Europe/Stockholm' });
-cron.schedule('30 7 * * *', () => nyhetsbrev.skickaMorgonbrief(SITE_URL).catch(e => console.error('Nyhetsbrev:', e.message)), { timezone: 'Europe/Stockholm' });
+// Nyhetsbrevet: morgonbriefen mejlas 06:30 och kvällsbriefen 17:30, till dem som valt
+// respektive utskick. En timme senare finns en reserv om briefen blev sen
+// (utskicksloggen i databasen gör att ingen får samma mejl två gånger).
+const skicka = typ => () => nyhetsbrev.skickaBrief(SITE_URL, typ).catch(e => console.error('Nyhetsbrev:', e.message));
+cron.schedule('30 6 * * *', skicka('morning'), { timezone: 'Europe/Stockholm' });
+cron.schedule('30 7 * * *', skicka('morning'), { timezone: 'Europe/Stockholm' });
+cron.schedule('30 17 * * *', skicka('evening'), { timezone: 'Europe/Stockholm' });
+cron.schedule('30 18 * * *', skicka('evening'), { timezone: 'Europe/Stockholm' });
 
 // Städa bort gamla artiklar och klick 04:00 varje natt
 cron.schedule('0 4 * * *', () => cleanup().catch(e => console.error('Städning:', e.message)), { timezone: 'Europe/Stockholm' });
