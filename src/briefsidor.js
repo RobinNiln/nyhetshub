@@ -9,6 +9,7 @@
 
 const { getBrief, listBriefs } = require('./db');
 const { anmalningsruta } = require('./nyhetsbrev');
+const { vyScript } = require('./trafik');
 
 // Ruta för nyhetsbrevet, visas under briefen och i arkivet
 const NL_RUTA = `<div class="card" style="margin-top:16px;">
@@ -106,7 +107,7 @@ const TRACKING = `
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-KSKGKZS2NX"></script>
   <script>gtag('js', new Date()); gtag('config', 'G-KSKGKZS2NX');</script>`;
 
-function sida({ title, description, canonical, body, schema, siteUrl }) {
+function sida({ title, description, canonical, body, schema, siteUrl, vy }) {
   return `<!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -166,6 +167,7 @@ function sida({ title, description, canonical, body, schema, siteUrl }) {
 ${body}
 <a class="tillbaka" href="/">← Alla nyheter på Skime</a>
 </main>
+${vy ? vyScript(vy) : ''}
 </body>
 </html>`;
 }
@@ -185,6 +187,7 @@ function register(app, { siteUrl }) {
         title: 'Skimes nyhetsbriefer – dagens nyheter sammanfattade morgon och kväll',
         description: 'Arkiv med Skimes morgon- och kvällsbriefer: dagens viktigaste svenska och internationella nyheter, sammanfattade med länkar till källorna.',
         canonical: `${siteUrl}/brief`,
+        vy: 'briefarkiv',
         body: `<div class="card">
   <div class="kicker">Briefarkiv</div>
   <h1>Skimes nyhetsbriefer</h1>
@@ -263,6 +266,7 @@ ${items}
         title: `${titel} – Skime`,
         description: beskrivning.slice(0, 160),
         canonical,
+        vy: 'brief',
         schema: {
           '@context': 'https://schema.org',
           '@type': 'NewsArticle',

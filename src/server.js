@@ -8,6 +8,8 @@ const { generateBrief } = require('./brief');
 const briefsidor = require('./briefsidor');
 const nyhetsbrev = require('./nyhetsbrev');
 const statistik = require('./statistik');
+const hett = require('./hett');
+const trafik = require('./trafik');
 
 const app = express();
 app.use(cors());
@@ -411,6 +413,7 @@ app.get('/topic/:slug', async (req, res) => {
   ${faqHtml}
   <p style="margin-top:32px;font-size:0.8rem;color:#999"><a href="/" style="color:#2563eb">← Tillbaka till Skime</a></p>
 </div>
+${trafik.vyScript('amne:' + slug)}
 </body>
 </html>`);
   } catch(e) {
@@ -866,8 +869,12 @@ briefsidor.register(app, { siteUrl: SITE_URL });
 // Nyhetsbrev: /api/prenumerera, /nyhetsbrev, /nyhetsbrev/bekrafta, /nyhetsbrev/avsluta
 nyhetsbrev.register(app, { siteUrl: SITE_URL });
 
-// Statistik för nyhetsbrevet: /statistik (skyddad med STATS_KEY)
+// Statistik: /statistik (skyddad med STATS_KEY)
 statistik.register(app);
+
+// Hett just nu: /api/hett. Trafikmätning: /api/vy
+hett.register(app);
+trafik.register(app);
 
 // Briefen sparas med länkar i formatet [ord](url). För Googles strukturerade
 // data och utan-JavaScript-versionen vill vi ha ren text.
@@ -888,6 +895,7 @@ app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'))
 // Databas, hämtning och brief körs efter — fel här får inte fälla processen.
 init().then(async () => {
   await nyhetsbrev.initNyhetsbrev().catch(e => console.error('Nyhetsbrev init:', e.message));
+  await trafik.initTrafik().catch(e => console.error('Trafik init:', e.message));
   await recategorizeRecent().catch(e => console.error('Omsortering:', e.message));
   await fetchAll();
   // Generera saknad brief vid uppstart:

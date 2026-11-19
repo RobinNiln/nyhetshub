@@ -7,6 +7,8 @@
 
 const crypto = require('crypto');
 const { pool } = require('./db');
+const trafik = require('./trafik');
+const hett = require('./hett');
 
 const STATS_KEY = process.env.STATS_KEY || '';
 const COOKIE = 'skime_stats';
@@ -100,14 +102,14 @@ function snyggtMax(v) {
   return 10 * steg;
 }
 
-function diagram(punkter) {
+function diagram(punkter, nyckel, enhet) {
   const W = 640, H = 200, L = 40, R = 44, T = 14, B = 26;
   const iw = W - L - R, ih = H - T - B;
-  const max = snyggtMax(Math.max(...punkter.map(p => p.aktiva), 1));
+  const max = snyggtMax(Math.max(...punkter.map(p => p[nyckel]), 1));
   const x = i => L + (punkter.length === 1 ? iw / 2 : (i / (punkter.length - 1)) * iw);
   const y = v => T + ih - (v / max) * ih;
 
-  const linje = punkter.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.aktiva).toFixed(1)}`).join(' ');
+  const linje = punkter.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p[nyckel]).toFixed(1)}`).join(' ');
   const yta = `${linje} L${x(punkter.length - 1).toFixed(1)},${(T + ih).toFixed(1)} L${x(0).toFixed(1)},${(T + ih).toFixed(1)} Z`;
 
   const ticks = [0, max / 2, max].map(v => `
@@ -118,15 +120,15 @@ function diagram(punkter) {
     <text x="${x(i)}" y="${H - 6}" text-anchor="${i === 0 ? 'start' : i === punkter.length - 1 ? 'end' : 'middle'}" class="ax">${esc(datumKort(punkter[i].dag))}</text>`).join('');
 
   const sista = punkter[punkter.length - 1];
-  const data = JSON.stringify(punkter.map((p, i) => ({ x: +x(i).toFixed(1), y: +y(p.aktiva).toFixed(1), d: datumKort(p.dag), v: p.aktiva })));
+  const data = JSON.stringify(punkter.map((p, i) => ({ x: +x(i).toFixed(1), y: +y(p[nyckel]).toFixed(1), d: datumKort(p.dag), v: p[nyckel] })));
 
   return `<div class="chart" id="chart">
-  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Aktiva prenumeranter senaste 30 dagarna, i dag ${sista.aktiva}">
+  <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(enhet)} senaste 30 dagarna, senast ${sista[nyckel]}">
     ${ticks}
     <path d="${yta}" fill="#2563eb" fill-opacity="0.1"/>
     <path d="${linje}" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
-    <circle cx="${x(punkter.length - 1)}" cy="${y(sista.aktiva)}" r="4" fill="#2563eb" stroke="#fff" stroke-width="2"/>
-    <text x="${x(punkter.length - 1) + 8}" y="${y(sista.aktiva) + 4}" class="val">${nf(sista.aktiva)}</text>
+    <circle cx="${x(punkter.length - 1)}" cy="${y(sista[nyckel])}" r="4" fill="#2563eb" stroke="#fff" stroke-width="2"/>
+    <text x="${x(punkter.length - 1) + 8}" y="${y(sista[nyckel]) + 4}" class="val">${nf(sista[nyckel])}</text>
     ${xEtiketter}
     <line id="hair" x1="0" x2="0" y1="${T}" y2="${T + ih}" stroke="#bbb" stroke-width="1" visibility="hidden"/>
     <circle id="hdot" r="4" fill="#2563eb" stroke="#fff" stroke-width="2" visibility="hidden"/>
@@ -143,7 +145,7 @@ function diagram(punkter) {
     P.forEach(function(p){ if(Math.abs(p.x-mx)<Math.abs(best.x-mx)) best=p; });
     hair.setAttribute('x1',best.x); hair.setAttribute('x2',best.x); hair.setAttribute('visibility','visible');
     dot.setAttribute('cx',best.x); dot.setAttribute('cy',best.y); dot.setAttribute('visibility','visible');
-    tip.innerHTML='<strong>'+best.v.toLocaleString('sv-SE')+'</strong> aktiva<br><span>'+best.d+'</span>';
+    tip.innerHTML='<strong>'+best.v.toLocaleString('sv-SE')+'</strong> ${esc(enhet)}<br><span>'+best.d+'</span>';
     tip.hidden=false;
     var left=best.x/sx, w=tip.offsetWidth;
     tip.style.left=Math.max(0,Math.min(r.width-w,left-w/2))+'px';
@@ -191,8 +193,132 @@ td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
 .pill.pending{background:#fff7e0;color:#854d0e}
 details summary{cursor:pointer;font-size:13px;color:#2563eb;margin-top:10px}
 .empty{color:#888;font-size:14px;padding:6px 0}
+.flikar{display:inline-flex;background:#e9e9e7;border-radius:10px;padding:3px;gap:2px;margin-bottom:18px}
+.flikar a{padding:7px 16px;border-radius:8px;font-size:14px;font-weight:600;color:#555;text-decoration:none}
+.flikar a.aktiv{background:#fff;color:#111;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.bar{height:8px;border-radius:0 4px 4px 0;background:#2563eb;min-width:2px}
+td.barcell{width:40%}
+.not{font-size:12px;color:#888;margin-top:10px;line-height:1.5}
+.ok{color:#166534;font-weight:600}
 @media(max-width:640px){.tiles{grid-template-columns:repeat(2,1fr)}.ax{font-size:18px}.val{font-size:20px}}
 </style></head><body><div class="wrap">${body}</div></body></html>`;
+}
+
+// ── Flik: Nyhetsbrev ─────────────────────────────────────────
+async function nyhetsbrevFlik() {
+  const d = await hamtaData();
+  const utskickRader = d.utskick.map(u => `<tr>
+      <td>${esc(datumKort(u.d))}</td>
+      <td class="r">${nf(u.recipients)}</td>
+      <td class="r muted">${u.finished_at ? new Date(u.finished_at).toLocaleTimeString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }) : 'pågår/misslyckat'}</td>
+    </tr>`).join('');
+  const senasteRader = d.senaste.map(s => `<tr>
+      <td>${esc(maska(s.email))}</td>
+      <td><span class="pill ${esc(s.status)}">${{ active: 'Aktiv', pending: 'Ej bekräftad', unsubscribed: 'Avslutad' }[s.status] || esc(s.status)}</span></td>
+      <td class="r muted">${new Date(s.created_at).toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short' })}</td>
+    </tr>`).join('');
+  const tabell = d.tillvaxt.slice().reverse().map(p => `<tr><td>${esc(datumKort(p.dag))}</td><td class="r">${nf(p.aktiva)}</td></tr>`).join('');
+
+  return `
+<h1>Nyhetsbrevet</h1>
+<div class="tiles">
+  <div class="tile"><div class="n">${nf(d.aktiva)}</div><div class="l">Aktiva prenumeranter</div></div>
+  <div class="tile"><div class="n">${nf(d.nya7)}</div><div class="l">Nya senaste 7 dagarna</div></div>
+  <div class="tile"><div class="n">${nf(d.vantande)}</div><div class="l">Ej bekräftade</div></div>
+  <div class="tile"><div class="n">${nf(d.avsl30)}</div><div class="l">Avslutade senaste 30 dagarna</div></div>
+</div>
+
+<h2>Aktiva prenumeranter, senaste 30 dagarna</h2>
+<div class="card">
+  ${diagram(d.tillvaxt, 'aktiva', 'aktiva')}
+  <details><summary>Visa som tabell</summary>
+    <table><thead><tr><th>Dag</th><th class="r">Aktiva</th></tr></thead><tbody>${tabell}</tbody></table>
+  </details>
+</div>
+
+<h2>Utskick</h2>
+<div class="card">
+  ${utskickRader ? `<table><thead><tr><th>Datum</th><th class="r">Mottagare</th><th class="r">Klart kl.</th></tr></thead><tbody>${utskickRader}</tbody></table>`
+    : '<p class="empty">Inga utskick än. Första går kl. 06:30.</p>'}
+</div>
+
+<h2>Senaste anmälningarna</h2>
+<div class="card">
+  ${senasteRader ? `<table><thead><tr><th>Adress</th><th>Status</th><th class="r">Anmäld</th></tr></thead><tbody>${senasteRader}</tbody></table>`
+    : '<p class="empty">Inga anmälningar än.</p>'}
+  <p class="not">Totalt: ${nf(d.aktiva)} aktiva · ${nf(d.vantande)} ej bekräftade · ${nf(d.avslutade)} avslutade. Senaste 7 dagarna: ${nf(d.nya7)} nya, ${nf(d.avsl7)} avslutade.</p>
+</div>`;
+}
+
+// ── Flik: Sajt ───────────────────────────────────────────────
+async function sajtFlik() {
+  const [t, d, amnen] = await Promise.all([trafik.hamtaTrafik(), hamtaData(), hett.beraknaHett().catch(() => [])]);
+  const tomt = !t.forsta;
+
+  const maxKalla = Math.max(1, ...t.kallor.map(k => k.besok));
+  const summaKallor = t.kallor.reduce((a, k) => a + k.besok, 0) || 1;
+  const kallRader = t.kallor.map(k => `<tr>
+      <td>${esc(k.kalla)}</td>
+      <td class="barcell"><div class="bar" style="width:${Math.max(1, Math.round(k.besok / maxKalla * 100))}%"></div></td>
+      <td class="r">${nf(k.besok)}</td>
+      <td class="r muted">${Math.round(k.besok / summaKallor * 100)} %</td>
+    </tr>`).join('');
+
+  const sidRader = t.sidor.map(p => `<tr><td>${esc(trafik.sidNamn(p.sida))}</td><td class="r">${nf(p.visningar)}</td></tr>`).join('');
+  const klickRader = t.klickade.map(k => `<tr><td>${esc(k.title)}<div class="muted">${esc(k.source)}</div></td><td class="r">${nf(k.klick)}</td></tr>`).join('');
+  const heta = amnen.filter(a => a.hett).sort((a, b) => b.poang - a.poang).slice(0, 3).map(a => a.id);
+  const amneRader = amnen.slice().sort((a, b) => b.poang - a.poang).map(a => `<tr>
+      <td>${esc(a.label)}</td>
+      <td class="r">${nf(a.nya)}</td>
+      <td class="r">${a.faktor.toLocaleString('sv-SE')}×</td>
+      <td class="r">${nf(a.klick)}</td>
+      <td class="r">${heta.includes(a.id) ? '<span class="ok">Visas</span>' : '<span class="muted">–</span>'}</td>
+    </tr>`).join('');
+  const tabell = t.perDag.slice().reverse().map(p => `<tr><td>${esc(datumKort(p.dag))}</td><td class="r">${nf(p.besok)}</td><td class="r">${nf(p.visningar)}</td></tr>`).join('');
+
+  return `
+<h1>Sajten</h1>
+${tomt ? '<p class="not" style="margin:-6px 0 14px;">Mätningen har precis startat – siffrorna fylls på allt eftersom besökare kommer.</p>' : ''}
+<div class="tiles">
+  <div class="tile"><div class="n">${nf(t.besok_idag)}</div><div class="l">Besök i dag</div></div>
+  <div class="tile"><div class="n">${nf(t.besok7)}</div><div class="l">Besök senaste 7 dagarna</div></div>
+  <div class="tile"><div class="n">${nf(t.vis7)}</div><div class="l">Sidvisningar, 7 dagar</div></div>
+  <div class="tile"><div class="n">${nf(d.sajt.klick7)}</div><div class="l">Klick till källor, 7 dagar</div></div>
+</div>
+
+<h2>Besök per dag, senaste 30 dagarna</h2>
+<div class="card">
+  ${diagram(t.perDag, 'besok', 'besök')}
+  <details><summary>Visa som tabell</summary>
+    <table><thead><tr><th>Dag</th><th class="r">Besök</th><th class="r">Visningar</th></tr></thead><tbody>${tabell}</tbody></table>
+  </details>
+</div>
+
+<h2>Varifrån besökarna kommer, 7 dagar</h2>
+<div class="card">
+  ${kallRader ? `<table><thead><tr><th>Källa</th><th></th><th class="r">Besök</th><th class="r">Andel</th></tr></thead><tbody>${kallRader}</tbody></table>`
+    : '<p class="empty">Inga besök registrerade än.</p>'}
+</div>
+
+<h2>Mest visade sidor, 7 dagar</h2>
+<div class="card">
+  ${sidRader ? `<table><thead><tr><th>Sida</th><th class="r">Visningar</th></tr></thead><tbody>${sidRader}</tbody></table>`
+    : '<p class="empty">Inga visningar registrerade än.</p>'}
+</div>
+
+<h2>Mest klickade nyheter, 7 dagar</h2>
+<div class="card">
+  ${klickRader ? `<table><thead><tr><th>Nyhet</th><th class="r">Klick</th></tr></thead><tbody>${klickRader}</tbody></table>`
+    : '<p class="empty">Inga klick än.</p>'}
+</div>
+
+<h2>Hett just nu – så räknas det</h2>
+<div class="card">
+  <table><thead><tr><th>Ämne</th><th class="r">Nya 3 h</th><th class="r">Mot normalt</th><th class="r">Klick 6 h</th><th class="r">Status</th></tr></thead><tbody>${amneRader}</tbody></table>
+  <p class="not">Ett ämne visas när minst ${hett.MIN_NYA} artiklar kommit senaste 3 timmarna och takten är minst ${String(hett.MIN_FAKTOR).replace('.', ',')}× det normala, eller när minst ${hett.MIN_KLICK} läsare klickat på ämnets nyheter senaste 6 timmarna. Högst tre ämnen visas.</p>
+</div>
+
+<p class="not">Skimes egen mätning är cookiefri och sparar inga IP-adresser, så den räknar alla besökare – även de som nekar cookies. Robotar filtreras bort. Ett "besök" är en ankomst utifrån; "visningar" räknar även flikbyten.</p>`;
 }
 
 function register(app) {
@@ -213,64 +339,13 @@ function register(app) {
     }
 
     try {
-      const d = await hamtaData();
+      const flik = req.query.flik === 'nyhetsbrev' ? 'nyhetsbrev' : 'sajt';
       res.setHeader('Cache-Control', 'no-store');
       const nu = new Date().toLocaleString('sv-SE', { timeZone: 'Europe/Stockholm', dateStyle: 'medium', timeStyle: 'short' });
-
-      const utskickRader = d.utskick.length ? d.utskick.map(u => `<tr>
-          <td>${esc(datumKort(u.d))}</td>
-          <td class="r">${nf(u.recipients)}</td>
-          <td class="r muted">${u.finished_at ? new Date(u.finished_at).toLocaleTimeString('sv-SE', { timeZone: 'Europe/Stockholm', hour: '2-digit', minute: '2-digit' }) : 'pågår/misslyckat'}</td>
-        </tr>`).join('') : '';
-
-      const senasteRader = d.senaste.map(s => `<tr>
-          <td>${esc(maska(s.email))}</td>
-          <td><span class="pill ${esc(s.status)}">${{ active: 'Aktiv', pending: 'Ej bekräftad', unsubscribed: 'Avslutad' }[s.status] || esc(s.status)}</span></td>
-          <td class="r muted">${new Date(s.created_at).toLocaleDateString('sv-SE', { timeZone: 'Europe/Stockholm', day: 'numeric', month: 'short' })}</td>
-        </tr>`).join('');
-
-      const tabellTillvaxt = d.tillvaxt.slice().reverse().map(p =>
-        `<tr><td>${esc(datumKort(p.dag))}</td><td class="r">${nf(p.aktiva)}</td></tr>`).join('');
-
-      res.send(ram('Statistik', `
-<div class="top"><a class="logo" href="/">SKIME</a><span class="muted">Uppdaterad ${esc(nu)}</span></div>
-<h1>Nyhetsbrevet</h1>
-<div class="tiles">
-  <div class="tile"><div class="n">${nf(d.aktiva)}</div><div class="l">Aktiva prenumeranter</div></div>
-  <div class="tile"><div class="n">${nf(d.nya7)}</div><div class="l">Nya senaste 7 dagarna</div></div>
-  <div class="tile"><div class="n">${nf(d.vantande)}</div><div class="l">Ej bekräftade</div></div>
-  <div class="tile"><div class="n">${nf(d.avsl30)}</div><div class="l">Avslutade senaste 30 dagarna</div></div>
-</div>
-
-<h2>Aktiva prenumeranter, senaste 30 dagarna</h2>
-<div class="card">
-  ${diagram(d.tillvaxt)}
-  <details><summary>Visa som tabell</summary>
-    <table><thead><tr><th>Dag</th><th class="r">Aktiva</th></tr></thead><tbody>${tabellTillvaxt}</tbody></table>
-  </details>
-</div>
-
-<h2>Utskick</h2>
-<div class="card">
-  ${utskickRader ? `<table><thead><tr><th>Datum</th><th class="r">Mottagare</th><th class="r">Klart kl.</th></tr></thead><tbody>${utskickRader}</tbody></table>`
-    : '<p class="empty">Inga utskick än. Första går kl. 06:30.</p>'}
-</div>
-
-<h2>Senaste anmälningarna</h2>
-<div class="card">
-  ${senasteRader ? `<table><thead><tr><th>Adress</th><th>Status</th><th class="r">Anmäld</th></tr></thead><tbody>${senasteRader}</tbody></table>`
-    : '<p class="empty">Inga anmälningar än.</p>'}
-  <p class="muted" style="margin-top:10px;">Totalt: ${nf(d.aktiva)} aktiva · ${nf(d.vantande)} ej bekräftade · ${nf(d.avslutade)} avslutade. Senaste 7 dagarna: ${nf(d.nya7)} nya, ${nf(d.avsl7)} avslutade.</p>
-</div>
-
-<h2>Sajten</h2>
-<div class="tiles">
-  <div class="tile"><div class="n">${nf(d.sajt.artiklar24)}</div><div class="l">Artiklar senaste dygnet</div></div>
-  <div class="tile"><div class="n">${nf(d.sajt.klick7)}</div><div class="l">Klick på nyheter, 7 dagar</div></div>
-  <div class="tile"><div class="n">${nf(d.sajt.briefer)}</div><div class="l">Briefer totalt</div></div>
-  <div class="tile"><div class="n">${nf(d.nya30)}</div><div class="l">Nya prenumeranter, 30 dagar</div></div>
-</div>
-`));
+      const topp = `<div class="top"><a class="logo" href="/">SKIME</a><span class="muted">Uppdaterad ${esc(nu)}</span></div>
+<nav class="flikar"><a href="/statistik?flik=sajt" class="${flik === 'sajt' ? 'aktiv' : ''}">Sajt</a><a href="/statistik?flik=nyhetsbrev" class="${flik === 'nyhetsbrev' ? 'aktiv' : ''}">Nyhetsbrev</a></nav>`;
+      const body = flik === 'sajt' ? await sajtFlik() : await nyhetsbrevFlik();
+      res.send(ram('Statistik', topp + body));
     } catch (e) {
       console.error('Statistik:', e.message);
       res.status(500).send(ram('Fel', '<h1>Kunde inte hämta statistiken</h1>'));

@@ -225,6 +225,21 @@
     /* Göm annonsytor som Google inte fyllt, så de inte lämnar tomma hål */
     ins.adsbygoogle[data-ad-status="unfilled"] { display:none !important; }
 
+    /* Hett just nu – en rad, scrollar i sidled på mobil */
+    .hett { border-bottom:1px solid var(--border); background:var(--nav-bg); position:relative; }
+    .hett-inner { max-width:1200px; margin:0 auto; padding:8px 20px; display:flex; align-items:center; gap:10px; overflow-x:auto; scrollbar-width:none; }
+    .hett-inner::-webkit-scrollbar { display:none; }
+    .hett-label { display:flex; align-items:center; gap:6px; flex-shrink:0; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.2px; color:var(--muted); }
+    .hett-dot { width:7px; height:7px; border-radius:50%; background:#f97316; box-shadow:0 0 0 0 rgba(249,115,22,.5); animation:hettpuls 2s infinite; }
+    @keyframes hettpuls { 0%{box-shadow:0 0 0 0 rgba(249,115,22,.45)} 70%{box-shadow:0 0 0 6px rgba(249,115,22,0)} 100%{box-shadow:0 0 0 0 rgba(249,115,22,0)} }
+    .hett-chips { display:flex; gap:6px; flex-shrink:0; }
+    .hett-chip { display:inline-flex; align-items:center; gap:5px; height:30px; padding:0 13px; border-radius:15px; border:1px solid var(--border); background:var(--card); color:var(--text); font-size:13px; font-weight:600; text-decoration:none; white-space:nowrap; transition:border-color .15s, background .15s; }
+    .hett-chip:hover { border-color:var(--red); }
+    .hett-chip.topp { background:var(--accent-bg); border-color:var(--accent-border); color:var(--red); }
+    .hett-chip .pil { font-size:11px; opacity:.7; }
+    @media(max-width:600px){ .hett-inner { padding:8px 12px; } .hett-chip { height:32px; font-size:13.5px; } }
+    @media (prefers-reduced-motion: reduce){ .hett-dot { animation:none; } }
+
     /* På mobil hamnar sidopanelen under nyheterna. Nyhetsläget och Trendar
        finns redan i egna mobilrutor – dölj dubletterna i panelen. */
     @media(max-width:860px){ .sidebar .dup-mobile { display:none; } }
@@ -283,6 +298,14 @@
 <!-- Näringsliv undermeny -->
 <div id="naringsliv-subnav" style="display:none; border-bottom:1px solid var(--border); background:var(--nav-bg);">
   <div class="nav-inner" style="padding-left:24px; gap:2px;"></div>
+</div>
+
+<!-- Hett just nu: 1–3 ämnen som är ovanligt heta (räknas fram i src/hett.js) -->
+<div id="hett" class="hett" hidden>
+  <div class="hett-inner">
+    <span class="hett-label"><span class="hett-dot" aria-hidden="true"></span>Hett just nu</span>
+    <div class="hett-chips" id="hett-chips"></div>
+  </div>
 </div>
 
 <!-- Leaderboard-annons borttagen: den hade inget riktigt annons-ID (data-ad-slot="auto")
@@ -566,6 +589,8 @@ function selectTab(val, el) {
 
 async function load() {
   renderIntro();
+  renderHett();
+  sparaVy();
   document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
   // Starta toppnyheter och brief parallellt
   loadTopStories().catch(e => console.warn('loadTopStories failed:', e));
@@ -921,6 +946,51 @@ function openStory(el) {
 
 // Läs av adressen så att länkar som /?category=sport eller /?region=Skåne
 // öppnar rätt flik direkt (tidigare hamnade alla på Nyheter).
+// ── Hett just nu ──────────────────────────────────────────────
+let hettLista = [];
+async function loadHett() {
+  try {
+    const res = await fetch('/api/hett');
+    hettLista = await res.json();
+  } catch (e) { hettLista = []; }
+  renderHett();
+}
+
+// Visar raden bara i nationellt läge, och aldrig ämnet man redan tittar på
+function renderHett() {
+  const box = document.getElementById('hett');
+  if (!box) return;
+  const aktiv = sportSub ? 'sport=' + sportSub : 'category=' + current;
+  const visa = mode === 'national' ? hettLista.filter(h => !h.url.endsWith(aktiv)) : [];
+  if (!visa.length) { box.hidden = true; return; }
+  document.getElementById('hett-chips').innerHTML = visa.map((h, i) =>
+    `<a class="hett-chip${i === 0 ? ' topp' : ''}" href="${escapeHtml(h.url)}">${escapeHtml(h.label)}<span class="pil" aria-hidden="true">↑</span></a>`
+  ).join('');
+  box.hidden = false;
+}
+
+// ── Cookiefri trafikmätning (se src/trafik.js) ────────────────
+// Skickar en signal när en ny vy visas. Första vyn räknas som "besök" om
+// besökaren kom utifrån. Inga kakor, ingen IP sparas.
+let senasteVy = null;
+function sparaVy() {
+  let s;
+  if (mode === 'regional') s = 'region:' + current;
+  else if (sportSub) s = 'sport:' + sportSub;
+  else if (borsSub) s = 'kategori:bors';
+  else if (current === 'nyheter' && location.pathname === '/' && !location.search) s = 'start';
+  else s = 'kategori:' + current;
+  if (s === senasteVy) return;          // automatisk omladdning var 15:e minut räknas inte
+  const forsta = senasteVy === null;
+  senasteVy = s;
+  try {
+    const r = document.referrer;
+    const utifran = forsta && (!r || !/(^|\.)skime\.se$/.test(new URL(r).hostname));
+    const u = new URLSearchParams(location.search).get('utm_source') || '';
+    navigator.sendBeacon('/api/vy', JSON.stringify({ s, e: utifran ? 1 : 0, r: utifran ? r : '', u: utifran ? u : '' }));
+  } catch (e) {}
+}
+
 // Regionsidor har rena adresser: Västra Götaland → /nyheter/vastra-gotaland
 function regionSlug(r) {
   return r.toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/\s+/g, '-').replace(/[^a-z-]/g, '');
@@ -952,6 +1022,8 @@ function applyUrl() {
   } else {
     mode = 'national';
     current = (c && CATS.some(x => x.id === c)) ? c : 'nyheter';
+    const sp = p.get('sport');
+    if (current === 'sport' && sp && SPORT_SUBS.some(x => x.id === sp && x.id !== 'sport')) sportSub = sp;
     document.getElementById('btn-national').classList.add('active');
     document.getElementById('btn-regional').classList.remove('active');
   }
@@ -972,6 +1044,8 @@ load();
 loadMostRead();
 loadTopics();
 loadMeter();
+loadHett();
+setInterval(loadHett, 10 * 60 * 1000);
 setInterval(load, 15 * 60 * 1000);
 setInterval(loadBrief, 30 * 60 * 1000);
 setInterval(loadMostRead, 5 * 60 * 1000);

@@ -14,6 +14,7 @@
 const crypto = require('crypto');
 const express = require('express');
 const { pool, listBriefs } = require('./db');
+const { vyScript } = require('./trafik');
 
 const RESEND_KEY = process.env.RESEND_API_KEY;
 const FROM = 'Skime <morgon@skime.se>';
@@ -161,7 +162,7 @@ function morgonMejl({ brief, briefUrl, avslutaUrl, valkommen }) {
     rubrik,
     innehall: briefHtml(brief.content) +
       `<p style="margin:22px 0 0;"><a href="${safeUrl(briefUrl)}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 18px;border-radius:8px;">Läs och dela på Skime</a></p>
-       <p style="margin:18px 0 0;font-size:13px;color:#666;">Alla nyheter, uppdaterade var 15:e minut: <a href="https://www.skime.se/" style="color:#2563eb;">skime.se</a></p>`,
+       <p style="margin:18px 0 0;font-size:13px;color:#666;">Alla nyheter, uppdaterade var 15:e minut: <a href="https://www.skime.se/?utm_source=nyhetsbrev" style="color:#2563eb;">skime.se</a></p>`,
     fot: `Du får det här mejlet för att du prenumererar på Skimes morgonbrief.<br>
           Briefen sammanställs automatiskt utifrån dagens mest rapporterade nyheter.<br>
           <a href="${safeUrl(avslutaUrl)}" style="color:#888;">Avsluta prenumerationen</a>`
@@ -210,7 +211,7 @@ async function skickaMorgonbrief(siteUrl) {
   if (!lock.rowCount) { console.log('[nyhetsbrev] redan skickat för ' + dag); return; }
 
   const { rows: subs } = await pool.query("SELECT email, token FROM subscribers WHERE status = 'active' ORDER BY id");
-  const briefUrl = siteUrl + briefPathFor(brief);
+  const briefUrl = siteUrl + briefPathFor(brief) + '?utm_source=nyhetsbrev';
   let skickade = 0;
 
   for (let i = 0; i < subs.length; i += 100) {
@@ -323,7 +324,7 @@ function register(app, { siteUrl }) {
           const brief = briefs.find(b => b.brief_type === 'morning') || briefs[0];
           if (brief) {
             const { avslutaUrl, oneClickUrl } = lankar(siteUrl, t);
-            const { subject, html, text } = morgonMejl({ brief, briefUrl: siteUrl + briefPathFor(brief), avslutaUrl, valkommen: true });
+            const { subject, html, text } = morgonMejl({ brief, briefUrl: siteUrl + briefPathFor(brief) + '?utm_source=nyhetsbrev', avslutaUrl, valkommen: true });
             await resend('/emails', {
               from: FROM, to: [rows[0].email], subject, html, text,
               headers: { 'List-Unsubscribe': `<${oneClickUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
@@ -372,7 +373,8 @@ function register(app, { siteUrl }) {
     res.send(enkelSida('Skimes morgonbrief', `<h1>Skimes morgonbrief</h1>
       <p>Dagens viktigaste nyheter, sammanfattade på en minut – med länkar till källorna. I din inkorg varje morgon kl. 06:30. Gratis.</p>
       ${anmalningsruta()}
-      <p style="margin-top:16px;font-size:13px;color:#888;">Se ett exempel i <a href="/brief">briefarkivet</a>. Vi använder din adress bara till briefen, och du kan avsluta när du vill. <a href="/integritet">Integritetspolicy</a>.</p>`)
+      <p style="margin-top:16px;font-size:13px;color:#888;">Se ett exempel i <a href="/brief">briefarkivet</a>. Vi använder din adress bara till briefen, och du kan avsluta när du vill. <a href="/integritet">Integritetspolicy</a>.</p>
+      ${vyScript('nyhetsbrev')}`)
       .replace('<meta name="robots" content="noindex">', `<meta name="description" content="Få dagens viktigaste nyheter sammanfattade i inkorgen varje morgon kl. 06:30. Gratis nyhetsbrev från Skime."><link rel="canonical" href="${siteUrl}/nyhetsbrev">`));
   });
 }
