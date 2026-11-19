@@ -6,6 +6,7 @@ const { pool, init, get, lastFetched, getTopStories, getTodaysBrief, hasBriefTod
 const { fetchAll, SOURCES, recategorizeRecent } = require('./fetcher');
 const { generateBrief } = require('./brief');
 const briefsidor = require('./briefsidor');
+const nyhetsbrev = require('./nyhetsbrev');
 
 const app = express();
 app.use(cors());
@@ -74,6 +75,11 @@ cron.schedule('0 6 * * *', () => generateBrief('morning'), { timezone: 'Europe/S
 
 // Kvällsbrief 17:00 svensk tid
 cron.schedule('0 17 * * *', () => generateBrief('evening'), { timezone: 'Europe/Stockholm' });
+
+// Nyhetsbrevet: morgonbriefen mejlas 06:30. 07:30 är en reserv om briefen blev sen
+// (utskicksloggen i databasen gör att ingen får mejlet två gånger).
+cron.schedule('30 6 * * *', () => nyhetsbrev.skickaMorgonbrief(SITE_URL).catch(e => console.error('Nyhetsbrev:', e.message)), { timezone: 'Europe/Stockholm' });
+cron.schedule('30 7 * * *', () => nyhetsbrev.skickaMorgonbrief(SITE_URL).catch(e => console.error('Nyhetsbrev:', e.message)), { timezone: 'Europe/Stockholm' });
 
 // Städa bort gamla artiklar och klick 04:00 varje natt
 cron.schedule('0 4 * * *', () => cleanup().catch(e => console.error('Städning:', e.message)), { timezone: 'Europe/Stockholm' });
@@ -661,6 +667,7 @@ app.get('/sitemap.xml', async (req, res) => {
       ...CATEGORIES.map(c => ({ loc: `${SITE_URL}/?category=${c}`, priority: '0.8' })),
       ...ALL_REGIONS.map(r => ({ loc: `${SITE_URL}/nyheter/${regionSlug(r)}`, priority: '0.8' })),
       { loc: `${SITE_URL}/brief`, priority: '0.8' },
+      { loc: `${SITE_URL}/nyhetsbrev`, priority: '0.7' },
       ...topicUrls,
     ];
     // Varje brief de senaste 60 dagarna – Skimes egna, unika texter
@@ -835,6 +842,7 @@ async function renderStart(req, res, { category, region }) {
       .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${esc(canonical)}">`)
       .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${esc(canonical)}">`)
       .replace('</head>', `<script type="application/ld+json">${jsonForScript(schema)}</script>\n${briefSchema}\n<script>window.SKIME_REGIONER = ${jsonForScript(REGION_INFO)};</script>\n</head>`)
+      .replace('<!--NYHETSBREV-->', nyhetsbrev.anmalningsruta())
       .replace('<div id="page-intro" hidden></div>', region
         ? `<div id="page-intro"><h1>Nyheter från ${esc(region)}</h1><p>${esc(regionIngress(region))}</p></div>`
         : '<div id="page-intro" hidden></div>')
@@ -851,6 +859,9 @@ async function renderStart(req, res, { category, region }) {
 
 // Briefsidor: /brief, /brief/rss.xml, /brief/2026-11-19/morgon
 briefsidor.register(app, { siteUrl: SITE_URL });
+
+// Nyhetsbrev: /api/prenumerera, /nyhetsbrev, /nyhetsbrev/bekrafta, /nyhetsbrev/avsluta
+nyhetsbrev.register(app, { siteUrl: SITE_URL });
 
 // Briefen sparas med länkar i formatet [ord](url). För Googles strukturerade
 // data och utan-JavaScript-versionen vill vi ha ren text.
@@ -870,6 +881,7 @@ app.listen(process.env.PORT || 8080, '0.0.0.0', () => console.log('Skime live'))
 
 // Databas, hämtning och brief körs efter — fel här får inte fälla processen.
 init().then(async () => {
+  await nyhetsbrev.initNyhetsbrev().catch(e => console.error('Nyhetsbrev init:', e.message));
   await recategorizeRecent().catch(e => console.error('Omsortering:', e.message));
   await fetchAll();
   // Generera saknad brief vid uppstart:

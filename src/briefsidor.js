@@ -8,6 +8,14 @@
 // unikt innehåll varje dag, och varje brief får en länk som går att dela.
 
 const { getBrief, listBriefs } = require('./db');
+const { anmalningsruta } = require('./nyhetsbrev');
+
+// Ruta för nyhetsbrevet, visas under briefen och i arkivet
+const NL_RUTA = `<div class="card" style="margin-top:16px;">
+  <div class="kicker">Gratis nyhetsbrev</div>
+  <p style="font-size:16px;margin-bottom:6px;"><strong>Få morgonbriefen i inkorgen kl. 06:30.</strong> Dagens viktigaste nyheter på en minut.</p>
+  ${anmalningsruta()}
+</div>`;
 
 const TYP_TILL_SLUG = { morning: 'morgon', evening: 'kvall' };
 const SLUG_TILL_TYP = { morgon: 'morning', kvall: 'evening' };
@@ -152,7 +160,7 @@ function sida({ title, description, canonical, body, schema, siteUrl }) {
 <body>
 <header><div class="hi">
   <a class="logo" href="/">SKIME</a>
-  <nav><a href="/">Alla nyheter</a><a href="/brief">Briefarkiv</a></nav>
+  <nav><a href="/">Alla nyheter</a><a href="/brief">Briefarkiv</a><a href="/nyhetsbrev">Nyhetsbrev</a></nav>
 </div></header>
 <main>
 ${body}
@@ -183,7 +191,8 @@ function register(app, { siteUrl }) {
   <p class="intro">Varje morgon kl. 06 och kväll kl. 17 sammanfattar Skime dagens viktigaste nyheter – med länkar till källorna.</p>
   ${briefs.length ? `<ul class="arkiv">${lista}</ul>` : '<p>Inga briefer än.</p>'}
   <div class="share"><a class="btn" href="/brief/rss.xml">RSS-flöde</a></div>
-</div>`
+</div>
+${NL_RUTA}`
       }));
     } catch (e) {
       console.error('Briefarkiv:', e.message);
@@ -278,6 +287,7 @@ ${items}
     <a class="btn" href="https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(canonical)}" target="_blank" rel="noopener">Dela på LinkedIn</a>
   </div>
 </article>
+${NL_RUTA}
 <div class="pager">
   <span>${aldre ? `<a href="${briefPath(aldre)}">← ${esc(briefTitel(aldre))}</a>` : ''}</span>
   <span>${nyare ? `<a href="${briefPath(nyare)}">${esc(briefTitel(nyare))} →</a>` : ''}</span>
