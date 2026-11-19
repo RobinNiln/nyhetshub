@@ -7,6 +7,7 @@ const { fetchAll, SOURCES, recategorizeRecent } = require('./fetcher');
 const { generateBrief } = require('./brief');
 const briefsidor = require('./briefsidor');
 const nyhetsbrev = require('./nyhetsbrev');
+const statistik = require('./statistik');
 
 const app = express();
 app.use(cors());
@@ -548,6 +549,8 @@ app.get('/robots.txt', (req, res) => {
   res.send(`User-agent: *
 Allow: /
 Disallow: /api/
+Disallow: /statistik
+Disallow: /nyhetsbrev/
 
 # AI-sökmotorer välkomna
 User-agent: GPTBot
@@ -862,6 +865,9 @@ briefsidor.register(app, { siteUrl: SITE_URL });
 
 // Nyhetsbrev: /api/prenumerera, /nyhetsbrev, /nyhetsbrev/bekrafta, /nyhetsbrev/avsluta
 nyhetsbrev.register(app, { siteUrl: SITE_URL });
+
+// Statistik för nyhetsbrevet: /statistik (skyddad med STATS_KEY)
+statistik.register(app);
 
 // Briefen sparas med länkar i formatet [ord](url). För Googles strukturerade
 // data och utan-JavaScript-versionen vill vi ha ren text.
