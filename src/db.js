@@ -188,12 +188,34 @@ async function saveBrief(date, type, content) {
 // Hämta senaste brief för idag (kvällsbrief om finns, annars morgonbrief)
 async function getTodaysBrief() {
   const { rows } = await pool.query(
-    `SELECT brief_date, brief_type, content, generated_at FROM daily_briefs
+    `SELECT brief_date, to_char(brief_date, 'YYYY-MM-DD') AS d, brief_type, content, generated_at FROM daily_briefs
      WHERE brief_date = CURRENT_DATE
      ORDER BY generated_at DESC
      LIMIT 1`
   );
   return rows[0] || null;
+}
+
+// En specifik brief, t.ex. ('2026-11-19', 'morning')
+async function getBrief(date, type) {
+  const { rows } = await pool.query(
+    `SELECT to_char(brief_date, 'YYYY-MM-DD') AS d, brief_type, content, generated_at
+     FROM daily_briefs WHERE brief_date = $1 AND brief_type = $2`,
+    [date, type]
+  );
+  return rows[0] || null;
+}
+
+// De senaste briefarna, nyast först (för arkiv, RSS och sitemap)
+async function listBriefs(limit) {
+  const { rows } = await pool.query(
+    `SELECT to_char(brief_date, 'YYYY-MM-DD') AS d, brief_type, content, generated_at
+     FROM daily_briefs
+     ORDER BY brief_date DESC, CASE brief_type WHEN 'evening' THEN 0 ELSE 1 END
+     LIMIT $1`,
+    [limit]
+  );
+  return rows;
 }
 
 // Kolla om en specifik typ finns för idag
@@ -515,4 +537,4 @@ async function cleanup() {
   console.log('[städning] raderade ' + a.rowCount + ' artiklar och ' + c.rowCount + ' klick');
 }
 
-module.exports = { pool, init, save, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, hasBriefToday, cleanup };
+module.exports = { pool, init, save, get, lastFetched, getTopStories, getTopHeadlinesForBrief, saveBrief, getTodaysBrief, getBrief, listBriefs, hasBriefToday, cleanup };

@@ -5,6 +5,7 @@ const cron = require('node-cron');
 const { pool, init, get, lastFetched, getTopStories, getTodaysBrief, hasBriefToday, cleanup } = require('./db');
 const { fetchAll, SOURCES, recategorizeRecent } = require('./fetcher');
 const { generateBrief } = require('./brief');
+const briefsidor = require('./briefsidor');
 
 const app = express();
 app.use(cors());
@@ -56,6 +57,12 @@ const ALL_REGIONS = [
   'Västerbotten','Västernorrland','Västmanland','Västra Götaland',
   'Örebro','Östergötland'
 ];
+
+// Regionsidor får rena adresser: Västra Götaland → /nyheter/vastra-gotaland
+function regionSlug(r) {
+  return r.toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/\s+/g, '-').replace(/[^a-z-]/g, '');
+}
+const REGION_BY_SLUG = Object.fromEntries(ALL_REGIONS.map(r => [regionSlug(r), r]));
 
 const CATEGORIES = ['nyheter','valet2026','samhalle','naringsliv','sport','tech','kultur','kronikor','utrikes','english'];
 
@@ -514,6 +521,7 @@ app.get('/api/regions', (req, res) => res.json(ALL_REGIONS));
 app.get('/api/brief', async (req, res) => {
   try {
     const brief = await getTodaysBrief();
+    if (brief && brief.d) brief.url = briefsidor.briefPath(brief);
     res.json(brief || {});
   } catch(e) {
     res.status(500).json({ error: 'Kunde inte hämta brief' });
@@ -623,6 +631,8 @@ Nyheter hämtas automatiskt var 15:e minut, dygnet runt. Nyhetssammanfattningar 
 - API: GET ${SITE_URL}/api/news?region=Stockholm
 - API: GET ${SITE_URL}/api/top-stories
 - API: GET ${SITE_URL}/api/brief (dagens nyhetssammanfattning)
+- Briefarkiv: ${SITE_URL}/brief (alla morgon- och kvällsbriefer, RSS: ${SITE_URL}/brief/rss.xml)
+- Regionsidor: ${SITE_URL}/nyheter/skane, ${SITE_URL}/nyheter/stockholm osv.
 - Sitemap: ${SITE_URL}/sitemap.xml
 
 ## Ägarskap och kontakt
@@ -649,9 +659,15 @@ app.get('/sitemap.xml', async (req, res) => {
       { loc: `${SITE_URL}/topic/shl`, priority: '0.7' },
       { loc: `${SITE_URL}/topic/valet-2026`, priority: '0.7' },
       ...CATEGORIES.map(c => ({ loc: `${SITE_URL}/?category=${c}`, priority: '0.8' })),
-      ...ALL_REGIONS.map(r => ({ loc: `${SITE_URL}/?region=${encodeURIComponent(r)}`, priority: '0.7' })),
+      ...ALL_REGIONS.map(r => ({ loc: `${SITE_URL}/nyheter/${regionSlug(r)}`, priority: '0.8' })),
+      { loc: `${SITE_URL}/brief`, priority: '0.8' },
       ...topicUrls,
     ];
+    // Varje brief de senaste 60 dagarna – Skimes egna, unika texter
+    try {
+      const briefs = await briefsidor.listBriefs(120);
+      for (const b of briefs) staticUrls.push({ loc: SITE_URL + briefsidor.briefPath(b), priority: '0.6' });
+    } catch(e) {}
 
     res.type('application/xml');
     res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -699,22 +715,52 @@ async function readIndexHtml() {
   return indexHtmlCache;
 }
 
-app.get('/', async (req, res) => {
+// Vilka källor som bevakar varje region (visas i regionsidornas ingress)
+const REGION_SOURCES = {};
+for (const s of SOURCES.regional) {
+  (REGION_SOURCES[s.region] = REGION_SOURCES[s.region] || []).push(s.name);
+}
+const REGION_INFO = Object.fromEntries(ALL_REGIONS.map(r =>
+  [r, { slug: regionSlug(r), sources: REGION_SOURCES[r] || [] }]));
+
+function regionIngress(region) {
+  const src = REGION_SOURCES[region] || [];
+  const lista = src.length > 1 ? src.slice(0, -1).join(', ') + ' och ' + src[src.length - 1] : (src[0] || 'lokala medier');
+  return `Senaste nyheterna från ${region}, samlade från ${lista}. Uppdateras var 15:e minut.`;
+}
+
+// Gamla regionlänkar (/?region=Skåne) flyttas permanent till /nyheter/skane
+app.get('/', (req, res, next) => {
+  if (req.query.region && ALL_REGIONS.includes(req.query.region)) {
+    return res.redirect(301, `/nyheter/${regionSlug(req.query.region)}`);
+  }
+  next();
+});
+
+app.get('/', (req, res) => {
+  // Godkänn bara kända värden. Allt annat ignoreras (skyddar mot skräp i URL:en).
+  const category = CATEGORIES.includes(req.query.category) ? req.query.category : '';
+  renderStart(req, res, { category, region: '' });
+});
+
+app.get('/nyheter/:slug', (req, res) => {
+  const region = REGION_BY_SLUG[req.params.slug];
+  if (!region) return res.status(404).send('Regionen finns inte.');
+  renderStart(req, res, { category: '', region });
+});
+
+async function renderStart(req, res, { category, region }) {
   try {
     // Hämta nya nyheter i bakgrunden om det behövs – men låt INTE besökaren vänta på det
     refreshIfStale();
-
-    // Godkänn bara kända värden. Allt annat ignoreras (skyddar mot skräp i URL:en).
-    const category = CATEGORIES.includes(req.query.category) ? req.query.category : '';
-    const region = ALL_REGIONS.includes(req.query.region) ? req.query.region : '';
 
     const articles = await get({ category: category || 'nyheter', region: region || undefined });
 
     let title, description, canonical;
     if (region) {
-      title = `${region} nyheter – Skime`;
-      description = `Senaste nyheterna från ${region}. Samlat från lokala medier i realtid.`;
-      canonical = `${SITE_URL}/?region=${encodeURIComponent(region)}`;
+      title = `Nyheter ${region} – senaste nytt från lokala medier | Skime`;
+      description = regionIngress(region);
+      canonical = `${SITE_URL}/nyheter/${regionSlug(region)}`;
     } else if (category) {
       title = `${CAT_NAMES[category]} – senaste nytt | Skime`;
       description = CAT_DESCRIPTIONS[category];
@@ -788,7 +834,10 @@ app.get('/', async (req, res) => {
     html = html
       .replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${esc(canonical)}">`)
       .replace(/<meta property="og:url" content="[^"]*">/, `<meta property="og:url" content="${esc(canonical)}">`)
-      .replace('</head>', `<script type="application/ld+json">${jsonForScript(schema)}</script>\n${briefSchema}\n</head>`)
+      .replace('</head>', `<script type="application/ld+json">${jsonForScript(schema)}</script>\n${briefSchema}\n<script>window.SKIME_REGIONER = ${jsonForScript(REGION_INFO)};</script>\n</head>`)
+      .replace('<div id="page-intro" hidden></div>', region
+        ? `<div id="page-intro"><h1>Nyheter från ${esc(region)}</h1><p>${esc(regionIngress(region))}</p></div>`
+        : '<div id="page-intro" hidden></div>')
       .replace('<div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>',
         `<div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
     <noscript>${briefSsr}<ul>${ssrLinks}</ul></noscript>`);
@@ -798,7 +847,10 @@ app.get('/', async (req, res) => {
     console.error('Startsida:', e.message);
     res.sendFile(path.join(__dirname, '../public/index.html'));
   }
-});
+}
+
+// Briefsidor: /brief, /brief/rss.xml, /brief/2026-11-19/morgon
+briefsidor.register(app, { siteUrl: SITE_URL });
 
 // Briefen sparas med länkar i formatet [ord](url). För Googles strukturerade
 // data och utan-JavaScript-versionen vill vi ha ren text.

@@ -225,6 +225,16 @@
     /* Göm annonsytor som Google inte fyllt, så de inte lämnar tomma hål */
     ins.adsbygoogle[data-ad-status="unfilled"] { display:none !important; }
 
+    /* På mobil hamnar sidopanelen under nyheterna. Nyhetsläget och Trendar
+       finns redan i egna mobilrutor – dölj dubletterna i panelen. */
+    @media(max-width:860px){ .sidebar .dup-mobile { display:none; } }
+
+    #page-intro { margin-bottom:16px; }
+    #page-intro h1 { font-size:22px; font-weight:800; letter-spacing:-0.4px; margin-bottom:4px; }
+    #page-intro p { font-size:13px; color:var(--muted); line-height:1.5; }
+    .brief-open { display:inline-block; margin-top:12px; font-size:13px; font-weight:600; color:var(--red); text-decoration:none; }
+    .brief-open:hover { text-decoration:underline; }
+
     footer { border-top:1px solid var(--border); text-align:center; padding:20px; font-size:0.75rem; color:var(--muted); margin-top:10px; }
     footer a { color:var(--muted); text-decoration:none; }
     footer a:hover { color:var(--red); }
@@ -309,6 +319,7 @@
         </div>
         <div id="brief-content" style="font-size:15px;line-height:1.65;color:var(--text);"></div>
         <div style="margin-top:10px;font-size:11px;color:var(--muted);">Sammanställt automatiskt av Skime utifrån dagens topprubriker.</div>
+        <a id="brief-open" class="brief-open" href="/brief" hidden>Öppna och dela briefen →</a>
       </div>
       <div class="section-divider">
         <div class="divider-line"></div>
@@ -316,6 +327,7 @@
         <div class="divider-line"></div>
       </div>
     </div>
+    <div id="page-intro" hidden></div>
     <div class="status-bar" id="status-bar" aria-live="polite"></div>
     <div id="news-grid" aria-label="Nyheter"><div class="state"><div class="spinner"></div></div></div>
     <!-- Mobil: Trending efter nyhetsflödet -->
@@ -325,7 +337,7 @@
     </div>
   </main>
   <aside class="sidebar" aria-label="Sidebar">
-    <div class="widget">
+    <div class="widget dup-mobile">
       <div class="widget-title">⚡ Nyhetsläget just nu</div>
       <div style="margin:8px 0 6px;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -356,7 +368,7 @@
       <div class="widget-title">🏷️ Snackas om</div>
       <div id="trending-topics" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;"></div>
     </div>
-    <div class="widget">
+    <div class="widget dup-mobile">
       <div class="widget-title" id="t-trending">🔥 Trendar</div>
       <div id="trending" role="list"></div>
     </div>
@@ -378,12 +390,16 @@
     <a href="/?category=kultur">Kultur</a> ·
     <a href="/?category=utrikes">Utrikes</a>
   </p>
+  <p style="margin-top:10px;max-width:760px;margin-left:auto;margin-right:auto;line-height:1.9">
+    <a href="/nyheter/blekinge">Blekinge</a> · <a href="/nyheter/dalarna">Dalarna</a> · <a href="/nyheter/gotland">Gotland</a> · <a href="/nyheter/gavleborg">Gävleborg</a> · <a href="/nyheter/halland">Halland</a> · <a href="/nyheter/jamtland">Jämtland</a> · <a href="/nyheter/jonkoping">Jönköping</a> · <a href="/nyheter/kalmar">Kalmar</a> · <a href="/nyheter/kronoberg">Kronoberg</a> · <a href="/nyheter/norrbotten">Norrbotten</a> · <a href="/nyheter/skane">Skåne</a> · <a href="/nyheter/stockholm">Stockholm</a> · <a href="/nyheter/sodermanland">Södermanland</a> · <a href="/nyheter/uppsala">Uppsala</a> · <a href="/nyheter/varmland">Värmland</a> · <a href="/nyheter/vasterbotten">Västerbotten</a> · <a href="/nyheter/vasternorrland">Västernorrland</a> · <a href="/nyheter/vastmanland">Västmanland</a> · <a href="/nyheter/vastra-gotaland">Västra Götaland</a> · <a href="/nyheter/orebro">Örebro</a> · <a href="/nyheter/ostergotland">Östergötland</a>
+  </p>
   <p style="margin-top:16px;max-width:600px;margin-left:auto;margin-right:auto;line-height:1.6">
     Skime aggregerar och länkar till nyheter från svenska medier. Allt innehåll tillhör respektive källa.
     Klicka alltid på rubriken eller källan för att läsa hela artikeln.
   </p>
   <p style="margin-top:10px">
     <a href="/om">Om Skime</a> ·
+    <a href="/brief">Briefarkiv</a> ·
     <a href="/integritet">Integritetspolicy</a> ·
     <a href="/cookies">Cookies</a> ·
     <a href="/villkor">Användarvillkor</a> ·
@@ -435,7 +451,7 @@ function setMode(m, el) {
   current = m === 'national' ? 'nyheter' : (getRecentRegions()[0] || ALL_REGIONS[0]);
   sportSub = null;
   borsSub = null;
-  history.pushState({}, '', m === 'national' ? '/?category=nyheter' : `/?region=${encodeURIComponent(current)}`);
+  history.pushState({}, '', m === 'national' ? '/?category=nyheter' : regionPath(current));
   renderTabs();
   renderSportSubs();
   load();
@@ -491,7 +507,7 @@ function selectRegionFromDropdown(region) {
   if (!region) return;
   current = region;
   saveRecentRegion(region);
-  history.pushState({}, '', `/?region=${encodeURIComponent(region)}`);
+  history.pushState({}, '', regionPath(region));
   renderTabs();
   load();
 }
@@ -537,13 +553,14 @@ function selectTab(val, el) {
   borsSub = null;
   document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  const newUrl = mode === 'national' ? `/?category=${current}` : `/?region=${encodeURIComponent(current)}`;
+  const newUrl = mode === 'national' ? `/?category=${current}` : regionPath(current);
   history.pushState({}, '', newUrl);
   renderSportSubs();
   load();
 }
 
 async function load() {
+  renderIntro();
   document.getElementById('news-grid').innerHTML = '<div class="state"><div class="spinner"></div></div>';
   // Starta toppnyheter och brief parallellt
   loadTopStories().catch(e => console.warn('loadTopStories failed:', e));
@@ -858,6 +875,8 @@ async function loadBrief() {
       // Fallback: visa texten som prosa (med länkar)
       target.innerHTML = lines.map(l => `<p style="margin:0 0 8px;">${briefInline(l)}</p>`).join('');
     }
+    const openLink = document.getElementById('brief-open');
+    if (data.url && /^\/brief\//.test(data.url)) { openLink.href = data.url; openLink.hidden = false; }
     section.style.display = 'block';
   } catch(e) {
     section.style.display = 'none';
@@ -897,9 +916,28 @@ function openStory(el) {
 
 // Läs av adressen så att länkar som /?category=sport eller /?region=Skåne
 // öppnar rätt flik direkt (tidigare hamnade alla på Nyheter).
+// Regionsidor har rena adresser: Västra Götaland → /nyheter/vastra-gotaland
+function regionSlug(r) {
+  return r.toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/\s+/g, '-').replace(/[^a-z-]/g, '');
+}
+function regionPath(r) { return '/nyheter/' + regionSlug(r); }
+
+// Rubrik och ingress överst på regionsidor (Google läser dem, besökaren ser var den är)
+function renderIntro() {
+  const box = document.getElementById('page-intro');
+  if (!box) return;
+  if (mode !== 'regional') { box.hidden = true; return; }
+  const info = (window.SKIME_REGIONER || {})[current];
+  const src = info && info.sources && info.sources.length ? info.sources : null;
+  const lista = src ? (src.length > 1 ? src.slice(0, -1).join(', ') + ' och ' + src[src.length - 1] : src[0]) : 'lokala medier';
+  box.innerHTML = `<h1>Nyheter från ${escapeHtml(current)}</h1><p>Senaste nyheterna från ${escapeHtml(current)}, samlade från ${escapeHtml(lista)}. Uppdateras var 15:e minut.</p>`;
+  box.hidden = false;
+}
+
 function applyUrl() {
   const p = new URLSearchParams(location.search);
-  const r = p.get('region');
+  const m = location.pathname.match(/^\/nyheter\/([a-z-]+)\/?$/);
+  const r = m ? (ALL_REGIONS.find(x => regionSlug(x) === m[1]) || null) : p.get('region');
   const c = p.get('category');
   sportSub = null;
   borsSub = null;
